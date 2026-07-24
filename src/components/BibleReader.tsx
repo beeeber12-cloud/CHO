@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, BookOpen, Quote, Sparkles, Send, Loader, CheckCircle2, Bookmark, Target, Award, ListChecks, ChevronRight, Settings, X, BookMarked, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
+import DualBibleText from "./DualBibleText";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
 
@@ -14,9 +15,12 @@ interface BibleReaderProps {
 interface BibleResult {
   reference: string;
   text: string;
+  textNiv?: string;
   explanation: string;
   meditationGuide: string;
 }
+
+type BibleVersion = "krv" | "niv" | "both";
 
 export default function BibleReader({ currentUser, onSelectVerseForMeditation, initialQuery = "" }: BibleReaderProps) {
   // Navigation & Selector states
@@ -27,6 +31,13 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   // Search & Result states
   const [query, setQuery] = useState<string>(initialQuery || "요한복음 1장");
   const [result, setResult] = useState<BibleResult | null>(null);
+  const [bibleVersion, setBibleVersion] = useState<BibleVersion>(() => {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("bibleVersion");
+      if (saved === "krv" || saved === "niv" || saved === "both") return saved;
+    }
+    return "krv";
+  });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -53,6 +64,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [logosVerse, setLogosVerse] = useState<{
     reference: string;
     text: string;
+    textNiv?: string;
     explanation: string;
     meditationGuide: string;
     source?: string;
@@ -388,6 +400,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             <p className="text-xs sm:text-sm leading-relaxed text-white font-medium pl-1">
               "{logosVerse.text}"
             </p>
+            {logosVerse.textNiv && (
+              <p className="text-xs sm:text-sm leading-relaxed text-amber-100/80 font-medium italic pl-1">
+                "{logosVerse.textNiv}"
+              </p>
+            )}
             {logosVerse.explanation && (
               <p className="text-[11px] text-emerald-100/90 pt-2 border-t border-white/10 leading-relaxed">
                 💡 <strong>묵상 포인트:</strong> {logosVerse.explanation}
@@ -617,11 +634,43 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 </div>
               </div>
 
+              {/* 성경 번역본 선택 토글: 개역개정 / NIV / 같이보기 */}
+              <div className="flex items-center gap-1 bg-[#f4f2eb] p-1 rounded-xl border border-[#ece8df] w-fit">
+                {([
+                  { key: "krv", label: "개역개정" },
+                  { key: "niv", label: "NIV" },
+                  { key: "both", label: "같이 보기" },
+                ] as { key: BibleVersion; label: string }[]).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => {
+                      setBibleVersion(opt.key);
+                      if (typeof window !== "undefined") window.localStorage.setItem("bibleVersion", opt.key);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                      bibleVersion === opt.key
+                        ? "bg-[#2c3e2d] text-white shadow-sm"
+                        : "text-[#5a6b5a] hover:bg-[#e0dcd0]"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
               {/* Scripture Verse Text Container - Compact padding for maximum mobile reading width */}
               <div className="serif-font bg-[#fdfbf7] p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-[#ece8df] shadow-inner max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
-                <FormattedBibleText
-                  text={result.text}
-                />
+                {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
+                  <>
+                    <FormattedBibleText text={result.text} />
+                    <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                      이 본문은 NIV(영어) 데이터가 아직 없어 개역개정으로 표시됩니다.
+                    </p>
+                  </>
+                ) : (
+                  <DualBibleText krvText={result.text} nivText={result.textNiv} mode={bibleVersion} />
+                )}
               </div>
 
               {/* Action Buttons */}

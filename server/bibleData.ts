@@ -177,19 +177,72 @@ const DAILY_VERSE_REFS = [
   "에베소서 2:8", "요한복음 15:5", "시편 91:1", "데살로니가전서 5:16", "골로새서 3:23"
 ];
 
-export function getDailyVerse(): { reference: string; text: string } {
+export function getDailyVerse(): { reference: string; text: string; textNiv: string } {
   preloadAllBooks();
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   const dayIndex = Math.floor(kst.getTime() / 86400000) % DAILY_VERSE_REFS.length;
   const ref = DAILY_VERSE_REFS[dayIndex];
-  const parsed = parseAndGenerateBibleText(ref);
+  const parsed = parseAndGenerateBibleText(ref) as any;
   if (parsed.isExactMatch && parsed.text) {
     // "16 하나님이..." 형태에서 절번호 접두어 제거
     const cleanText = parsed.text.replace(/^\d+\s*/, "").trim();
-    return { reference: parsed.reference || ref, text: cleanText };
+    let niv = "";
+    if (parsed.matchedBookName && parsed.chapter) {
+      niv = getNivText(parsed.matchedBookName, parsed.chapter, parsed.verseNumbers).replace(/^\d+\s*/, "").trim();
+    }
+    return { reference: parsed.reference || ref, text: cleanText, textNiv: niv };
   }
-  return { reference: "요한복음 3:16", text: "하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 그를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이라" };
+  return { reference: "요한복음 3:16", text: "하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 그를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이라", textNiv: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." };
+}
+
+// ===== NIV(영어) 성경 엔진 =====
+const NIV_CACHE = new Map<string, any>();
+
+function getNivBookData(koreanBookName: string) {
+  if (NIV_CACHE.has(koreanBookName)) return NIV_CACHE.get(koreanBookName);
+  const bookId = BOOK_ID_MAP[koreanBookName];
+  if (!bookId) return null;
+  try {
+    const baseDir = (typeof __dirname !== "undefined") ? __dirname : process.cwd();
+    const pathsToTry = [
+      path.join(process.cwd(), "server", "data", "books_niv", `${bookId}.json`),
+      path.join(baseDir, "data", "books_niv", `${bookId}.json`),
+      path.join(baseDir, "..", "server", "data", "books_niv", `${bookId}.json`)
+    ];
+    for (const p of pathsToTry) {
+      if (fs.existsSync(p)) {
+        const data = JSON.parse(fs.readFileSync(p, "utf-8"));
+        NIV_CACHE.set(koreanBookName, data);
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn(`[NIV Engine] Could not load NIV data for ${koreanBookName}:`, e);
+  }
+  return null;
+}
+
+export function preloadAllNivBooks(): number {
+  for (const book of BIBLE_BOOKS) {
+    if (!NIV_CACHE.has(book.name)) getNivBookData(book.name);
+  }
+  return NIV_CACHE.size;
+}
+
+// 한글 책이름 + 장 + (선택)절번호들 -> NIV 본문 문자열 ("절 text" 줄바꿈)
+export function getNivText(koreanBookName: string, chapter: number, verseNumbers?: number[] | null): string {
+  const book = getNivBookData(koreanBookName);
+  if (!book || !book.chapters) return "";
+  const verses = book.chapters[String(chapter)];
+  if (!Array.isArray(verses) || verses.length === 0) return "";
+  let selected = verses;
+  if (verseNumbers && verseNumbers.length > 0) {
+    const set = new Set(verseNumbers);
+    selected = verses.filter((v: any) => set.has(v.verse));
+    if (selected.length === 0) selected = verses;
+  }
+  return selected.map((v: any) => `${v.verse} ${v.text}`).join("\n");
 }
 
 // 66권 별칭 지도 (Alias Mapping)
@@ -279,6 +332,7 @@ export function parseAndGenerateBibleText(queryStr: string): {
   chapter?: number;
   startVerse?: number | null;
   endVerse?: number | null;
+  verseNumbers?: number[];
 } {
   if (!queryStr || !queryStr.trim()) {
     queryStr = "시편 23편";
@@ -362,7 +416,10 @@ export function parseAndGenerateBibleText(queryStr: string): {
         text: verseTextLines,
         explanation: `${matchedBookName} ${chapter}${isPsalm ? '편' : '장'} 본문은 하나님의 신실하신 보살핌과 구원의 은혜를 전해주는 말씀입니다.`,
         meditationGuide: `오늘 ${matchedBookName} ${chapter}${isPsalm ? '편' : '장'} 말씀을 조용히 읊조리며 주님이 주시는 평안과 위로를 묵상해 보세요.`,
-        isExactMatch: true
+        isExactMatch: true,
+        matchedBookName,
+        chapter,
+        verseNumbers: selectedVerses.map((v: any) => v.verse)
       };
     } else {
       // 로컬 파일에 장 데이터가 없는 경우 -> AI로 자동 생성 및 저장 트리거
@@ -411,7 +468,10 @@ export function parseAndGenerateBibleText(queryStr: string): {
         text: `${v.verse} ${v.text}`,
         explanation: `${v.book} ${v.chapter}${isPsalm ? '편' : '장'} ${v.verse}절의 은혜로운 말씀입니다.`,
         meditationGuide: "이 말씀을 깊이 새기며 주님의 마음을 느껴보세요.",
-        isExactMatch: true
+        isExactMatch: true,
+        matchedBookName: v.book,
+        chapter: Number(v.chapter),
+        verseNumbers: [v.verse]
       };
     } else {
       const verseTextLines = matchingVerses.map(v => `[${v.book} ${v.chapter}:${v.verse}] ${v.verse} ${v.text}`).join("\n\n");

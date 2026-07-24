@@ -5,7 +5,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup } from "./src/types";
-import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse } from "./server/bibleData.js";
+import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText } from "./server/bibleData.js";
 import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
 
 dotenv.config();
@@ -398,7 +398,8 @@ async function startServer() {
   // 개역개정 66권 전권을 메모리에 프리로드 (성경 검색 즉시 응답 + 키워드 검색 지원)
   try {
     const loaded = preloadAllBooks();
-    console.log(`[Bible Engine] ${loaded}권 개역개정 본문 프리로드 완료.`);
+    const nivLoaded = preloadAllNivBooks();
+    console.log(`[Bible Engine] 개역개정 ${loaded}권 + NIV ${nivLoaded}권 프리로드 완료.`);
   } catch (e) {
     console.error("[Bible Engine] 프리로드 실패:", e);
   }
@@ -1141,6 +1142,15 @@ JSON 양식:
         }
       }
 
+      // NIV(영어) 본문 동봉 — 개역개정과 같은 책/장/절 범위로
+      if (bibleResult.isExactMatch && bibleResult.matchedBookName && bibleResult.chapter) {
+        try {
+          bibleResult.textNiv = getNivText(bibleResult.matchedBookName, bibleResult.chapter, bibleResult.verseNumbers);
+        } catch (e) {
+          bibleResult.textNiv = "";
+        }
+      }
+
       if (bibleResult.isExactMatch && bibleResult.text && !bibleResult.needsAiFetch) {
         bibleSearchCache.set(cacheKey, bibleResult);
       }
@@ -1189,9 +1199,10 @@ JSON format:
 
       return res.json({
         success: true,
-        source: "내장 개역개정",
+        source: "내장 개역개정 + NIV",
         reference: daily.reference,
         text: daily.text,
+        textNiv: daily.textNiv,
         explanation,
         meditationGuide
       });
