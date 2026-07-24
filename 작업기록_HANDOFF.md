@@ -70,6 +70,13 @@
 - **`Dockerfile`** + **`.dockerignore`** 추가
 - `.gitignore`: `db.json`(회원 PIN 평문)·실제 `.env`·성경 원본백업 **제외** 처리
 
+### ✅ (G) 모바일 앱 설치(PWA) + 아이콘 정상화
+- **원인 발견:** `public/app_icon.jpg`가 **손상된 파일**이었음(바이너리가 텍스트로 저장돼 `ef bf bd`로 시작) → 브라우저가 아이콘을 못 읽어 설치해도 아이콘이 안 나옴
+- **복구:** 정상 원본(`src/assets/images/app_icon_1784640295623.jpg`, 1024×1024)에서 재생성
+- **PWA 아이콘 세트 생성:** `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`(안드로이드 적응형·안전영역 확보), `apple-touch-icon.png`(iOS 180px)
+- `manifest.json` 정비(이름 "말씀나눔", standalone, portrait, 아이콘 3종), `index.html` 아이콘 태그 추가, `sw.js` 캐시 v3로 상향
+- **`PWAInstallPrompt.tsx` 실제 구현** — 원래 `return null`인 빈 껍데기라 설치 버튼이 아예 없었음. 이제 안드로이드=원터치 "앱 설치하기" 버튼, iOS=공유→홈 화면에 추가 안내. 7일 스누즈, 설치 완료/이미 설치 시 자동 숨김. `App.tsx`에 로그인화면·메인 양쪽 마운트
+
 ### 검증 완료
 - `npm install` + `npm run build` **통과** (프론트 vite + 서버 esbuild)
 - 빌드된 서버 실제 기동 → **개역개정 66권 + NIV 66권 프리로드 성공**, 검색·오늘의말씀 한/영 동시 반환 확인

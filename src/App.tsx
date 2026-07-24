@@ -10,6 +10,7 @@ import BibleQnA from "./components/BibleQnA";
 import NotificationSettings from "./components/NotificationSettings";
 import MyMeditations from "./components/MyMeditations";
 import FontSizeControl from "./components/FontSizeControl";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 interface UserProfile {
   id: string;
@@ -89,11 +90,17 @@ export default function App() {
   };
 
   if (!currentUser) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+        <PWAInstallPrompt />
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] text-[#333333] pb-20 md:pb-10 font-sans">
+      <PWAInstallPrompt />
       {/* Dynamic Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[#ece8df] shadow-sm">
         <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2.5 flex justify-between items-center gap-1.5">

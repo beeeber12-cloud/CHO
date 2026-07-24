@@ -1,17 +1,32 @@
 {
-  "name": "Bible Meditation Share",
+  "name": "말씀나눔 - 성경 묵상 공유",
   "short_name": "말씀나눔",
   "description": "매일의 성경 묵상과 은혜의 소그룹 나눔방",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#fdfbf7",
   "theme_color": "#2c3e2d",
+  "lang": "ko",
   "icons": [
     {
-      "src": "/app_icon.jpg",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

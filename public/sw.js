@@ -1,10 +1,14 @@
 // Service Worker for Bible Meditation Share PWA
-const CACHE_NAME = "bible-meditation-v2";
+// 아이콘/매니페스트 갱신 시 버전을 올리면 이전 캐시가 자동 삭제됩니다.
+const CACHE_NAME = "bible-meditation-v3";
 const ASSETS = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/app_icon.jpg"
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-maskable-512.png",
+  "/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (e) => {
