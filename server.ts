@@ -16,6 +16,25 @@ const DB_FILE = path.join(process.cwd(), "db.json");
 let dbCache: DatabaseSchema | null = null;
 let saveQueue = Promise.resolve();
 
+// Firestore 를 한 번이라도 정상적으로 읽었는지 (원격 데이터 보호용)
+let remoteEverRead = false;
+
+/**
+ * "방금 만들어진 초기 상태(시드) DB"인지 판별.
+ * 실제 회원(admin-1 제외)도 없고 묵상/감사/QnA 도 전혀 없으면 시드로 본다.
+ * 이런 DB 를 원격에 쓰면 기존 데이터가 전부 지워지므로 쓰기를 막는 데 사용한다.
+ */
+function isSeedLikeDb(d: DatabaseSchema): boolean {
+  if (!d) return true;
+  const realUsers = (d.users || []).filter((u) => u.id !== "admin-1");
+  return (
+    realUsers.length === 0 &&
+    (d.meditations || []).length === 0 &&
+    (d.gratitudes || []).length === 0 &&
+    (d.bibleQAs || []).length === 0
+  );
+}
+
 // Helper to load database
 function loadDb(): DatabaseSchema {
   if (dbCache) return dbCache;
@@ -55,6 +74,7 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
     const isDummyUser = (u: User) => dummyUserIds.has(u.id) || dummyUserNames.has(u.name);
 
     if (remoteDb) {
+      remoteEverRead = true;
       const userMap = new Map<string, User>();
 
       userMap.set("admin-1", {
@@ -225,8 +245,17 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
       await saveToFirestore(mergedDb);
       return mergedDb;
     } else {
+      // ⚠️ 여기 도달 = Firestore 를 읽지 못했거나 원격 문서가 없는 상태.
+      // 이때 로컬(초기 상태) DB 를 원격에 쓰면 기존 회원·묵상이 전부 삭제된다.
+      // (2026-07-24 실제 사고 발생: db.json 없는 새 컨테이너가 빈 DB로 Firestore 를 덮어씀)
       const current = loadDb();
-      await saveToFirestore(current);
+      if (isSeedLikeDb(current)) {
+        console.error(
+          "[SAFETY] Firestore 읽기 실패/비어있음 + 로컬이 초기상태 → 원격 쓰기를 건너뜁니다. (데이터 보호)"
+        );
+      } else {
+        await saveToFirestore(current);
+      }
       return current;
     }
   } catch (err) {
@@ -256,7 +285,12 @@ function saveDb(dbData: DatabaseSchema) {
 
       // Save to Firebase Firestore in the background
       try {
-        await saveToFirestore(dbData);
+        // ⚠️ 원격을 한 번도 못 읽은 상태에서 초기(빈) DB 를 쓰면 기존 데이터가 삭제된다.
+        if (!remoteEverRead && isSeedLikeDb(dbData)) {
+          console.error("[SAFETY] 원격 미확인 + 초기상태 DB → Firestore 쓰기 차단 (데이터 보호)");
+        } else {
+          await saveToFirestore(dbData);
+        }
       } catch (fErr) {
         console.error("Failed to sync save to Firestore:", fErr);
       }
