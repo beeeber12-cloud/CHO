@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@300;400;500;600;700;900&display=swap');
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Pretendard", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif KR", "Playfair Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-forest-primary: #4a6d4a;
+  --color-forest-dark: #2c3e2d;
+  --color-forest-hover: #3d5a3d;
+  --color-warm-bg: #fdfbf7;
+  --color-warm-card: #ffffff;
+  --color-warm-border: #ece8df;
+  --color-warm-secondary: #f4f2eb;
+  --color-warm-text: #333333;
+  --color-warm-muted: #8a8171;
+  --color-warm-darktext: #4a463f;
+}
+
+body {
+  background-color: var(--color-warm-bg);
+  color: var(--color-warm-text);
+  font-family: var(--font-sans);
+}
+
+/* Custom class for elegant serif elements */
+.serif-font {
+  font-family: var(--font-serif);
+}
+
+/* Font Scaling for Adults & Seniors */
+.font-scale-small {
+  font-size: 11px;
+}
+
+.font-scale-normal {
+  /* default */
+}
+
+.font-scale-large {
+  font-size: 20px;
+}
+
+.font-scale-xlarge {
+  font-size: 28px;
+}
+
+/* Specific text elements scaling adjustments */
+.font-scale-small p,
+.font-scale-small textarea,
+.font-scale-small input {
+  font-size: 11px !important;
+  line-height: 1.5;
+}
+
+.font-scale-normal p,
+.font-scale-normal textarea,
+.font-scale-normal input {
+  line-height: 1.6;
+}
+
+.font-scale-large p,
+.font-scale-large textarea,
+.font-scale-large input {
+  font-size: 20px !important;
+  line-height: 1.7;
+}
+
+.font-scale-xlarge p,
+.font-scale-xlarge textarea,
+.font-scale-xlarge input {
+  font-size: 28px !important;
+  line-height: 1.8;
+}
+

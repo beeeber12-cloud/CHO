@@ -1,0 +1,65 @@
+{
+  "collections": {
+    "app_data": {
+      "documents": {
+        "main_db": {
+          "schema": {
+            "users": "array",
+            "notices": "array",
+            "meditations": "array",
+            "weeklySummaries": "array",
+            "alarmConfigs": "array",
+            "updatedAt": "string"
+          }
+        }
+      }
+    },
+    "users": {
+      "documents": {
+        "{userId}": {
+          "schema": {
+            "id": "string",
+            "name": "string",
+            "role": "string",
+            "pin": "string",
+            "createdAt": "string"
+          }
+        }
+      }
+    },
+    "meditations": {
+      "documents": {
+        "{meditationId}": {
+          "schema": {
+            "id": "string",
+            "userId": "string",
+            "userName": "string",
+            "date": "string",
+            "verseTitle": "string",
+            "title": "string",
+            "content": "string",
+            "prayer": "string",
+            "likes": "array",
+            "comments": "array",
+            "createdAt": "string"
+          }
+        }
+      }
+    },
+    "notices": {
+      "documents": {
+        "{noticeId}": {
+          "schema": {
+            "id": "string",
+            "date": "string",
+            "verseTitle": "string",
+            "verseText": "string",
+            "content": "string",
+            "createdBy": "string",
+            "readBy": "array"
+          }
+        }
+      }
+    }
+  }
+}

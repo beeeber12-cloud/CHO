@@ -1,0 +1,79 @@
+import React from "react";
+
+interface FormattedBibleTextProps {
+  text: string;
+  className?: string;
+}
+
+interface ParsedVerse {
+  verseNum?: string;
+  verseBody: string;
+}
+
+export default function FormattedBibleText({
+  text,
+  className = "",
+}: FormattedBibleTextProps) {
+  if (!text) return null;
+
+  // Clean quotes if wrapped
+  let cleanKRV = text.trim();
+  if (cleanKRV.startsWith('"') && cleanKRV.endsWith('"')) {
+    cleanKRV = cleanKRV.slice(1, -1).trim();
+  }
+
+  const parseLines = (rawText: string) => {
+    let rawLines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
+
+    // If inline verse numbers exist in a single line
+    if (rawLines.length === 1 && /\b\d{1,3}[\s절.:]/.test(rawLines[0])) {
+      const matches = rawLines[0]
+        .split(/(?=(?:^|\s)\d{1,3}(?:절|\.|\:|\s+)\s*)/g)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (matches.length > 1) {
+        rawLines = matches;
+      }
+    }
+    return rawLines;
+  };
+
+  const krvLines = parseLines(cleanKRV);
+  const parsedVerses: ParsedVerse[] = [];
+
+  for (let i = 0; i < krvLines.length; i++) {
+    const line = krvLines[i];
+    const match = line.match(/^(\d{1,3})(?:절|\.|\:|\s+)\s*(.*)/);
+
+    if (match) {
+      parsedVerses.push({
+        verseNum: match[1],
+        verseBody: match[2].trim(),
+      });
+    } else {
+      parsedVerses.push({
+        verseBody: line,
+      });
+    }
+  }
+
+  return (
+    <div className={`space-y-3 sm:space-y-4 ${className}`}>
+      {parsedVerses.map((v, idx) => (
+        <div key={idx} className="group">
+          <p
+            className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#2c3e2d] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
+            style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
+          >
+            {v.verseNum && (
+              <span className="font-sans font-bold text-[#4a6d4a] text-xs sm:text-sm mr-2 inline-block select-none">
+                {v.verseNum}
+              </span>
+            )}
+            {v.verseBody}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}

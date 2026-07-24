@@ -1,0 +1,6 @@
+{
+  "appId": "com.biblemeditation.app",
+  "appName": "Bible Meditation Share",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

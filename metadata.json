@@ -1,0 +1,6 @@
+{
+  "name": "Bible Meditation Share",
+  "description": "20~30명의 성경 묵상 및 소그룹 나눔을 위한 반응형 웹 앱입니다. 매일 말씀 공지, 개인 묵상 작성, 댓글 나눔, 읽음 체크, AI 주간 요약, 말씀 읽기 기능을 제공합니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

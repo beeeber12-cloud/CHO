@@ -1,0 +1,17 @@
+{
+  "name": "Bible Meditation Share",
+  "short_name": "말씀나눔",
+  "description": "매일의 성경 묵상과 은혜의 소그룹 나눔방",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdfbf7",
+  "theme_color": "#2c3e2d",
+  "icons": [
+    {
+      "src": "/app_icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# 회원 PIN(평문)이 담긴 로컬 DB — GitHub에 올리지 않음 (실제 데이터는 Firestore가 원본)
+db.json
+db.json.tmp
+
+# 성경 원본 백업 (변환 완료됨, books/ 에 최종본 있음)
+server/data/bible_krv_source.json
+
+# 안드로이드 빌드 산출물
+android/
