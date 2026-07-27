@@ -236,7 +236,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
             <span className="p-1.5 bg-amber-400/20 text-amber-300 rounded-xl border border-amber-400/30">
               <BookOpen size={18} />
             </span>
-            <h2 className="text-xl font-bold tracking-tight">AI 성경 역사 & 배경 Q&A</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">AI 성경 역사 & 배경 Q&A</h2>
           </div>
 
           <p className="text-xs text-slate-200/90 leading-relaxed max-w-2xl">
