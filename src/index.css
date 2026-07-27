@@ -19,10 +19,18 @@
   --color-warm-darktext: #4a463f;
 }
 
+html {
+  /* 앱 전체 기본 글씨 크기 11% 확대 (Tailwind의 rem 기반 사이즈에 모두 반영됨) */
+  font-size: 111%;
+}
+
 body {
   background-color: var(--color-warm-bg);
   color: var(--color-warm-text);
   font-family: var(--font-sans);
+  /* 단어 중간이 잘리지 않도록: 한글 단어는 어절 단위로만 줄바꿈, 부득이한 경우에만 넘침 방지용 줄바꿈 허용 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* Custom class for elegant serif elements */
