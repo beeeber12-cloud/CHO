@@ -209,7 +209,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
             <BookOpen size={18} />
           </div>
           <div>
-            <h3 className="font-bold text-[#2c3e2d] text-base sm:text-lg whitespace-nowrap">오늘의 말씀 공지</h3>
+            <h3 className="font-bold text-[#2c3e2d] text-lg sm:text-2xl whitespace-nowrap">오늘의 말씀 공지</h3>
             <p className="text-[11px] sm:text-xs text-[#8a8171]">매일 아침 새 말씀이 공지됩니다</p>
           </div>
         </div>
