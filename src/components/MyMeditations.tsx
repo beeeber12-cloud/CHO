@@ -343,7 +343,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             <span className="text-[10px] font-black tracking-widest uppercase bg-white/20 px-2.5 py-1 rounded-full text-white/90 whitespace-nowrap shrink-0 inline-block">
               MY DEVOTIONAL JOURNAL
             </span>
-            <h3 className="font-bold text-lg sm:text-2xl mt-1.5">{currentUser.name}님의 영성 기록 발자취</h3>
+            <h3 className="font-bold text-xl sm:text-3xl mt-1.5">{currentUser.name}님의 영성 기록 발자취</h3>
             <p className="text-xs text-emerald-100/80 mt-1 leading-relaxed">
               주님과 친밀하게 나누어 온 묵상과 감사의 고백들이 은혜로 쌓여 가고 있습니다.
             </p>
