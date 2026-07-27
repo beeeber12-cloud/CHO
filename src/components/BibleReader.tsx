@@ -60,38 +60,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [checklistTab, setChecklistTab] = useState<'ALL' | 'OT' | 'NT' | 'IN_PROGRESS'>('ALL');
   const [checklistSearch, setChecklistSearch] = useState<string>('');
 
-  // 오늘의 추천 구절 State (내장 개역개정)
-  const [logosVerse, setLogosVerse] = useState<{
-    reference: string;
-    text: string;
-    textNiv?: string;
-    explanation: string;
-    meditationGuide: string;
-    source?: string;
-  } | null>(null);
-  const [logosLoading, setLogosLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    fetchLogosVerse();
-  }, []);
-
-  const fetchLogosVerse = async () => {
-    setLogosLoading(true);
-    try {
-      const res = await fetch("/api/bible/daily");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success || data.text) {
-          setLogosVerse(data);
-        }
-      }
-    } catch (e) {
-      console.error("Logos API fetch error:", e);
-    } finally {
-      setLogosLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (currentUser?.id) {
       fetchUserProgress(currentUser.id);
@@ -271,10 +239,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           <div className="relative z-10 space-y-3 sm:space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-white/10 pb-3 sm:pb-4">
               <div>
-                <span className="text-[10px] font-black tracking-widest uppercase bg-white/20 px-2.5 py-1 rounded-full text-white/90 whitespace-nowrap shrink-0 inline-block">
-                  PERSONAL BIBLE READING HUB
-                </span>
-                <h3 className="font-bold text-lg sm:text-2xl mt-1 flex items-center gap-2">
+                <h3 className="font-bold text-xl sm:text-3xl flex items-center gap-2">
                   <span>{currentUser.name}님의 개인 성경 통독방</span>
                 </h3>
               </div>
@@ -356,84 +321,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         </div>
       )}
-
-      {/* 오늘의 추천 구절 배너 (내장 개역개정) */}
-      <div className="bg-gradient-to-br from-[#2c3e2d] via-[#3a533c] to-[#4a6d4a] text-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm space-y-3 relative overflow-hidden border border-[#527852]">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-              개역개정
-            </span>
-            <h4 className="font-bold text-sm sm:text-base text-amber-200 flex items-center gap-1.5">
-              <Sparkles size={16} className="text-amber-300" />
-              <span>오늘의 추천 구절</span>
-            </h4>
-          </div>
-          <button
-            type="button"
-            onClick={fetchLogosVerse}
-            disabled={logosLoading}
-            className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border border-white/20 whitespace-nowrap shrink-0"
-          >
-            <RefreshCw size={13} className={logosLoading ? "animate-spin" : ""} />
-            <span>새 말씀 불러오기</span>
-          </button>
-        </div>
-
-        {logosLoading && !logosVerse && (
-          <div className="bg-black/20 p-4 rounded-xl text-center text-xs text-amber-100 font-medium animate-pulse">
-            오늘의 개역개정 말씀을 불러오고 있습니다...
-          </div>
-        )}
-
-        {logosVerse && (
-          <div className="bg-black/25 backdrop-blur border border-white/10 rounded-xl p-3.5 space-y-2.5">
-            <div className="flex justify-between items-center text-amber-300 font-bold text-xs sm:text-sm">
-              <span className="flex items-center gap-1">
-                <Quote size={14} className="text-amber-400" />
-                {logosVerse.reference}
-              </span>
-              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-md text-white font-semibold">
-                개역개정(KRV)
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm leading-relaxed text-white font-medium pl-1">
-              "{logosVerse.text}"
-            </p>
-            {logosVerse.textNiv && (
-              <p className="text-xs sm:text-sm leading-relaxed text-amber-100/80 font-medium italic pl-1">
-                "{logosVerse.textNiv}"
-              </p>
-            )}
-            {logosVerse.explanation && (
-              <p className="text-[11px] text-emerald-100/90 pt-2 border-t border-white/10 leading-relaxed">
-                💡 <strong>묵상 포인트:</strong> {logosVerse.explanation}
-              </p>
-            )}
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery(logosVerse.reference);
-                  handleSearchQuery(logosVerse.reference);
-                }}
-                className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1 border border-white/20"
-              >
-                <Search size={12} />
-                <span>장 전체 읽기</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectVerseForMeditation?.(logosVerse.reference, logosVerse.text)}
-                className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1 shadow-xs"
-              >
-                <Send size={12} />
-                <span>이 구절로 묵상 쓰기</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* 2. Full Bible Book & Chapter Quick Selector (성경 66권 탐색기) */}
       <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#ece8df] shadow-sm p-3.5 sm:p-5 space-y-3 sm:space-y-4">
