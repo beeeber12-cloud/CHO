@@ -3,6 +3,7 @@ import React from "react";
 interface FormattedBibleTextProps {
   text: string;
   className?: string;
+  highlightVerse?: number | null;
 }
 
 interface ParsedVerse {
@@ -13,6 +14,7 @@ interface ParsedVerse {
 export default function FormattedBibleText({
   text,
   className = "",
+  highlightVerse = null,
 }: FormattedBibleTextProps) {
   if (!text) return null;
 
@@ -60,7 +62,15 @@ export default function FormattedBibleText({
   return (
     <div className={`space-y-3 sm:space-y-4 ${className}`}>
       {parsedVerses.map((v, idx) => (
-        <div key={idx} className="group">
+        <div
+          key={idx}
+          data-verse={v.verseNum}
+          className={`group scroll-mt-4 transition-colors duration-500 ${
+            highlightVerse != null && v.verseNum != null && Number(v.verseNum) === highlightVerse
+              ? "bg-amber-100 border-l-4 border-amber-500 rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+              : ""
+          }`}
+        >
           <p
             className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#2c3e2d] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
             style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}

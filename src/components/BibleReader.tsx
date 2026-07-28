@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, BookOpen, Quote, Sparkles, Send, Loader, CheckCircle2, Bookmark, Target, Award, ListChecks, ChevronRight, Settings, X, BookMarked, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
@@ -52,13 +52,20 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [dailyTarget, setDailyTarget] = useState<number>(3);
   const [savingGoal, setSavingGoal] = useState<boolean>(false);
 
-  // 원터치 성경 네비게이터 (구약/신약 → 권 → 장 → 절)
+  // 원터치 성경 네비게이터 (구약/신약 탭 → 팝업에서 권 → 장 → 절)
+  const [showNavModal, setShowNavModal] = useState<boolean>(false);
   const [navTestament, setNavTestament] = useState<'OT' | 'NT'>('OT');
   const [navStep, setNavStep] = useState<'book' | 'chapter' | 'verse'>('book');
   const [navBook, setNavBook] = useState<BibleBookInfo | null>(null);
   const [navChapter, setNavChapter] = useState<number | null>(null);
   const [navVerseCount, setNavVerseCount] = useState<number | null>(null);
   const [navVerseLoading, setNavVerseLoading] = useState<boolean>(false);
+
+  // 본문 영역 스크롤 / 선택한 절 강조
+  const readerRef = useRef<HTMLDivElement>(null);
+  const verseBoxRef = useRef<HTMLDivElement>(null);
+  const [highlightVerse, setHighlightVerse] = useState<number | null>(null);
+  const [pendingScroll, setPendingScroll] = useState<boolean>(false);
 
   // Checklist Modal Filter States
   const [checklistTab, setChecklistTab] = useState<'ALL' | 'OT' | 'NT' | 'IN_PROGRESS'>('ALL');
@@ -79,6 +86,26 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       handleSearchQuery("요한복음 1장");
     }
   }, [initialQuery]);
+
+  // 본문이 로드되면 본문 영역으로 화면을 내리고, 선택한 절이 있으면 그 절 위치까지 맞춰준다.
+  useEffect(() => {
+    if (!pendingScroll || loading || !result) return;
+
+    const timer = setTimeout(() => {
+      readerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      if (highlightVerse != null) {
+        const box = verseBoxRef.current;
+        const target = box?.querySelector<HTMLElement>(`[data-verse="${highlightVerse}"]`);
+        if (box && target) {
+          box.scrollTop += target.getBoundingClientRect().top - box.getBoundingClientRect().top - 16;
+        }
+      }
+      setPendingScroll(false);
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [pendingScroll, loading, result, highlightVerse]);
 
   const fetchUserProgress = async (userId: string) => {
     setProgressLoading(true);
@@ -160,6 +187,16 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
+  // 구약/신약 탭을 누르면 권·장·절 선택 팝업을 연다
+  const openNavModal = (testament: 'OT' | 'NT') => {
+    setNavTestament(testament);
+    setNavStep('book');
+    setNavBook(null);
+    setNavChapter(null);
+    setNavVerseCount(null);
+    setShowNavModal(true);
+  };
+
   // 네비게이터: 권 선택 → 장 선택 단계로
   const handleNavSelectBook = (book: BibleBookInfo) => {
     setNavBook(book);
@@ -167,20 +204,26 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setNavStep('chapter');
   };
 
-  // 네비게이터: 장 선택 → 절 선택 단계로 (동시에 장 전체 본문 표시)
+  // 네비게이터: 장 선택 → 절 선택 단계로 (동시에 장 전체 본문을 미리 불러둠)
   const handleNavSelectChapter = (chapter: number) => {
     if (!navBook) return;
     setNavChapter(chapter);
     setNavStep('verse');
     fetchVerseCount(navBook, chapter);
-    // 장 전체를 바로 본문 영역에 표시
+    setHighlightVerse(null);
     handleSelectBookChapter(navBook, chapter);
   };
 
-  // 네비게이터: 절 선택 → 해당 절만 본문 영역에 표시
+  // 네비게이터: 절 선택 → 팝업을 닫고, 장 전체 본문에서 그 절 위치로 이동
   const handleNavSelectVerse = (verse: number) => {
     if (!navBook || !navChapter) return;
-    handleSelectBookChapter(navBook, navChapter, String(verse));
+    setHighlightVerse(verse);
+    setShowNavModal(false);
+    setPendingScroll(true);
+    // 장 전체가 이미 로드된 경우 재조회 없이 스크롤만, 아니면 장 전체를 불러온다
+    if (selectedBook.name !== navBook.name || selectedChapter !== navChapter) {
+      handleSelectBookChapter(navBook, navChapter);
+    }
   };
 
   const handleSelectBookChapter = (book: BibleBookInfo, chapter: number, verseNum: string = "") => {
@@ -358,6 +401,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   type="button"
                   onClick={() => {
                     const book = BIBLE_BOOKS.find(b => b.name === (userProgress?.lastReadBook || "창세기")) || BIBLE_BOOKS[0];
+                    setHighlightVerse(null);
+                    setPendingScroll(true);
                     handleSelectBookChapter(book, userProgress?.lastReadChapter || 1);
                   }}
                   className="mt-2 w-full py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
@@ -383,145 +428,25 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         </div>
 
-        {/* 구약 / 신약 대분류 탭 */}
-        <div className="flex bg-[#f4f2eb] p-1 rounded-xl text-sm font-bold text-[#4a463f]">
+        {/* 구약 / 신약 탭 — 누르면 권·장·절 선택 팝업이 열린다 */}
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
-            onClick={() => {
-              setNavTestament('OT');
-              setNavStep('book');
-              setNavBook(null);
-              setNavChapter(null);
-            }}
-            className={`flex-1 px-3 py-2 rounded-lg transition cursor-pointer ${
-              navTestament === 'OT' ? "bg-[#3a6ea5] text-white shadow-sm" : "hover:text-[#2c3e2d]"
-            }`}
+            onClick={() => openNavModal('OT')}
+            className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl bg-[#3a6ea5] hover:bg-[#325f8e] text-white font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
           >
-            구약 (39권)
+            <BookOpen size={17} />
+            <span>구약 (39권)</span>
           </button>
           <button
             type="button"
-            onClick={() => {
-              setNavTestament('NT');
-              setNavStep('book');
-              setNavBook(null);
-              setNavChapter(null);
-            }}
-            className={`flex-1 px-3 py-2 rounded-lg transition cursor-pointer ${
-              navTestament === 'NT' ? "bg-[#3a6ea5] text-white shadow-sm" : "hover:text-[#2c3e2d]"
-            }`}
+            onClick={() => openNavModal('NT')}
+            className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-2xl bg-[#4a6d4a] hover:bg-[#3d5a3d] text-white font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
           >
-            신약 (27권)
+            <BookOpen size={17} />
+            <span>신약 (27권)</span>
           </button>
         </div>
-
-        {/* 이동 경로(breadcrumb) + 뒤로가기 */}
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#2c3e2d] flex-wrap">
-          <button
-            type="button"
-            onClick={() => { setNavStep('book'); setNavBook(null); setNavChapter(null); }}
-            className={`px-2 py-1 rounded-lg transition cursor-pointer ${navStep === 'book' ? "bg-[#e0e7df]" : "hover:bg-[#f4f2eb]"}`}
-          >
-            성경
-          </button>
-          {navBook && (
-            <>
-              <ChevronRight size={14} className="text-[#b3ab99]" />
-              <button
-                type="button"
-                onClick={() => { setNavStep('chapter'); setNavChapter(null); }}
-                className={`px-2 py-1 rounded-lg transition cursor-pointer ${navStep === 'chapter' ? "bg-[#e0e7df]" : "hover:bg-[#f4f2eb]"}`}
-              >
-                {navBook.name}
-              </button>
-            </>
-          )}
-          {navBook && navChapter && (
-            <>
-              <ChevronRight size={14} className="text-[#b3ab99]" />
-              <span className="px-2 py-1 rounded-lg bg-[#e0e7df]">{navChapter}장</span>
-            </>
-          )}
-        </div>
-
-        {/* STEP 1: 권(책) 선택 그리드 */}
-        {navStep === 'book' && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {BIBLE_BOOKS.filter(b => b.testament === navTestament).map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => handleNavSelectBook(b)}
-                className="py-3 px-1 bg-[#fdfbf7] border border-[#ece8df] rounded-xl text-slate-800 font-bold text-sm hover:bg-[#e0e7df] hover:border-[#3a6ea5] transition cursor-pointer text-center"
-              >
-                {b.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* STEP 2: 장 선택 그리드 */}
-        {navStep === 'chapter' && navBook && (
-          <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
-            {Array.from({ length: navBook.chapters }, (_, i) => i + 1).map((ch) => {
-              const key = `${navBook.name} ${ch}장`;
-              const isDone = userProgress?.completedChapters?.includes(key);
-              return (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => handleNavSelectChapter(ch)}
-                  className={`py-2.5 rounded-xl font-bold text-sm border transition cursor-pointer relative ${
-                    isDone
-                      ? "bg-[#4a6d4a] text-white border-[#4a6d4a]"
-                      : "bg-[#fdfbf7] text-slate-800 border-[#ece8df] hover:bg-[#e0e7df] hover:border-[#3a6ea5]"
-                  }`}
-                >
-                  {ch}
-                  {isDone && <span className="absolute top-0.5 right-1 text-[9px]">✓</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* STEP 3: 절 선택 그리드 (장 전체는 이미 아래 본문에 표시됨) */}
-        {navStep === 'verse' && navBook && navChapter && (
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-[#8a8171]">
-                절을 누르면 해당 구절만 펼쳐집니다. (전체 장은 아래 본문 참고)
-              </p>
-              <button
-                type="button"
-                onClick={() => handleSelectBookChapter(navBook, navChapter)}
-                className="text-xs font-bold text-[#3a6ea5] hover:underline cursor-pointer whitespace-nowrap"
-              >
-                장 전체 보기
-              </button>
-            </div>
-            {navVerseLoading ? (
-              <div className="py-6 text-center text-xs text-[#8a8171] flex items-center justify-center gap-2">
-                <Loader className="animate-spin" size={16} /> 절 정보를 불러오는 중...
-              </div>
-            ) : navVerseCount ? (
-              <div className="grid grid-cols-6 sm:grid-cols-10 gap-1.5">
-                {Array.from({ length: navVerseCount }, (_, i) => i + 1).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => handleNavSelectVerse(v)}
-                    className="py-2 rounded-lg font-bold text-xs bg-[#fdfbf7] text-slate-800 border border-[#ece8df] hover:bg-[#3a6ea5] hover:text-white hover:border-[#3a6ea5] transition cursor-pointer"
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="py-4 text-center text-xs text-[#8a8171]">절 정보를 표시할 수 없습니다. 위 "장 전체 보기"를 이용해 주세요.</p>
-            )}
-          </div>
-        )}
 
         {/* Custom Search Input */}
         <div className="pt-3 border-t border-[#ece8df] space-y-1.5">
@@ -531,6 +456,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              setHighlightVerse(null);
               handleSearchQuery(query);
             }}
             className="flex gap-2"
@@ -563,6 +489,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       </div>
 
       {/* 3. Main Bible Chapter Reader Display */}
+      <div ref={readerRef} className="scroll-mt-4" />
       <AnimatePresence mode="wait">
         {loading && (
           <div className="bg-white rounded-3xl border border-[#ece8df] p-12 text-center shadow-sm">
@@ -645,16 +572,24 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               </div>
 
               {/* Scripture Verse Text Container - Compact padding for maximum mobile reading width */}
-              <div className="serif-font bg-[#fdfbf7] p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-[#ece8df] shadow-inner max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+              <div
+                ref={verseBoxRef}
+                className="serif-font bg-[#fdfbf7] p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-[#ece8df] shadow-inner max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
+              >
                 {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
                   <>
-                    <FormattedBibleText text={result.text} />
+                    <FormattedBibleText text={result.text} highlightVerse={highlightVerse} />
                     <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
                       이 본문은 NIV(영어) 데이터가 아직 없어 개역개정으로 표시됩니다.
                     </p>
                   </>
                 ) : (
-                  <DualBibleText krvText={result.text} nivText={result.textNiv} mode={bibleVersion} />
+                  <DualBibleText
+                    krvText={result.text}
+                    nivText={result.textNiv}
+                    mode={bibleVersion}
+                    highlightVerse={highlightVerse}
+                  />
                 )}
               </div>
 
@@ -665,7 +600,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {selectedChapter > 1 && (
                     <button
                       type="button"
-                      onClick={() => handleSelectBookChapter(selectedBook, selectedChapter - 1)}
+                      onClick={() => {
+                        setHighlightVerse(null);
+                        handleSelectBookChapter(selectedBook, selectedChapter - 1);
+                      }}
                       className="px-3 py-1.5 bg-[#f4f2eb] hover:bg-[#e0dcd0] text-[#2c3e2d] font-bold text-xs rounded-xl transition cursor-pointer whitespace-nowrap"
                     >
                       ← 이전 장 ({selectedChapter - 1}장)
@@ -674,7 +612,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {selectedChapter < selectedBook.chapters && (
                     <button
                       type="button"
-                      onClick={() => handleSelectBookChapter(selectedBook, selectedChapter + 1)}
+                      onClick={() => {
+                        setHighlightVerse(null);
+                        handleSelectBookChapter(selectedBook, selectedChapter + 1);
+                      }}
                       className="px-3 py-1.5 bg-[#2c3e2d] hover:bg-[#1f2d20] text-white font-bold text-xs rounded-xl transition cursor-pointer whitespace-nowrap"
                     >
                       다음 장 ({selectedChapter + 1}장) →
@@ -738,6 +679,156 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               </div>
             )}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 성경 선택 팝업 (권 → 장 → 절) */}
+      <AnimatePresence>
+        {showNavModal && (
+          <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setShowNavModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full sm:max-w-2xl max-h-[88vh] rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 flex flex-col border border-[#ece8df] shadow-2xl"
+            >
+              <div className="flex justify-between items-center border-b border-[#ece8df] pb-3">
+                <h4 className="font-bold text-[#2c3e2d] text-base sm:text-lg flex items-center gap-2">
+                  <BookOpen size={19} className="text-[#4a6d4a]" />
+                  {navTestament === 'OT' ? '구약' : '신약'} 성경 펼치기
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowNavModal(false)}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* 이동 경로(breadcrumb) */}
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#2c3e2d] flex-wrap py-3">
+                <button
+                  type="button"
+                  onClick={() => { setNavStep('book'); setNavBook(null); setNavChapter(null); }}
+                  className={`px-2 py-1 rounded-lg transition cursor-pointer ${navStep === 'book' ? "bg-[#e0e7df]" : "hover:bg-[#f4f2eb]"}`}
+                >
+                  {navTestament === 'OT' ? '구약' : '신약'}
+                </button>
+                {navBook && (
+                  <>
+                    <ChevronRight size={14} className="text-[#b3ab99]" />
+                    <button
+                      type="button"
+                      onClick={() => { setNavStep('chapter'); setNavChapter(null); }}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer ${navStep === 'chapter' ? "bg-[#e0e7df]" : "hover:bg-[#f4f2eb]"}`}
+                    >
+                      {navBook.name}
+                    </button>
+                  </>
+                )}
+                {navBook && navChapter && (
+                  <>
+                    <ChevronRight size={14} className="text-[#b3ab99]" />
+                    <span className="px-2 py-1 rounded-lg bg-[#e0e7df]">{navChapter}장</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+                {/* STEP 1: 권(책) 선택 */}
+                {navStep === 'book' && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {BIBLE_BOOKS.filter(b => b.testament === navTestament).map((b) => (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => handleNavSelectBook(b)}
+                        className="py-3 px-1 bg-[#fdfbf7] border border-[#ece8df] rounded-xl text-slate-800 font-bold text-sm hover:bg-[#e0e7df] hover:border-[#3a6ea5] transition cursor-pointer text-center"
+                      >
+                        {b.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* STEP 2: 장 선택 */}
+                {navStep === 'chapter' && navBook && (
+                  <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
+                    {Array.from({ length: navBook.chapters }, (_, i) => i + 1).map((ch) => {
+                      const key = `${navBook.name} ${ch}장`;
+                      const isDone = userProgress?.completedChapters?.includes(key);
+                      return (
+                        <button
+                          key={ch}
+                          type="button"
+                          onClick={() => handleNavSelectChapter(ch)}
+                          className={`py-2.5 rounded-xl font-bold text-sm border transition cursor-pointer relative ${
+                            isDone
+                              ? "bg-[#4a6d4a] text-white border-[#4a6d4a]"
+                              : "bg-[#fdfbf7] text-slate-800 border-[#ece8df] hover:bg-[#e0e7df] hover:border-[#3a6ea5]"
+                          }`}
+                        >
+                          {ch}
+                          {isDone && <span className="absolute top-0.5 right-1 text-[9px]">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* STEP 3: 절 선택 */}
+                {navStep === 'verse' && navBook && navChapter && (
+                  <div className="space-y-2.5">
+                    <p className="text-xs font-bold text-[#8a8171]">
+                      절을 누르면 팝업이 닫히고 본문에서 그 절로 이동합니다.
+                    </p>
+                    {navVerseLoading ? (
+                      <div className="py-6 text-center text-xs text-[#8a8171] flex items-center justify-center gap-2">
+                        <Loader className="animate-spin" size={16} /> 절 정보를 불러오는 중...
+                      </div>
+                    ) : navVerseCount ? (
+                      <div className="grid grid-cols-6 sm:grid-cols-10 gap-1.5">
+                        {Array.from({ length: navVerseCount }, (_, i) => i + 1).map((v) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => handleNavSelectVerse(v)}
+                            className="py-2 rounded-lg font-bold text-xs bg-[#fdfbf7] text-slate-800 border border-[#ece8df] hover:bg-[#3a6ea5] hover:text-white hover:border-[#3a6ea5] transition cursor-pointer"
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="py-4 text-center text-xs text-[#8a8171]">절 정보를 표시할 수 없습니다.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 절을 고르지 않고 장 전체만 보고 싶을 때 */}
+              {navStep === 'verse' && navBook && navChapter && (
+                <div className="pt-3 border-t border-[#ece8df] flex justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHighlightVerse(null);
+                      setShowNavModal(false);
+                      setPendingScroll(true);
+                    }}
+                    className="px-5 py-2.5 bg-[#2c3e2d] text-white text-xs font-bold rounded-xl hover:bg-[#1f2d20] transition cursor-pointer"
+                  >
+                    {navBook.name} {navChapter}장 처음부터 읽기
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

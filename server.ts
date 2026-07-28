@@ -356,6 +356,51 @@ if (process.env.GEMINI_API_KEY) {
   console.warn("GEMINI_API_KEY is not defined. AI Summary features will run in offline simulation mode.");
 }
 
+// 성경 Q&A 답변 생성용 프롬프트
+function buildQnaPrompt(question: string): string {
+  return `당신은 세계 최고 수준의 성경 학자이자 은혜롭고 신학적으로 깊은 목회적 AI 상담자입니다.
+질문자가 성경의 역사, 구절의 시대적 배경, 저작 목적, 주요 인물, 또는 신학적 개념에 대해 물어보았습니다.
+다음 질문에 대해 정교하고 학술적이며 은혜롭고 깊이 있는 해설을 한국어 마크다운(Markdown) 형식으로 작성해 주세요:
+
+[답변 작성 지침]
+1. 📌 **핵심 결론 요약**: 질문에 대해 한눈에 파악할 수 있는 명확한 답변 요약
+2. 📜 **역사적·지리적·시대적 배경**: 성경 본문 집필 당시의 연대, 제국 및 고대 근동/1세기 그레코-로만 문맥, 저자 및 수신자의 구체적 정황
+3. 📖 **성경적·신학적 해설**: 관련 구절과 구속사적 하나님 나라의 맥락, 원어(히브리어/헬라어)적 입체적 의미
+4. 💡 **오늘날 삶에 주는 영적 통찰**: 현대 성도의 삶과 기도, 묵상에 적용할 깊은 은혜의 메시지
+
+질문: ${question}`;
+}
+
+// 앞 모델이 실패하면 다음 모델로 순차 폴백. 키가 없으면 원인을 명확히 알린다.
+const QNA_MODEL_CHAIN = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash"];
+
+async function generateQnaAnswer(question: string): Promise<string> {
+  if (!process.env.GEMINI_API_KEY || !ai) {
+    throw new Error(
+      "서버에 GEMINI_API_KEY 환경변수가 설정되어 있지 않습니다. Cloud Run 서비스의 환경변수를 확인해 주세요."
+    );
+  }
+
+  const prompt = buildQnaPrompt(question);
+  let lastError: any = null;
+
+  for (const model of QNA_MODEL_CHAIN) {
+    try {
+      const result = await ai.models.generateContent({ model, contents: prompt });
+      if (result.text && result.text.trim()) return result.text;
+      lastError = new Error(`${model} 이(가) 빈 응답을 반환했습니다.`);
+      console.warn(`[QnA] ${model} 빈 응답`);
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[QnA] ${model} 호출 실패:`, err?.message || err);
+    }
+  }
+
+  throw new Error(
+    `사용 가능한 Gemini 모델을 찾지 못했습니다 (${QNA_MODEL_CHAIN.join(", ")}). 마지막 오류: ${lastError?.message || lastError}`
+  );
+}
+
 async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null> {
   if (!db.biblePlan || !db.biblePlan.active) return null;
   
@@ -1511,33 +1556,7 @@ JSON format:
 
     let answerText = "";
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `당신은 세계 최고 수준의 성경 학자이자 은혜롭고 신학적으로 깊은 목회적 AI 상담자입니다.
-질문자가 성경의 역사, 구절의 시대적 배경, 저작 목적, 주요 인물, 또는 신학적 개념에 대해 물어보았습니다.
-다음 질문에 대해 정교하고 학술적이며 은혜롭고 깊이 있는 해설을 한국어 마크다운(Markdown) 형식으로 작성해 주세요:
-
-[답변 작성 지침]
-1. 📌 **핵심 결론 요약**: 질문에 대해 한눈에 파악할 수 있는 명확한 답변 요약
-2. 📜 **역사적·지리적·시대적 배경**: 성경 본문 집필 당시의 연대, 제국 및 고대 근동/1세기 그레코-로만 문맥, 저자 및 수신자의 구체적 정황
-3. 📖 **성경적·신학적 해설**: 관련 구절과 구속사적 하나님 나라의 맥락, 원어(히브리어/헬라어)적 입체적 의미
-4. 💡 **오늘날 삶에 주는 영적 통찰**: 현대 성도의 삶과 기도, 묵상에 적용할 깊은 은혜의 메시지
-
-질문: ${question.trim()}`;
-
-      try {
-        const result = await ai.models.generateContent({
-          model: "gemini-3.6-flash",
-          contents: prompt
-        });
-        answerText = result.text || "성경 질문에 대한 AI 답변 생성이 완료되었습니다.";
-      } catch (e1) {
-        console.warn("gemini-3.6-flash failed, trying gemini-flash-latest:", e1);
-        const fallbackResult = await ai.models.generateContent({
-          model: "gemini-flash-latest",
-          contents: prompt
-        });
-        answerText = fallbackResult.text || "성경 질문에 대한 AI 답변 생성이 완료되었습니다.";
-      }
+      answerText = await generateQnaAnswer(question.trim());
     } catch (err: any) {
       console.error("Gemini Bible QnA error:", err);
       return res.status(500).json({ error: "AI 답변 생성 중 오류가 발생했습니다: " + (err.message || err) });
@@ -1565,24 +1584,7 @@ JSON format:
     if (!qa) return res.status(404).json({ error: "질문을 찾을 수 없습니다." });
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `당신은 세계 최고 수준의 성경 학자이자 은혜롭고 신학적으로 깊은 목회적 AI 상담자입니다.
-질문자가 성경의 역사, 구절의 시대적 배경, 저작 목적, 주요 인물, 또는 신학적 개념에 대해 물어보았습니다.
-다음 질문에 대해 정교하고 학술적이며 은혜롭고 깊이 있는 해설을 한국어 마크다운(Markdown) 형식으로 작성해 주세요:
-
-[답변 작성 지침]
-1. 📌 **핵심 결론 요약**: 질문에 대해 한눈에 파악할 수 있는 명확한 답변 요약
-2. 📜 **역사적·지리적·시대적 배경**: 성경 본문 집필 당시의 연대, 제국 및 고대 근동/1세기 그레코-로만 문맥, 저자 및 수신자의 구체적 정황
-3. 📖 **성경적·신학적 해설**: 관련 구절과 구속사적 하나님 나라의 맥락, 원어(히브리어/헬라어)적 입체적 의미
-4. 💡 **오늘날 삶에 주는 영적 통찰**: 현대 성도의 삶과 기도, 묵상에 적용할 깊은 은혜의 메시지
-
-질문: ${qa.question}`;
-
-      const result = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt
-      });
-      qa.answer = result.text || qa.answer;
+      qa.answer = await generateQnaAnswer(qa.question);
       saveDb(db);
       res.json(qa);
     } catch (err: any) {

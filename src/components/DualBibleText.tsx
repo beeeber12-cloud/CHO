@@ -5,6 +5,7 @@ interface DualBibleTextProps {
   nivText?: string;
   mode: "krv" | "niv" | "both";
   className?: string;
+  highlightVerse?: number | null;
 }
 
 interface Verse {
@@ -35,7 +36,7 @@ function parseVerses(raw: string): Verse[] {
   });
 }
 
-export default function DualBibleText({ krvText, nivText = "", mode, className = "" }: DualBibleTextProps) {
+export default function DualBibleText({ krvText, nivText = "", mode, className = "", highlightVerse = null }: DualBibleTextProps) {
   const krvVerses = parseVerses(krvText);
   const nivVerses = parseVerses(nivText);
 
@@ -55,8 +56,17 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
     <div className={`space-y-3 sm:space-y-4 ${className}`}>
       {baseVerses.map((v, idx) => {
         const niv = v.num ? nivMap.get(v.num) : nivVerses[idx]?.body;
+        const isHighlighted = highlightVerse != null && v.num != null && Number(v.num) === highlightVerse;
         return (
-          <div key={idx} className="group">
+          <div
+            key={idx}
+            data-verse={v.num}
+            className={`group scroll-mt-4 transition-colors duration-500 ${
+              isHighlighted
+                ? "bg-amber-100 border-l-4 border-amber-500 rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+                : ""
+            }`}
+          >
             {/* 개역개정 (krv/both 모드) */}
             {!nivOnly && (
               <p
