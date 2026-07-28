@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { Search, BookOpen, Quote, Sparkles, Send, Loader, CheckCircle2, Bookmark, Target, Award, ListChecks, ChevronRight, Settings, X, BookMarked, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
@@ -27,8 +27,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [selectedBook, setSelectedBook] = useState<BibleBookInfo>(BIBLE_BOOKS.find(b => b.name === "요한복음") || BIBLE_BOOKS[0]);
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
 
-  // Search & Result states
-  const [query, setQuery] = useState<string>(initialQuery || "요한복음 1장");
+  // Search & Result states — 검색창은 사용자가 직접 입력할 때만 채워진다(평소엔 안내 문구 노출)
+  const [query, setQuery] = useState<string>(initialQuery || "");
   const [result, setResult] = useState<BibleResult | null>(null);
   const [bibleVersion, setBibleVersion] = useState<BibleVersion>(() => {
     if (typeof window !== "undefined") {
@@ -123,9 +123,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           if (matchedBook) {
             setSelectedBook(matchedBook);
             setSelectedChapter(data.lastReadChapter);
-            const targetQuery = `${data.lastReadBook} ${data.lastReadChapter}장`;
-            setQuery(targetQuery);
-            handleSearchQuery(targetQuery);
+            handleSearchQuery(`${data.lastReadBook} ${data.lastReadChapter}장`);
           }
         }
       }
@@ -230,7 +228,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setSelectedBook(book);
     setSelectedChapter(chapter);
     const searchTarget = verseNum ? `${book.name} ${chapter}:${verseNum}` : `${book.name} ${chapter}장`;
-    setQuery(searchTarget);
     handleSearchQuery(searchTarget);
 
     // Save as last read location for current user
@@ -654,18 +651,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               </div>
             </div>
 
-            {/* Commentary / Explanation Box */}
-            {result.explanation && (
-              <div className="bg-[#f4f2eb] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-[#ece8df] text-[#4a463f]">
-                <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8a8171] whitespace-nowrap">말씀 주석 및 묵상 가이드</span>
-                </div>
-                <p className="text-xs text-[#4a463f] leading-relaxed font-medium">
-                  {result.explanation}
-                </p>
-              </div>
-            )}
-
             {/* Practical Meditation Guide */}
             {result.meditationGuide && (
               <div className="bg-[#e0e7df]/60 rounded-3xl p-5 border border-[#ece8df]">
@@ -686,7 +671,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       <AnimatePresence>
         {showNavModal && (
           <div
-            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
             onClick={() => setShowNavModal(false)}
           >
             <motion.div
@@ -739,7 +724,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 )}
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="flex-1 overflow-y-auto pr-1 pb-4 scrollbar-thin scrollbar-thumb-slate-200">
                 {/* STEP 1: 권(책) 선택 */}
                 {navStep === 'book' && (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -835,7 +820,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       {/* Goal Setup Modal */}
       <AnimatePresence>
         {showGoalModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -961,7 +946,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       {/* Full 66-Book Checklist Modal */}
       <AnimatePresence>
         {showChecklistModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
