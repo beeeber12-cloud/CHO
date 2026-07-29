@@ -19,12 +19,12 @@ export default function FontSizeControl() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#EDEEF0] hover:bg-[#DCDEE1] border border-[#DCDEE1] rounded-2xl text-xs font-bold text-[#2C2F36] transition cursor-pointer shadow-xs whitespace-nowrap"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#E8EFEE] hover:bg-[#CBD9D7] border border-[#CBD9D7] rounded-2xl text-xs font-bold text-[#004643] transition cursor-pointer shadow-xs whitespace-nowrap"
         title="글씨 크기 조절"
       >
-        <Type size={14} className="text-[#4B4E55]" />
+        <Type size={14} className="text-[#4A5654]" />
         <span>글씨크기</span>
-        <span className="text-2xs bg-[#2C2F36] text-white px-1.5 py-0.5 rounded-md font-semibold">
+        <span className="text-2xs bg-[#004643] text-white px-1.5 py-0.5 rounded-md font-semibold">
           {fontScale === "small"
             ? "작게"
             : fontScale === "normal"
@@ -46,13 +46,13 @@ export default function FontSizeControl() {
               initial={{ opacity: 0, scale: 0.95, y: 5 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 5 }}
-              className="fixed top-16 left-1/2 -translate-x-1/2 sm:translate-x-0 w-[90vw] max-w-xs sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-64 bg-white border border-[#E3E4E7] rounded-2xl shadow-xl z-50 p-3 space-y-1 text-[#1A1C21]"
+              className="fixed top-16 left-1/2 -translate-x-1/2 sm:translate-x-0 w-[90vw] max-w-xs sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-64 bg-white border border-[#E4E8E7] rounded-2xl shadow-xl z-50 p-3 space-y-1 text-[#1F2A29]"
             >
-              <div className="flex justify-between items-center px-2 py-1 border-b border-[#E3E4E7] mb-1">
-                <span className="text-xs font-bold text-[#2C2F36] flex items-center gap-1">
-                  <Type size={14} className="text-[#4B4E55]" /> 화면 글씨 크기 설정
+              <div className="flex justify-between items-center px-2 py-1 border-b border-[#E4E8E7] mb-1">
+                <span className="text-xs font-bold text-[#004643] flex items-center gap-1">
+                  <Type size={14} className="text-[#4A5654]" /> 화면 글씨 크기 설정
                 </span>
-                <span className="text-2xs text-[#85888F]">선택 시 즉시 적용</span>
+                <span className="text-2xs text-[#7F8C8A]">선택 시 즉시 적용</span>
               </div>
 
               {scales.map((s) => (
@@ -65,15 +65,15 @@ export default function FontSizeControl() {
                   }}
                   className={`w-full flex items-center justify-between p-2 rounded-2xl text-left transition cursor-pointer ${
                     fontScale === s.key
-                      ? "bg-[#EDEEF0] text-[#2C2F36] font-bold"
-                      : "hover:bg-[#F4F5F7] text-[#4B4E55]"
+                      ? "bg-[#E8EFEE] text-[#004643] font-bold"
+                      : "hover:bg-[#F2F4F3] text-[#4A5654]"
                   }`}
                 >
                   <div>
                     <div className="text-xs font-bold">{s.label}</div>
-                    <div className="text-2xs text-[#85888F]">{s.desc}</div>
+                    <div className="text-2xs text-[#7F8C8A]">{s.desc}</div>
                   </div>
-                  {fontScale === s.key && <Check size={16} className="text-[#2C2F36]" />}
+                  {fontScale === s.key && <Check size={16} className="text-[#004643]" />}
                 </button>
               ))}
             </motion.div>

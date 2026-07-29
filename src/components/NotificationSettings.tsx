@@ -22,14 +22,14 @@ function FontSizeSettingCard() {
   ];
 
   return (
-    <div className="border-t border-[#E3E4E7] pt-6 space-y-4">
+    <div className="border-t border-[#E4E8E7] pt-6 space-y-4">
       <div className="flex items-center gap-2">
-        <div className="p-2 bg-[#EDEEF0] text-[#2C2F36] rounded-2xl">
+        <div className="p-2 bg-[#E8EFEE] text-[#004643] rounded-2xl">
           <ZoomIn size={18} />
         </div>
         <div>
-          <h3 className="font-bold text-[#2C2F36] text-base">어르신 화면 글씨 크기 설정</h3>
-          <p className="text-2xs text-[#85888F]">성경 말씀과 묵상 글을 시원하고 큼직하게 읽으실 수 있습니다.</p>
+          <h3 className="font-bold text-[#004643] text-base">어르신 화면 글씨 크기 설정</h3>
+          <p className="text-2xs text-[#7F8C8A]">성경 말씀과 묵상 글을 시원하고 큼직하게 읽으실 수 있습니다.</p>
         </div>
       </div>
 
@@ -41,8 +41,8 @@ function FontSizeSettingCard() {
             onClick={() => setFontScale(s.key)}
             className={`flex items-center justify-between p-3.5 rounded-2xl border transition text-left cursor-pointer ${
               fontScale === s.key
-                ? "bg-[#2C2F36] text-white border-[#2C2F36] shadow-sm"
-                : "bg-[#EFF1F3] text-[#4B4E55] border-[#E3E4E7] hover:bg-[#F4F5F7]"
+                ? "bg-[#004643] text-white border-[#004643] shadow-sm"
+                : "bg-[#FAFAFA] text-[#4A5654] border-[#E4E8E7] hover:bg-[#F2F4F3]"
             }`}
           >
             <div>
@@ -50,12 +50,12 @@ function FontSizeSettingCard() {
                 <Type size={14} />
                 {s.label}
               </div>
-              <div className={`text-2xs mt-0.5 ${fontScale === s.key ? "text-[#EDEEF0]" : "text-[#85888F]"}`}>
+              <div className={`text-2xs mt-0.5 ${fontScale === s.key ? "text-[#E8EFEE]" : "text-[#7F8C8A]"}`}>
                 {s.desc}
               </div>
             </div>
             {fontScale === s.key && (
-              <span className="text-2xs bg-[#EDEEF0] text-[#2C2F36] px-2 py-0.5 rounded-full font-black">
+              <span className="text-2xs bg-[#E8EFEE] text-[#004643] px-2 py-0.5 rounded-full font-black">
                 적용중
               </span>
             )}
@@ -312,33 +312,33 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
   };
 
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E3E4E7] shadow-sm p-3.5 sm:p-6 space-y-5">
-      <div className="flex items-center gap-2 border-b border-[#E3E4E7] pb-3">
-        <div className="p-1.5 sm:p-2 bg-[#EDEEF0] text-[#2C2F36] rounded-2xl shrink-0">
+    <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E4E8E7] shadow-sm p-3.5 sm:p-6 space-y-5">
+      <div className="flex items-center gap-2 border-b border-[#E4E8E7] pb-3">
+        <div className="p-1.5 sm:p-2 bg-[#E8EFEE] text-[#004643] rounded-2xl shrink-0">
           <Bell size={18} />
         </div>
         <div>
-          <h3 className="font-bold text-[#2C2F36] text-base sm:text-lg whitespace-nowrap">아침 묵상 알림 및 설정</h3>
-          <p className="text-2xs sm:text-xs text-[#85888F]">매일 아침 약속된 시간에 묵상을 독려하는 알림 및 개인 설정을 관리합니다</p>
+          <h3 className="font-bold text-[#004643] text-base sm:text-lg whitespace-nowrap">아침 묵상 알림 및 설정</h3>
+          <p className="text-2xs sm:text-xs text-[#7F8C8A]">매일 아침 약속된 시간에 묵상을 독려하는 알림 및 개인 설정을 관리합니다</p>
         </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-5">
         {/* Enabled Status Toggle */}
-        <div className="flex items-center justify-between p-3.5 bg-[#F4F5F7] rounded-2xl border border-[#E3E4E7]">
+        <div className="flex items-center justify-between p-3.5 bg-[#F2F4F3] rounded-2xl border border-[#E4E8E7]">
           <div className="flex items-center gap-2.5">
             {enabled ? (
-              <div className="p-1.5 bg-[#EDEEF0] text-[#2C2F36] rounded-xl">
+              <div className="p-1.5 bg-[#E8EFEE] text-[#004643] rounded-xl">
                 <Bell size={18} />
               </div>
             ) : (
-              <div className="p-1.5 bg-[#FFE3E3] text-[#C40000] rounded-xl">
+              <div className="p-1.5 bg-[#F8E3E3] text-[#A32020] rounded-xl">
                 <BellOff size={18} />
               </div>
             )}
             <div>
-              <span className="text-xs font-bold text-[#1A1C21] block">알림 기능 활성화</span>
-              <p className="text-2xs text-[#85888F]">설정한 시간에 알람 독려를 활성화합니다</p>
+              <span className="text-xs font-bold text-[#1F2A29] block">알림 기능 활성화</span>
+              <p className="text-2xs text-[#7F8C8A]">설정한 시간에 알람 독려를 활성화합니다</p>
             </div>
           </div>
 
@@ -349,28 +349,28 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
               onChange={() => setEnabled(!enabled)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-[#D5D7DB] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#C3C5CA] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B4E55]"></div>
+            <div className="w-11 h-6 bg-[#D3DAD9] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#B9C4C2] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4A5654]"></div>
           </label>
         </div>
 
         {/* Time selection */}
         <div>
-          <label className="block text-xs font-semibold text-[#85888F] mb-1.5 flex items-center gap-1">
-            <Clock size={14} className="text-[#4B4E55]" />
+          <label className="block text-xs font-semibold text-[#7F8C8A] mb-1.5 flex items-center gap-1">
+            <Clock size={14} className="text-[#4A5654]" />
             독려 알림 희망 시간
           </label>
           <input
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="px-3.5 py-2.5 border border-[#E3E4E7] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4B4E55] text-[#1A1C21] text-sm font-semibold shadow-sm"
+            className="px-3.5 py-2.5 border border-[#E4E8E7] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A5654] text-[#1F2A29] text-sm font-semibold shadow-sm"
           />
         </div>
 
         {/* Days Selection */}
         <div>
-          <label className="block text-xs font-semibold text-[#85888F] mb-2 flex items-center gap-1">
-            <Calendar size={14} className="text-[#4B4E55]" />
+          <label className="block text-xs font-semibold text-[#7F8C8A] mb-2 flex items-center gap-1">
+            <Calendar size={14} className="text-[#4A5654]" />
             알림 요일 반복 선택
           </label>
           <div className="flex gap-1.5">
@@ -384,10 +384,10 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                   onClick={() => toggleDay(index)}
                   className={`w-9 h-9 rounded-2xl text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
                     isSelected
-                      ? "bg-[#2C2F36] border-[#2C2F36] text-white"
+                      ? "bg-[#004643] border-[#004643] text-white"
                       : isWeekend
-                      ? "bg-[#F4F5F7] border-[#E3E4E7] text-[#FF0000] hover:bg-[#D5D7DB]"
-                      : "bg-[#F4F5F7] border-[#E3E4E7] text-[#4B4E55] hover:bg-[#D5D7DB]"
+                      ? "bg-[#F2F4F3] border-[#E4E8E7] text-[#C62828] hover:bg-[#D3DAD9]"
+                      : "bg-[#F2F4F3] border-[#E4E8E7] text-[#4A5654] hover:bg-[#D3DAD9]"
                   }`}
                 >
                   {label}
@@ -398,7 +398,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
         </div>
 
         {success && (
-          <p className="text-xs text-[#4B4E55] font-semibold bg-[#F4F5F7] p-2.5 rounded-2xl border border-[#EDEEF0]/50 flex items-center gap-1.5">
+          <p className="text-xs text-[#4A5654] font-semibold bg-[#F2F4F3] p-2.5 rounded-2xl border border-[#E8EFEE]/50 flex items-center gap-1.5">
             <Check size={14} className="stroke-[3px]" />
             {success}
           </p>
@@ -409,7 +409,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4B4E55] hover:bg-[#1E2128] px-4 py-2.5 rounded-2xl shadow-md transition cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A5654] hover:bg-[#003330] px-4 py-2.5 rounded-2xl shadow-md transition cursor-pointer"
           >
             {saving ? "설정 저장 중..." : "알림 설정 저장"}
           </button>
@@ -417,18 +417,18 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       </form>
 
       {/* Interactive push simulator */}
-      <div className="border-t border-[#E3E4E7] pt-5 space-y-3">
-        <h4 className="text-xs font-bold text-[#1A1C21] flex items-center gap-1">
-          <Sparkles className="text-[#4B4E55] animate-pulse" size={14} />
+      <div className="border-t border-[#E4E8E7] pt-5 space-y-3">
+        <h4 className="text-xs font-bold text-[#1F2A29] flex items-center gap-1">
+          <Sparkles className="text-[#4A5654] animate-pulse" size={14} />
           알림 기능 테스트 및 시뮬레이션
         </h4>
-        <p className="text-2xs text-[#85888F] leading-relaxed">
+        <p className="text-2xs text-[#7F8C8A] leading-relaxed">
           웹 브라우저 및 앱 환경에서 매일 아침 성도들에게 발송될 묵상 시간 독려 알림 메시지를 즉시 미리 받아보실 수 있습니다.
         </p>
 
         <button
           onClick={triggerSimulatedNotification}
-          className="w-full flex items-center justify-center gap-2 border border-dashed border-[#4B4E55]/50 hover:border-[#4B4E55] bg-[#EDEEF0]/20 hover:bg-[#EDEEF0]/50 text-[#2C2F36] text-xs font-bold py-3 px-4 rounded-2xl transition cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 border border-dashed border-[#4A5654]/50 hover:border-[#4A5654] bg-[#E8EFEE]/20 hover:bg-[#E8EFEE]/50 text-[#004643] text-xs font-bold py-3 px-4 rounded-2xl transition cursor-pointer"
         >
           <Send size={14} />
           아침 묵상 독려 알림 가상 수신하기
@@ -441,25 +441,25 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
               initial={{ scale: 0.9, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: -10 }}
-              className="bg-[#2C2F36] text-white rounded-3xl p-4 shadow-lg border border-[#E3E4E7] relative overflow-hidden"
+              className="bg-[#004643] text-white rounded-3xl p-4 shadow-lg border border-[#E4E8E7] relative overflow-hidden"
             >
               <div className="flex gap-2.5 items-start">
-                <div className="p-2 bg-[#4B4E55] rounded-2xl text-white">
+                <div className="p-2 bg-[#4A5654] rounded-2xl text-white">
                   <Volume2 size={16} />
                 </div>
                 <div className="space-y-1">
-                  <span className="block text-2xs uppercase font-bold text-[#EDEEF0] tracking-widest flex items-center gap-1">
+                  <span className="block text-2xs uppercase font-bold text-[#E8EFEE] tracking-widest flex items-center gap-1">
                     <Bell size={10} className="animate-bounce" />
                     BIBLE MEDITATION NOTIFICATION
                   </span>
-                  <p className="text-xs leading-relaxed text-[#EDEEF0] font-medium">
+                  <p className="text-xs leading-relaxed text-[#E8EFEE] font-medium">
                     {simulatedAlert}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSimulatedAlert(null)}
-                className="absolute right-2 top-2 p-1 text-[#EDEEF0] hover:text-white rounded-md cursor-pointer"
+                className="absolute right-2 top-2 p-1 text-[#E8EFEE] hover:text-white rounded-md cursor-pointer"
               >
                 <X size={12} />
               </button>
@@ -472,34 +472,34 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       <FontSizeSettingCard />
 
       {/* PWA App Installation Guide Card */}
-      <div className="border-t border-[#E3E4E7] pt-6 space-y-4">
+      <div className="border-t border-[#E4E8E7] pt-6 space-y-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#EDEEF0] text-[#2C2F36] rounded-2xl">
+          <div className="p-2 bg-[#E8EFEE] text-[#004643] rounded-2xl">
             <Smartphone size={18} />
           </div>
           <div>
-            <h3 className="font-bold text-[#2C2F36] text-base">스마트폰 앱(PWA) 설치 안내</h3>
-            <p className="text-2xs text-[#85888F]">주소 입력 없이 홈 화면 아이콘 한 번으로 바로 들어오세요.</p>
+            <h3 className="font-bold text-[#004643] text-base">스마트폰 앱(PWA) 설치 안내</h3>
+            <p className="text-2xs text-[#7F8C8A]">주소 입력 없이 홈 화면 아이콘 한 번으로 바로 들어오세요.</p>
           </div>
         </div>
 
-        <div className="bg-[#EFF1F3] border border-[#E3E4E7] rounded-2xl p-4 space-y-3 text-xs text-[#4B4E55]">
+        <div className="bg-[#FAFAFA] border border-[#E4E8E7] rounded-2xl p-4 space-y-3 text-xs text-[#4A5654]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-white p-3 rounded-2xl border border-[#E3E4E7] space-y-1.5">
-              <span className="font-bold text-[#2C2F36] flex items-center gap-1">
+            <div className="bg-white p-3 rounded-2xl border border-[#E4E8E7] space-y-1.5">
+              <span className="font-bold text-[#004643] flex items-center gap-1">
                 📱 갤럭시 / 안드로이드
               </span>
-              <p className="text-2xs text-[#85888F] leading-relaxed">
+              <p className="text-2xs text-[#7F8C8A] leading-relaxed">
                 상단 배너의 <strong>'앱 설치'</strong> 버튼을 누르시거나, 크롬/삼성인터넷 브라우저 메뉴(⋮)에서 <strong>'앱 설치'</strong> 또는 <strong>'홈 화면에 추가'</strong>를 누르시면 스마트폰 바탕화면에 은혜교회 앱이 생성됩니다.
               </p>
             </div>
 
-            <div className="bg-white p-3 rounded-2xl border border-[#E3E4E7] space-y-1.5">
-              <span className="font-bold text-[#2C2F36] flex items-center gap-1">
+            <div className="bg-white p-3 rounded-2xl border border-[#E4E8E7] space-y-1.5">
+              <span className="font-bold text-[#004643] flex items-center gap-1">
                 🍎 아이폰 / 아이패드 (iOS)
               </span>
-              <p className="text-2xs text-[#85888F] leading-relaxed">
-                사파리(Safari) 화면 하단의 <strong>공유 아이콘(<Share size={10} className="inline text-[#2C2F36]" />)</strong>을 누른 후, 아래로 내려 <strong>'홈 화면에 추가(<PlusSquare size={10} className="inline" />)'</strong>를 선택하시면 홈 화면에 바로 설치됩니다.
+              <p className="text-2xs text-[#7F8C8A] leading-relaxed">
+                사파리(Safari) 화면 하단의 <strong>공유 아이콘(<Share size={10} className="inline text-[#004643]" />)</strong>을 누른 후, 아래로 내려 <strong>'홈 화면에 추가(<PlusSquare size={10} className="inline" />)'</strong>를 선택하시면 홈 화면에 바로 설치됩니다.
               </p>
             </div>
           </div>
@@ -507,47 +507,47 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       </div>
 
       {/* Profile modification section */}
-      <div className="border-t border-[#E3E4E7] pt-6 space-y-4">
+      <div className="border-t border-[#E4E8E7] pt-6 space-y-4">
 
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#EDEEF0] text-[#2C2F36] rounded-2xl">
+          <div className="p-2 bg-[#E8EFEE] text-[#004643] rounded-2xl">
             <User size={18} />
           </div>
           <div>
-            <h3 className="font-bold text-[#2C2F36] text-base">내 프로필 및 비밀번호(PIN) 수정</h3>
-            <p className="text-2xs text-[#85888F]">로그인 이름과 4자리 비밀번호(PIN)를 변경할 수 있습니다.</p>
+            <h3 className="font-bold text-[#004643] text-base">내 프로필 및 비밀번호(PIN) 수정</h3>
+            <p className="text-2xs text-[#7F8C8A]">로그인 이름과 4자리 비밀번호(PIN)를 변경할 수 있습니다.</p>
           </div>
         </div>
 
         <form onSubmit={handleUpdateProfile} className="space-y-3 max-w-md text-xs">
           {profileError && (
-            <div className="bg-[#FFF2F2] border-l-4 border-[#FF0000] p-2.5 text-[#C40000] font-semibold rounded-r-lg flex items-center">
+            <div className="bg-[#FDF3F3] border-l-4 border-[#C62828] p-2.5 text-[#A32020] font-semibold rounded-r-lg flex items-center">
               <ShieldAlert className="mr-1.5 flex-shrink-0" size={14} />
               <span>{profileError}</span>
             </div>
           )}
           {profileSuccess && (
-            <div className="bg-[#F4F5F7] border-l-4 border-[#4B4E55] p-2.5 text-[#2C2F36] font-semibold rounded-r-lg flex items-center">
+            <div className="bg-[#F2F4F3] border-l-4 border-[#4A5654] p-2.5 text-[#004643] font-semibold rounded-r-lg flex items-center">
               <Check className="mr-1.5 flex-shrink-0" size={14} />
               <span>{profileSuccess}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-2xs font-bold text-[#85888F] mb-1">내 이름 (지체 표시명)</label>
+            <label className="block text-2xs font-bold text-[#7F8C8A] mb-1">내 이름 (지체 표시명)</label>
             <input
               type="text"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               placeholder="예: 김성경"
-              className="w-full text-xs px-3 py-2 border border-[#E3E4E7] rounded-2xl bg-[#EFF1F3] text-[#1A1C21] font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4B4E55]"
+              className="w-full text-xs px-3 py-2 border border-[#E4E8E7] rounded-2xl bg-[#FAFAFA] text-[#1F2A29] font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4A5654]"
               required
             />
-            <p className="text-2xs text-[#85888F] mt-0.5">괄호 부분 등 원하는 직분이나 꼬리말도 수정할 수 있습니다 (예: 관리자(목사님) ➡️ 김목사)</p>
+            <p className="text-2xs text-[#7F8C8A] mt-0.5">괄호 부분 등 원하는 직분이나 꼬리말도 수정할 수 있습니다 (예: 관리자(목사님) ➡️ 김목사)</p>
           </div>
 
           <div>
-            <label className="block text-2xs font-bold text-[#85888F] mb-1">비밀번호 4자리 (PIN)</label>
+            <label className="block text-2xs font-bold text-[#7F8C8A] mb-1">비밀번호 4자리 (PIN)</label>
             <input
               type="password"
               maxLength={4}
@@ -556,7 +556,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
               value={profilePin}
               onChange={(e) => setProfilePin(e.target.value.replace(/[^0-9]/g, ""))}
               placeholder="변경할 4자리 숫자 비밀번호"
-              className="w-full text-xs px-3 py-2 border border-[#E3E4E7] rounded-2xl bg-[#EFF1F3] text-[#1A1C21] font-bold tracking-widest text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4B4E55]"
+              className="w-full text-xs px-3 py-2 border border-[#E4E8E7] rounded-2xl bg-[#FAFAFA] text-[#1F2A29] font-bold tracking-widest text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4A5654]"
               required
             />
           </div>
@@ -564,7 +564,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           <button
             type="submit"
             disabled={profileSaving}
-            className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-[#2C2F36] hover:bg-[#1E2128] px-4 py-2 rounded-2xl shadow-sm transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-[#004643] hover:bg-[#003330] px-4 py-2 rounded-2xl shadow-sm transition cursor-pointer"
           >
             {profileSaving ? "정보 변경 중..." : "내 정보 및 PIN 비밀번호 변경하기"}
           </button>
@@ -572,16 +572,16 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       </div>
 
       {/* Account Deletion and Member List Management section */}
-      <div className="border-t border-[#E3E4E7] pt-6 space-y-4">
+      <div className="border-t border-[#E4E8E7] pt-6 space-y-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#FFF2F2] text-[#C40000] rounded-2xl">
+          <div className="p-2 bg-[#FDF3F3] text-[#A32020] rounded-2xl">
             <Users size={18} />
           </div>
           <div>
-            <h3 className="font-bold text-[#2C2F36] text-base">
+            <h3 className="font-bold text-[#004643] text-base">
               {currentUser.role === "admin" ? "지체 계정 관리 (가입 목록 및 삭제)" : "계정 탈퇴 및 이름 삭제"}
             </h3>
-            <p className="text-2xs text-[#85888F]">
+            <p className="text-2xs text-[#7F8C8A]">
               {currentUser.role === "admin"
                 ? "등록된 모든 말씀 나눔방 지체들의 가입 현황 확인 및 계정 정리"
                 : "나눔방에서 더이상 내 이름을 사용하지 않을 때 계정을 영구 탈퇴 처리합니다."}
@@ -592,17 +592,17 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
         {currentUser.role === "admin" ? (
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {loadingUsers ? (
-              <p className="text-2xs text-[#85888F]">계정 목록을 불러오는 중...</p>
+              <p className="text-2xs text-[#7F8C8A]">계정 목록을 불러오는 중...</p>
             ) : allUsers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {allUsers.map((u) => (
-                  <div key={u.id} className="flex justify-between items-center p-2.5 bg-[#EFF1F3] border border-[#E3E4E7] rounded-2xl">
+                  <div key={u.id} className="flex justify-between items-center p-2.5 bg-[#FAFAFA] border border-[#E4E8E7] rounded-2xl">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 bg-[#2C2F36] text-white text-2xs rounded-full flex items-center justify-center font-bold">
+                      <div className="w-5 h-5 bg-[#004643] text-white text-2xs rounded-full flex items-center justify-center font-bold">
                         {u.name.slice(-2)}
                       </div>
-                      <span className="font-bold text-[#1A1C21]">
-                        {u.name} {u.role === "admin" ? <span className="text-2xs text-[#2C2F36] bg-[#F4F5F7] px-1 py-0.5 rounded font-black">관리자</span> : <span className="text-2xs text-[#85888F] bg-[#EDEEF0] px-1 py-0.5 rounded">지체</span>}
+                      <span className="font-bold text-[#1F2A29]">
+                        {u.name} {u.role === "admin" ? <span className="text-2xs text-[#004643] bg-[#F2F4F3] px-1 py-0.5 rounded font-black">관리자</span> : <span className="text-2xs text-[#7F8C8A] bg-[#E8EFEE] px-1 py-0.5 rounded">지체</span>}
                       </span>
                     </div>
                     {u.id !== currentUser.id ? (
@@ -616,11 +616,11 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                             placeholder="새 PIN"
                             value={adminNewPin}
                             onChange={(e) => setAdminNewPin(e.target.value.replace(/[^0-9]/g, ""))}
-                            className="w-14 px-1 py-0.5 border border-[#E3E4E7] rounded text-center text-2xs font-bold tracking-widest text-[#1A1C21] bg-white"
+                            className="w-14 px-1 py-0.5 border border-[#E4E8E7] rounded text-center text-2xs font-bold tracking-widest text-[#1F2A29] bg-white"
                           />
                           <button
                             onClick={() => handleAdminChangeUserPin(u.id)}
-                            className="bg-[#2C2F36] hover:bg-[#1E2128] text-white px-1.5 py-0.5 rounded text-2xs font-semibold transition cursor-pointer"
+                            className="bg-[#004643] hover:bg-[#003330] text-white px-1.5 py-0.5 rounded text-2xs font-semibold transition cursor-pointer"
                           >
                             저장
                           </button>
@@ -629,7 +629,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                               setEditingPinUserId(null);
                               setAdminNewPin("");
                             }}
-                            className="bg-[#D5D7DB] hover:bg-[#C3C5CA] text-[#4B4E55] px-1.5 py-0.5 rounded text-2xs font-semibold transition cursor-pointer"
+                            className="bg-[#D3DAD9] hover:bg-[#B9C4C2] text-[#4A5654] px-1.5 py-0.5 rounded text-2xs font-semibold transition cursor-pointer"
                           >
                             취소
                           </button>
@@ -641,7 +641,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                               setEditingPinUserId(u.id);
                               setAdminNewPin("");
                             }}
-                            className="text-2xs font-bold text-[#4B4E55] hover:text-[#2C2F36] flex items-center gap-0.5 hover:bg-[#EDEEF0] px-1.5 py-1 rounded-xl transition cursor-pointer"
+                            className="text-2xs font-bold text-[#4A5654] hover:text-[#004643] flex items-center gap-0.5 hover:bg-[#E8EFEE] px-1.5 py-1 rounded-xl transition cursor-pointer"
                             title="비밀번호 변경"
                           >
                             <Lock size={11} />
@@ -649,7 +649,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
-                            className="text-2xs font-bold text-[#FF0000] hover:text-[#B00000] flex items-center gap-0.5 hover:bg-[#FFF2F2] px-1.5 py-1 rounded-xl transition cursor-pointer"
+                            className="text-2xs font-bold text-[#C62828] hover:text-[#8E1F1F] flex items-center gap-0.5 hover:bg-[#FDF3F3] px-1.5 py-1 rounded-xl transition cursor-pointer"
                             title="계정 삭제"
                           >
                             <Trash2 size={11} />
@@ -658,24 +658,24 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                         </div>
                       )
                     ) : (
-                      <span className="text-2xs text-[#85888F] font-bold italic px-2">나</span>
+                      <span className="text-2xs text-[#7F8C8A] font-bold italic px-2">나</span>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-2xs text-[#85888F]">가입된 지체가 없습니다.</p>
+              <p className="text-2xs text-[#7F8C8A]">가입된 지체가 없습니다.</p>
             )}
           </div>
         ) : (
-          <div className="max-w-md bg-[#FFF2F2] border border-[#FFD6D6] rounded-2xl p-4 text-xs text-[#B00000] space-y-2.5">
+          <div className="max-w-md bg-[#FDF3F3] border border-[#EFD2D2] rounded-2xl p-4 text-xs text-[#8E1F1F] space-y-2.5">
             <p className="font-bold">⚠️ 주의사항:</p>
             <p className="leading-relaxed">
               계정을 삭제하시면 로그인 화면의 <strong>이름 목록에서 내 이름이 영구적으로 지워집니다</strong>. 이 조치는 즉시 효력을 가집니다.
             </p>
             <button
               onClick={() => handleDeleteUser(currentUser.id)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 px-4 border border-[#FFD6D6] hover:border-[#FFC2C2] text-[#C40000] hover:text-white bg-white hover:bg-[#FF0000] rounded-2xl font-bold transition shadow-sm cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-4 border border-[#EFD2D2] hover:border-[#E4BEBE] text-[#A32020] hover:text-white bg-white hover:bg-[#C62828] rounded-2xl font-bold transition shadow-sm cursor-pointer"
             >
               <Trash2 size={14} />
               내 이름 목록에서 영구 지우기 (탈퇴하기)

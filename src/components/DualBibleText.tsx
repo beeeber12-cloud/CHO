@@ -63,18 +63,18 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             data-verse={v.num}
             className={`group scroll-mt-4 transition-colors duration-500 ${
               isHighlighted
-                ? "bg-[#EDEEF0] border-l-4 border-[#4B4E55] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+                ? "bg-[#E8EFEE] border-l-4 border-[#4A5654] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
                 : ""
             }`}
           >
             {/* 개역개정 (krv/both 모드) */}
             {!nivOnly && (
               <p
-                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#1A1C21] font-medium tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
+                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#333333] font-medium tracking-normal scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.num && (
-                  <span className="font-sans font-bold text-[#4B4E55] text-xs sm:text-sm mr-2 inline-block select-none">
+                  <span className="font-sans font-bold text-[#4A5654] text-xs sm:text-sm mr-2 inline-block select-none">
                     {v.num}
                   </span>
                 )}
@@ -85,13 +85,13 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* NIV (niv 단독, 또는 both 모드에서 개역개정 아래) */}
             {(nivOnly || (mode === "both" && niv)) && (
               <p
-                className={`text-sm sm:text-base leading-[1.7] text-[#4B4E55] font-serif italic [overflow-wrap:break-word] ${
+                className={`text-sm sm:text-base leading-[1.7] text-[#4A5654] scripture-font italic [overflow-wrap:break-word] ${
                   mode === "both" ? "mt-1 pl-0.5" : ""
                 }`}
                 style={{ overflowWrap: "break-word" }}
               >
                 {nivOnly && v.num && (
-                  <span className="font-sans font-bold text-[#85888F] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
+                  <span className="font-sans font-bold text-[#7F8C8A] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
                     {v.num}
                   </span>
                 )}

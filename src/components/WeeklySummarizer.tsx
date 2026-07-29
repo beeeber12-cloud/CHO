@@ -70,13 +70,13 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
     return text.split("\n").map((line, index) => {
       let trimmed = line.trim();
       if (trimmed.startsWith("###")) {
-        return <h4 key={index} className="text-base font-bold text-[#1A1C21] mt-4 mb-2">{trimmed.replace("###", "").trim()}</h4>;
+        return <h4 key={index} className="text-base font-bold text-[#1F2A29] mt-4 mb-2">{trimmed.replace("###", "").trim()}</h4>;
       }
       if (trimmed.startsWith("##")) {
-        return <h3 key={index} className="text-lg font-bold text-[#2C2F36] mt-5 mb-2.5 border-b border-[#E3E4E7] pb-1">{trimmed.replace("##", "").trim()}</h3>;
+        return <h3 key={index} className="text-lg font-bold text-[#004643] mt-5 mb-2.5 border-b border-[#E4E8E7] pb-1">{trimmed.replace("##", "").trim()}</h3>;
       }
       if (trimmed.startsWith("#")) {
-        return <h2 key={index} className="text-xl font-bold text-[#2C2F36] mt-6 mb-3">{trimmed.replace("#", "").trim()}</h2>;
+        return <h2 key={index} className="text-xl font-bold text-[#004643] mt-6 mb-3">{trimmed.replace("#", "").trim()}</h2>;
       }
       if (trimmed.startsWith("*") || trimmed.startsWith("-")) {
         const itemText = trimmed.substring(1).trim();
@@ -84,47 +84,47 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
         if (itemText.includes("**")) {
           const parts = itemText.split("**");
           return (
-            <li key={index} className="ml-4 list-disc text-xs text-[#4B4E55] leading-relaxed py-0.5">
-              {parts.map((p, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="font-bold text-[#2C2F36]">{p}</strong> : p)}
+            <li key={index} className="ml-4 list-disc text-xs text-[#4A5654] leading-relaxed py-0.5">
+              {parts.map((p, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="font-bold text-[#004643]">{p}</strong> : p)}
             </li>
           );
         }
-        return <li key={index} className="ml-4 list-disc text-xs text-[#4B4E55] leading-relaxed py-0.5">{itemText}</li>;
+        return <li key={index} className="ml-4 list-disc text-xs text-[#4A5654] leading-relaxed py-0.5">{itemText}</li>;
       }
       if (trimmed.includes("**")) {
         const parts = trimmed.split("**");
         return (
-          <p key={index} className="text-xs text-[#4B4E55] leading-relaxed my-2">
-            {parts.map((p, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="font-bold text-[#2C2F36]">{p}</strong> : p)}
+          <p key={index} className="text-xs text-[#4A5654] leading-relaxed my-2">
+            {parts.map((p, pIdx) => pIdx % 2 === 1 ? <strong key={pIdx} className="font-bold text-[#004643]">{p}</strong> : p)}
           </p>
         );
       }
       if (trimmed === "") {
         return <div key={index} className="h-2"></div>;
       }
-      return <p key={index} className="text-xs text-[#4B4E55] leading-relaxed my-1.5">{trimmed}</p>;
+      return <p key={index} className="text-xs text-[#4A5654] leading-relaxed my-1.5">{trimmed}</p>;
     });
   };
 
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E3E4E7] shadow-sm p-3.5 sm:p-6">
-      <div className="flex items-center gap-2 border-b border-[#E3E4E7] pb-3 mb-4">
-        <div className="p-1.5 sm:p-2 bg-[#EDEEF0] text-[#2C2F36] rounded-2xl shrink-0">
+    <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#E4E8E7] shadow-sm p-3.5 sm:p-6">
+      <div className="flex items-center gap-2 border-b border-[#E4E8E7] pb-3 mb-4">
+        <div className="p-1.5 sm:p-2 bg-[#E8EFEE] text-[#004643] rounded-2xl shrink-0">
           <Sparkles size={18} />
         </div>
         <div>
-          <h3 className="font-bold text-[#2C2F36] text-base sm:text-lg whitespace-nowrap">AI 주간 묵상 요약방</h3>
-          <p className="text-2xs sm:text-xs text-[#85888F]">성도들이 작성한 묵상을 목회적 은혜 가이드로 자동 요약합니다</p>
+          <h3 className="font-bold text-[#004643] text-base sm:text-lg whitespace-nowrap">AI 주간 묵상 요약방</h3>
+          <p className="text-2xs sm:text-xs text-[#7F8C8A]">성도들이 작성한 묵상을 목회적 은혜 가이드로 자동 요약합니다</p>
         </div>
       </div>
 
       {/* Generation control panel for Admin */}
-      <div className="bg-[#F4F5F7] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-[#E3E4E7] mb-5">
-        <h4 className="text-sm font-bold text-[#2C2F36] mb-1 flex items-center">
-          <Sparkles className="mr-1 text-[#4B4E55] animate-pulse shrink-0" size={16} />
+      <div className="bg-[#F2F4F3] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-[#E4E8E7] mb-5">
+        <h4 className="text-sm font-bold text-[#004643] mb-1 flex items-center">
+          <Sparkles className="mr-1 text-[#4A5654] animate-pulse shrink-0" size={16} />
           {currentUser.role === "admin" ? "새로운 주간 묵상 종합 요약 생성" : "주간 요약 보고서 정보"}
         </h4>
-        <p className="text-xs text-[#4B4E55] leading-relaxed mb-4">
+        <p className="text-xs text-[#4A5654] leading-relaxed mb-4">
           {currentUser.role === "admin" 
             ? "최근 성도들이 작성하여 나눈 개별 묵상 글들의 키워드와 고백, 기도 제목을 분석하여 하나의 종합 보고서로 요약합니다."
             : "우리 소그룹 지체들의 묵상 흐름 and 은혜의 방향을 한눈에 볼 수 있도록 정기적인 주간 요약 보고서가 발행됩니다."
@@ -135,22 +135,22 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
           <form onSubmit={handleGenerate} className="space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-2xs font-bold text-[#2C2F36] uppercase tracking-wider mb-1">보고서 이름 (예: 7월 3주차 종합)</label>
+                <label className="block text-2xs font-bold text-[#004643] uppercase tracking-wider mb-1">보고서 이름 (예: 7월 3주차 종합)</label>
                 <input
                   type="text"
                   value={weekLabel}
                   onChange={(e) => setWeekLabel(e.target.value)}
                   placeholder={`${new Date().getMonth() + 1}월 ${Math.ceil(new Date().getDate() / 7)}주차 묵상 종합`}
-                  className="w-full text-xs px-3 py-2 bg-white border border-[#E3E4E7] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4B4E55] text-[#1A1C21] font-semibold"
+                  className="w-full text-xs px-3 py-2 bg-white border border-[#E4E8E7] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A5654] text-[#1F2A29] font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-2xs font-bold text-[#2C2F36] uppercase tracking-wider mb-1">분석 대상 기간 (일 수)</label>
+                <label className="block text-2xs font-bold text-[#004643] uppercase tracking-wider mb-1">분석 대상 기간 (일 수)</label>
                 <select
                   value={daysCount}
                   onChange={(e) => setDaysCount(Number(e.target.value))}
-                  className="w-full text-xs px-3 py-2 bg-white border border-[#E3E4E7] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4B4E55] text-[#1A1C21] font-semibold cursor-pointer"
+                  className="w-full text-xs px-3 py-2 bg-white border border-[#E4E8E7] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A5654] text-[#1F2A29] font-semibold cursor-pointer"
                 >
                   <option value={3}>최근 3일 동안의 묵상 분석</option>
                   <option value={7}>최근 7일 동안의 묵상 분석 (기본)</option>
@@ -160,14 +160,14 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
               </div>
             </div>
 
-            {error && <p className="text-xs text-[#FF0000] font-semibold bg-[#FFF2F2] p-2 rounded-xl">{error}</p>}
-            {success && <p className="text-xs text-[#4B4E55] font-semibold bg-[#F4F5F7] p-2 rounded-xl">{success}</p>}
+            {error && <p className="text-xs text-[#C62828] font-semibold bg-[#FDF3F3] p-2 rounded-xl">{error}</p>}
+            {success && <p className="text-xs text-[#4A5654] font-semibold bg-[#F2F4F3] p-2 rounded-xl">{success}</p>}
 
             <div className="flex justify-end pt-1">
               <button
                 type="submit"
                 disabled={generating}
-                className="flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-[#4B4E55] hover:bg-[#1E2128] px-4 py-2.5 rounded-2xl shadow-md transition cursor-pointer"
+                className="flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-[#4A5654] hover:bg-[#003330] px-4 py-2.5 rounded-2xl shadow-md transition cursor-pointer"
               >
                 {generating ? (
                   <>
@@ -184,23 +184,23 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
             </div>
           </form>
         ) : (
-          <div className="flex items-center gap-2 text-xs bg-white/70 p-3 rounded-2xl border border-[#E3E4E7]">
-            <Check size={16} className="text-[#4B4E55]" />
-            <span className="text-[#2C2F36] font-medium">관리자(목사님/소그룹장) 계정으로 로그인 시 보고서 신규 생성이 활성화됩니다.</span>
+          <div className="flex items-center gap-2 text-xs bg-white/70 p-3 rounded-2xl border border-[#E4E8E7]">
+            <Check size={16} className="text-[#4A5654]" />
+            <span className="text-[#004643] font-medium">관리자(목사님/소그룹장) 계정으로 로그인 시 보고서 신규 생성이 활성화됩니다.</span>
           </div>
         )}
       </div>
 
       {/* Historical Summaries list */}
       <div className="space-y-6">
-        <h4 className="text-sm font-bold text-[#1A1C21] border-b border-[#E3E4E7] pb-2 flex items-center gap-1.5">
-          <Calendar size={16} className="text-[#4B4E55]" />
+        <h4 className="text-sm font-bold text-[#1F2A29] border-b border-[#E4E8E7] pb-2 flex items-center gap-1.5">
+          <Calendar size={16} className="text-[#4A5654]" />
           발행된 묵상 종합 요약 역사 ({summaries.length}건)
         </h4>
 
         {loading ? (
-          <div className="text-center py-10 text-[#85888F]">
-            <Loader className="animate-spin mx-auto text-[#4B4E55] mb-2" size={24} />
+          <div className="text-center py-10 text-[#7F8C8A]">
+            <Loader className="animate-spin mx-auto text-[#4A5654] mb-2" size={24} />
             <p className="text-sm">종합 보고서를 불러오고 있습니다...</p>
           </div>
         ) : summaries.length > 0 ? (
@@ -211,29 +211,29 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-[#F4F5F7]/60 rounded-3xl border border-[#E3E4E7] p-5 space-y-3"
+                className="bg-[#F2F4F3]/60 rounded-3xl border border-[#E4E8E7] p-5 space-y-3"
               >
                 <div className="flex justify-between items-start flex-wrap gap-2">
-                  <h5 className="font-bold text-base text-[#2C2F36] flex items-center gap-1.5 font-serif">
-                    <MessageSquareQuote size={18} className="text-[#4B4E55]" />
+                  <h5 className="font-bold text-base text-[#004643] flex items-center gap-1.5 font-serif">
+                    <MessageSquareQuote size={18} className="text-[#4A5654]" />
                     {sum.weekLabel}
                   </h5>
-                  <div className="flex items-center gap-1 text-2xs text-[#85888F] font-medium">
+                  <div className="flex items-center gap-1 text-2xs text-[#7F8C8A] font-medium">
                     <Clock size={11} />
                     <span>생성일: {new Date(sum.generatedAt).toLocaleString()}</span>
                   </div>
                 </div>
 
                 {/* Markdown content container */}
-                <div className="bg-white rounded-2xl p-5 border border-[#E3E4E7] shadow-sm leading-relaxed max-w-none">
+                <div className="bg-white rounded-2xl p-5 border border-[#E4E8E7] shadow-sm leading-relaxed max-w-none">
                   {renderMarkdown(sum.summaryText)}
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 bg-[#F4F5F7] rounded-3xl border border-dashed border-[#E3E4E7] text-[#85888F]">
-            <BookOpen className="mx-auto text-[#85888F] mb-2" size={28} />
+          <div className="text-center py-10 bg-[#F2F4F3] rounded-3xl border border-dashed border-[#E4E8E7] text-[#7F8C8A]">
+            <BookOpen className="mx-auto text-[#7F8C8A] mb-2" size={28} />
             <p className="text-sm">아직 생성된 묵상 요약 보고서가 없습니다.</p>
           </div>
         )}

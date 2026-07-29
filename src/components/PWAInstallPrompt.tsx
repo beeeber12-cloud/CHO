@@ -85,7 +85,7 @@ export default function PWAInstallPrompt() {
         exit={{ opacity: 0, y: 40 }}
         className="fixed bottom-24 md:bottom-6 left-3 right-3 z-50 mx-auto max-w-md"
       >
-        <div className="bg-[#2C2F36] text-white rounded-2xl shadow-2xl border border-[#4B4E55] p-3.5 flex items-start gap-3">
+        <div className="bg-[#004643] text-white rounded-2xl shadow-2xl border border-[#4A5654] p-3.5 flex items-start gap-3">
           <img
             src="/icon-192.png"
             alt="말씀나눔"
@@ -96,12 +96,12 @@ export default function PWAInstallPrompt() {
             <p className="font-bold text-sm leading-tight">홈 화면에 앱으로 추가하기</p>
 
             {showIosGuide ? (
-              <p className="text-2xs text-[#D5D7DB]/90 mt-1 leading-relaxed">
+              <p className="text-2xs text-[#D3DAD9]/90 mt-1 leading-relaxed">
                 아래 <Share size={11} className="inline -mt-0.5" /> <strong>공유</strong> 버튼을 누른 뒤{" "}
                 <PlusSquare size={11} className="inline -mt-0.5" /> <strong>‘홈 화면에 추가’</strong>를 선택하세요.
               </p>
             ) : (
-              <p className="text-2xs text-[#D5D7DB]/90 mt-1 leading-relaxed">
+              <p className="text-2xs text-[#D3DAD9]/90 mt-1 leading-relaxed">
                 설치하면 아이콘으로 바로 열리고, 주소창 없이 앱처럼 사용할 수 있습니다.
               </p>
             )}
@@ -110,7 +110,7 @@ export default function PWAInstallPrompt() {
               <button
                 type="button"
                 onClick={install}
-                className="mt-2 inline-flex items-center gap-1.5 bg-[#2C2F36] hover:bg-[#1E2128] text-white font-bold text-xs px-3.5 py-1.5 rounded-2xl transition cursor-pointer shadow-sm"
+                className="mt-2 inline-flex items-center gap-1.5 bg-[#004643] hover:bg-[#003330] text-white font-bold text-xs px-3.5 py-1.5 rounded-2xl transition cursor-pointer shadow-sm"
               >
                 <Download size={14} />
                 <span>앱 설치하기</span>
@@ -122,7 +122,7 @@ export default function PWAInstallPrompt() {
             type="button"
             onClick={dismiss}
             aria-label="닫기"
-            className="text-[#D5D7DB]/70 hover:text-white transition cursor-pointer shrink-0 p-0.5"
+            className="text-[#D3DAD9]/70 hover:text-white transition cursor-pointer shrink-0 p-0.5"
           >
             <X size={18} />
           </button>

@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+KR:wght@300;400;500;600;700;900&display=swap');
+/* 성경 본문 전용 — 화면 가독성을 위해 설계된 본문용 세리프 (획 대비가 낮아 오래 읽어도 눈이 덜 피로) */
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Nanum+Myeongjo:wght@400;700;800&display=swap');
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
 @import "tailwindcss";
 
@@ -13,24 +15,26 @@
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1.45;
 
-  /* Base chip: #2c2f36 charcoal / #85888f gray / #ffffff white / #ff0000 red
-     밝은 중립색(EFF1F3·F4F5F7·E3E4E7)은 #85888f 에서 파생 — 배경·카드·테두리 위계용 */
-  --color-forest-primary: #4B4E55;
-  --color-forest-dark: #2C2F36;   /* CHARCOAL */
-  --color-forest-hover: #1E2128;
-  --color-warm-bg: #EFF1F3;       /* page */
+  /* Base chip: CYPRUS #004643 / CLOUD WHITE #FAFAFA / SANDY YELLOW #FFEF4D
+     중간 중립색은 CYPRUS 에 살짝 틴트를 준 그레이 — 배경·카드·테두리 위계용 */
+  --color-forest-primary: #4A5654;
+  --color-forest-dark: #004643;   /* CYPRUS */
+  --color-forest-hover: #003330;
+  --color-warm-bg: #FAFAFA;       /* CLOUD WHITE */
   --color-warm-card: #ffffff;
-  --color-warm-border: #E3E4E7;
-  --color-warm-secondary: #F4F5F7;
-  --color-warm-text: #1A1C21;
-  --color-warm-muted: #85888F;
-  --color-warm-darktext: #4B4E55;
+  --color-warm-border: #E4E8E7;
+  --color-warm-secondary: #F2F4F3;
+  --color-warm-text: #1F2A29;
+  --color-warm-muted: #7F8C8A;
+  --color-warm-darktext: #4A5654;
 
-  /* Point color — 구별이 필요한 지점에만 */
-  --color-point-red: #FF0000;
+  /* Point color — 이름 뱃지·구분 지점에만 */
+  --color-point-yellow: #FFEF4D;
+  /* 삭제·오류 전용 (노랑으로는 위험 신호를 전달할 수 없어 별도 유지) */
+  --color-danger: #C62828;
 
-  /* 성경 본문 전용: 가독성 위해 거의 검정에 가까운 진회색 */
-  --color-scripture: #1A1C21;
+  /* 성경 본문 전용: 진한 그레이 */
+  --color-scripture: #333333;
 }
 
 html {
@@ -79,6 +83,20 @@ button {
 /* Custom class for elegant serif elements */
 .serif-font {
   font-family: var(--font-serif);
+}
+
+/* 성경 본문 전용 타이포그래피
+   Lora(영문) + 나눔명조(한글) — 본문 읽기용으로 설계된 세리프.
+   자간을 살짝 넓히고 행간을 키워 긴 본문도 편하게 읽히도록 조정. */
+.scripture-font {
+  font-family: "Lora", "Nanum Myeongjo", "Noto Serif KR", Georgia, serif;
+  letter-spacing: 0.01em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.scripture-font p {
+  line-height: 1.95;
 }
 
 /* Font Scaling for Adults & Seniors */
