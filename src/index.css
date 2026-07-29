@@ -7,21 +7,22 @@
   --font-serif: "Noto Serif KR", "Playfair Display", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-forest-primary: #4a6d4a;
-  --color-forest-dark: #2c3e2d;
-  --color-forest-hover: #3d5a3d;
-  --color-warm-bg: #fdfbf7;
+  --color-forest-primary: #17784C;
+  --color-forest-dark: #14603F;
+  --color-forest-hover: #125E3B;
+  --color-warm-bg: #F2F2F7;
   --color-warm-card: #ffffff;
-  --color-warm-border: #ece8df;
-  --color-warm-secondary: #f4f2eb;
-  --color-warm-text: #333333;
-  --color-warm-muted: #8a8171;
-  --color-warm-darktext: #4a463f;
+  --color-warm-border: #E5E5EA;
+  --color-warm-secondary: #F2F2F7;
+  --color-warm-text: #1C1C1E;
+  --color-warm-muted: #8E8E93;
+  --color-warm-darktext: #3A3A3C;
 }
 
 html {
   /* 앱 전체 기본 글씨 크기 11% 확대 (Tailwind의 rem 기반 사이즈에 모두 반영됨) */
   font-size: 111%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -31,6 +32,34 @@ body {
   /* 단어 중간이 잘리지 않도록: 한글 단어는 어절 단위로만 줄바꿈, 부득이한 경우에만 넘침 방지용 줄바꿈 허용 */
   word-break: keep-all;
   overflow-wrap: break-word;
+  /* iOS(SF Pro) 특유의 얇고 또렷한 글자 질감 + 살짝 좁은 자간 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+/* iOS 스타일: 제목은 더 굵고 자간을 조여 또렷하게 */
+h1, h2, h3, h4 {
+  letter-spacing: -0.021em;
+}
+
+/* iOS 카드/시트 느낌의 부드럽고 얕은 그림자 (검은 테두리 대신 은은한 확산) */
+.shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 8px rgba(0, 0, 0, 0.03) !important;
+}
+.shadow-md {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), 0 6px 20px rgba(0, 0, 0, 0.05) !important;
+}
+.shadow-2xl {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 버튼을 누를 때 살짝 눌리는 iOS 특유의 반응 */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+button {
+  transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 /* Custom class for elegant serif elements */

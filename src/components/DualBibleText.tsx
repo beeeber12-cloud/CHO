@@ -70,11 +70,11 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* 개역개정 (krv/both 모드) */}
             {!nivOnly && (
               <p
-                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#2c3e2d] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
+                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#14603F] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.num && (
-                  <span className="font-sans font-bold text-[#4a6d4a] text-xs sm:text-sm mr-2 inline-block select-none">
+                  <span className="font-sans font-bold text-[#17784C] text-xs sm:text-sm mr-2 inline-block select-none">
                     {v.num}
                   </span>
                 )}
@@ -85,13 +85,13 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* NIV (niv 단독, 또는 both 모드에서 개역개정 아래) */}
             {(nivOnly || (mode === "both" && niv)) && (
               <p
-                className={`text-sm sm:text-base leading-[1.7] text-[#5a6b7a] font-serif italic [overflow-wrap:break-word] ${
+                className={`text-sm sm:text-base leading-[1.7] text-[#6E6E73] font-serif italic [overflow-wrap:break-word] ${
                   mode === "both" ? "mt-1 pl-0.5" : ""
                 }`}
                 style={{ overflowWrap: "break-word" }}
               >
                 {nivOnly && v.num && (
-                  <span className="font-sans font-bold text-[#6d8a9a] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
+                  <span className="font-sans font-bold text-[#8E8E93] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
                     {v.num}
                   </span>
                 )}

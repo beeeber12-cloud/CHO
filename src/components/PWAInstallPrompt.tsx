@@ -85,11 +85,11 @@ export default function PWAInstallPrompt() {
         exit={{ opacity: 0, y: 40 }}
         className="fixed bottom-24 md:bottom-6 left-3 right-3 z-50 mx-auto max-w-md"
       >
-        <div className="bg-[#2c3e2d] text-white rounded-2xl shadow-2xl border border-[#4a6d4a] p-3.5 flex items-start gap-3">
+        <div className="bg-[#14603F] text-white rounded-2xl shadow-2xl border border-[#17784C] p-3.5 flex items-start gap-3">
           <img
             src="/icon-192.png"
             alt="말씀나눔"
-            className="w-11 h-11 rounded-xl shrink-0 shadow-md"
+            className="w-11 h-11 rounded-2xl shrink-0 shadow-md"
           />
 
           <div className="flex-1 min-w-0">
@@ -110,7 +110,7 @@ export default function PWAInstallPrompt() {
               <button
                 type="button"
                 onClick={install}
-                className="mt-2 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs px-3.5 py-1.5 rounded-xl transition cursor-pointer shadow-sm"
+                className="mt-2 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs px-3.5 py-1.5 rounded-2xl transition cursor-pointer shadow-sm"
               >
                 <Download size={14} />
                 <span>앱 설치하기</span>

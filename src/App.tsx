@@ -99,18 +99,18 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfbf7] text-[#333333] pb-20 md:pb-10 font-sans">
+    <div className="min-h-screen bg-[#F7F7FA] text-[#1C1C1E] pb-20 md:pb-10 font-sans">
       <PWAInstallPrompt />
       {/* Dynamic Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[#ece8df] shadow-sm">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[#E5E5EA] shadow-sm">
         <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2.5 flex justify-between items-center gap-1.5">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#e0e7df] rounded-lg flex items-center justify-center text-[#2c3e2d] shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E3F2E9] rounded-xl flex items-center justify-center text-[#14603F] shrink-0">
               <BookMarked size={18} className="sm:w-5 sm:h-5" />
             </div>
             <div className="shrink-0">
-              <h1 className="font-bold text-base sm:text-lg text-[#2c3e2d] tracking-tight leading-none whitespace-nowrap">은혜교회</h1>
-              <span className="text-[9px] sm:text-[10px] text-[#4a6d4a] font-bold uppercase tracking-wider block whitespace-nowrap">말씀 묵상 나눔방</span>
+              <h1 className="font-bold text-base sm:text-lg text-[#14603F] tracking-tight leading-none whitespace-nowrap">은혜교회</h1>
+              <span className="text-[9px] sm:text-[10px] text-[#17784C] font-bold uppercase tracking-wider block whitespace-nowrap">말씀 묵상 나눔방</span>
             </div>
           </div>
 
@@ -119,11 +119,11 @@ export default function App() {
             <FontSizeControl />
 
             {/* Profile badge */}
-            <div className="flex items-center gap-1.5 bg-[#f4f2eb] border border-[#ece8df] px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs text-[#4a463f] whitespace-nowrap">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-[#2c3e2d] text-white font-bold rounded-full flex items-center justify-center text-[9px] sm:text-[10px] shrink-0">
+            <div className="flex items-center gap-1.5 bg-[#F2F2F7] border border-[#E5E5EA] px-2 sm:px-3 py-1 sm:py-1.5 rounded-2xl text-[11px] sm:text-xs text-[#3A3A3C] whitespace-nowrap">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-[#14603F] text-white font-bold rounded-full flex items-center justify-center text-[9px] sm:text-[10px] shrink-0">
                 {currentUser.name.slice(-2)}
               </div>
-              <span className="font-bold text-[#4a463f] truncate max-w-[80px] sm:max-w-none">
+              <span className="font-bold text-[#3A3A3C] truncate max-w-[80px] sm:max-w-none">
                 {currentUser.name} {currentUser.role === 'admin' ? '(관리자)' : '성도님'}
               </span>
             </div>
@@ -131,7 +131,7 @@ export default function App() {
             {/* Logout button */}
             <button
               onClick={handleLogout}
-              className="p-1.5 text-slate-400 hover:text-[#2c3e2d] hover:bg-[#f4f2eb] rounded-xl transition cursor-pointer shrink-0"
+              className="p-1.5 text-slate-400 hover:text-[#14603F] hover:bg-[#F2F2F7] rounded-2xl transition cursor-pointer shrink-0"
               title="로그아웃"
             >
               <LogOut size={16} />
@@ -143,11 +143,11 @@ export default function App() {
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-1 sm:px-4 py-2 sm:py-6">
         {/* PC Desktop Tabs Grid */}
-        <div className="hidden md:grid grid-cols-7 gap-1.5 border-b border-[#ece8df] bg-[#f4f2eb] p-1 rounded-2xl">
+        <div className="hidden md:grid grid-cols-7 gap-1.5 border-b border-[#E5E5EA] bg-[#F2F2F7] p-1 rounded-2xl">
           <button
             onClick={() => setActiveTab('notice')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'notice' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'notice' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <BookOpen size={15} />
@@ -155,8 +155,8 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('feed')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'feed' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'feed' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <MessageSquare size={15} />
@@ -164,8 +164,8 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('gratitude')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'gratitude' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'gratitude' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <HeartHandshake size={15} className={activeTab === 'gratitude' ? "text-amber-300" : "text-amber-600"} />
@@ -173,8 +173,8 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('bible')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'bible' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'bible' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <BookMarked size={15} />
@@ -182,8 +182,8 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('my')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'my' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'my' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <Calendar size={15} />
@@ -191,8 +191,8 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('qna')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'qna' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'qna' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <HelpCircle size={15} />
@@ -200,8 +200,8 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'settings' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'settings' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
             }`}
           >
             <Bell size={15} />
@@ -323,14 +323,14 @@ export default function App() {
       </main>
 
       {/* Mobile Sticky Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#ece8df] shadow-[0_-2px_15px_rgba(44,62,45,0.05)] px-1 py-1 flex items-center justify-around overflow-x-auto">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E5E5EA] shadow-[0_-2px_15px_rgba(44,62,45,0.05)] px-1 py-1 flex items-center justify-around overflow-x-auto">
         <button
           onClick={() => {
             setActiveTab('notice');
             setPrefilledVerse(null);
           }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'notice' ? "text-[#2c3e2d]" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'notice' ? "text-[#14603F]" : "text-[#8E8E93]"
           }`}
         >
           <BookOpen size={17} />
@@ -339,8 +339,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab('feed')}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'feed' ? "text-[#2c3e2d]" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'feed' ? "text-[#14603F]" : "text-[#8E8E93]"
           }`}
         >
           <MessageSquare size={17} />
@@ -349,8 +349,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveTab('gratitude')}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'gratitude' ? "text-[#2c3e2d] font-extrabold" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'gratitude' ? "text-[#14603F] font-extrabold" : "text-[#8E8E93]"
           }`}
         >
           <HeartHandshake size={17} className={activeTab === 'gratitude' ? "text-amber-600" : ""} />
@@ -362,8 +362,8 @@ export default function App() {
             setActiveTab('bible');
             setPrefilledVerse(null);
           }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'bible' ? "text-[#2c3e2d]" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'bible' ? "text-[#14603F]" : "text-[#8E8E93]"
           }`}
         >
           <BookMarked size={17} />
@@ -375,8 +375,8 @@ export default function App() {
             setActiveTab('my');
             setPrefilledVerse(null);
           }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'my' ? "text-[#2c3e2d]" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'my' ? "text-[#14603F]" : "text-[#8E8E93]"
           }`}
         >
           <Calendar size={17} />
@@ -388,8 +388,8 @@ export default function App() {
             setActiveTab('qna');
             setPrefilledVerse(null);
           }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'qna' ? "text-[#2c3e2d] font-extrabold" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'qna' ? "text-[#14603F] font-extrabold" : "text-[#8E8E93]"
           }`}
         >
           <HelpCircle size={17} className={activeTab === 'qna' ? "text-amber-600" : ""} />
@@ -401,8 +401,8 @@ export default function App() {
             setActiveTab('settings');
             setPrefilledVerse(null);
           }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'settings' ? "text-[#2c3e2d]" : "text-[#8a8171]"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-2xl transition cursor-pointer min-w-[50px] ${
+            activeTab === 'settings' ? "text-[#14603F]" : "text-[#8E8E93]"
           }`}
         >
           <Bell size={17} />

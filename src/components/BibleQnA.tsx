@@ -230,10 +230,10 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
   return (
     <div className="space-y-5">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#1c2e1d] via-[#2c3e2d] to-[#3d5a3d] text-white rounded-3xl p-5 shadow-sm relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0E4A30] via-[#14603F] to-[#125E3B] text-white rounded-3xl p-5 shadow-sm relative overflow-hidden">
         <div className="relative z-10 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-amber-400/20 text-amber-300 rounded-xl border border-amber-400/30">
+            <span className="p-1.5 bg-amber-400/20 text-amber-300 rounded-2xl border border-amber-400/30">
               <BookOpen size={18} />
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">AI 성경 역사 & 배경 Q&A</h2>
@@ -249,19 +249,19 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
       </div>
 
       {/* Ask Question Form */}
-      <div className="bg-white rounded-3xl border border-[#ece8df] shadow-sm p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between border-b border-[#ece8df] pb-2.5">
-          <h3 className="text-sm font-bold text-[#2c3e2d] flex items-center gap-1.5">
-            <HelpCircle size={16} className="text-[#4a6d4a]" />
+      <div className="bg-white rounded-3xl border border-[#E5E5EA] shadow-sm p-4 sm:p-5 space-y-3">
+        <div className="flex items-center justify-between border-b border-[#E5E5EA] pb-2.5">
+          <h3 className="text-sm font-bold text-[#14603F] flex items-center gap-1.5">
+            <HelpCircle size={16} className="text-[#17784C]" />
             성경 역사 및 배경 질문하기
           </h3>
-          <span className="text-[11px] text-[#8a8171] bg-[#f4f2eb] px-2.5 py-0.5 rounded-lg border border-[#ece8df]">
+          <span className="text-[11px] text-[#8E8E93] bg-[#F2F2F7] px-2.5 py-0.5 rounded-xl border border-[#E5E5EA]">
             🔒 익명 질문
           </span>
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-2xl font-medium">
             {error}
           </div>
         )}
@@ -271,7 +271,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] bg-white text-slate-800 shrink-0 cursor-pointer shadow-sm"
+              className="px-3 py-2 text-xs font-semibold border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] bg-white text-slate-800 shrink-0 cursor-pointer shadow-sm"
             >
               <option value="성경 역사 & 배경">📜 성경 역사 & 배경</option>
               <option value="신학 & 구절 이해">📖 신학 & 구절 이해</option>
@@ -287,19 +287,19 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                 if (e.key === 'Enter' && !asking) handleAsk(e);
               }}
               placeholder="예) 출애굽 당시 이집트의 역사적 상황과 파라오는 누구였나요?"
-              className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm font-medium border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] bg-white text-slate-800 shadow-sm"
+              className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm font-medium border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] bg-white text-slate-800 shadow-sm"
             />
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <p className="text-[11px] text-[#8a8171]">
+            <p className="text-[11px] text-[#8E8E93]">
               질문과 AI 해설은 전체 성도와 공유되며, 최신 질문이 맨 위에 남게 됩니다.
             </p>
 
             <button
               onClick={(e) => handleAsk(e)}
               disabled={asking || !question.trim()}
-              className="flex items-center gap-1.5 px-5 py-2.5 bg-[#2c3e2d] hover:bg-[#1c2e1d] text-white font-bold text-xs rounded-xl shadow transition cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-[#14603F] hover:bg-[#0E4A30] text-white font-bold text-xs rounded-2xl shadow transition cursor-pointer disabled:opacity-50"
             >
               <Sparkles size={14} className={asking ? "animate-spin text-amber-300" : "text-amber-300"} />
               {asking ? "AI 역사 해설 생성 중..." : "AI에 질문하고 답변받기"}
@@ -309,7 +309,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-[#ece8df] p-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2.5">
+      <div className="bg-white rounded-2xl border border-[#E5E5EA] p-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2.5">
         <div className="relative w-full sm:w-72">
           <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
           <input
@@ -317,7 +317,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Q&A 내용, 단어 검색..."
-            className="w-full pl-8 pr-3 py-1.5 text-xs font-medium border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] bg-white text-slate-800"
+            className="w-full pl-8 pr-3 py-1.5 text-xs font-medium border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] bg-white text-slate-800"
           />
         </div>
 
@@ -326,16 +326,16 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-2xl text-xs font-bold transition cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-[#2c3e2d] text-white"
-                  : "bg-[#f4f2eb] text-[#8a8171] hover:text-[#2c3e2d]"
+                  ? "bg-[#14603F] text-white"
+                  : "bg-[#F2F2F7] text-[#8E8E93] hover:text-[#14603F]"
               }`}
             >
               {cat}
             </button>
           ))}
-          <span className="text-[11px] text-[#8a8171] font-semibold bg-[#f4f2eb] px-2 py-1 rounded-xl">
+          <span className="text-[11px] text-[#8E8E93] font-semibold bg-[#F2F2F7] px-2 py-1 rounded-2xl">
             총 {filteredQnA.length}건
           </span>
         </div>
@@ -343,18 +343,18 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
 
       {/* QnA Feed List */}
       {loading ? (
-        <div className="bg-white rounded-3xl p-10 text-center text-[#8a8171] text-xs font-medium border border-[#ece8df] shadow-sm">
-          <Sparkles className="mx-auto mb-2 text-[#4a6d4a] animate-spin" size={24} />
+        <div className="bg-white rounded-3xl p-10 text-center text-[#8E8E93] text-xs font-medium border border-[#E5E5EA] shadow-sm">
+          <Sparkles className="mx-auto mb-2 text-[#17784C] animate-spin" size={24} />
           성경 Q&A 히스토리를 불러오고 있습니다...
         </div>
       ) : filteredQnA.length === 0 ? (
-        <div className="bg-white rounded-3xl p-10 text-center border border-[#ece8df] shadow-sm space-y-3">
+        <div className="bg-white rounded-3xl p-10 text-center border border-[#E5E5EA] shadow-sm space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto">
             <HelpCircle size={24} />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-[#2c3e2d]">등록된 성경 질문이 없습니다.</h4>
-            <p className="text-xs text-[#8a8171] mt-1">
+            <h4 className="text-sm font-bold text-[#14603F]">등록된 성경 질문이 없습니다.</h4>
+            <p className="text-xs text-[#8E8E93] mt-1">
               궁금했던 성경 구절의 역사적 배경이나 의미를 첫 번째로 질문해보세요!
             </p>
           </div>
@@ -373,22 +373,22 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl sm:rounded-3xl border border-[#ece8df] shadow-sm p-4 sm:p-5 transition hover:border-[#4a6d4a]/40 space-y-3.5"
+                className="bg-white rounded-2xl sm:rounded-3xl border border-[#E5E5EA] shadow-sm p-4 sm:p-5 transition hover:border-[#17784C]/40 space-y-3.5"
               >
                 {/* Header Tag and Delete */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#e0e7df] text-[#2c3e2d] border border-[#4a6d4a]/30">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E3F2E9] text-[#14603F] border border-[#17784C]/30">
                       {qa.category || "성경 역사 & 배경"}
                     </span>
-                    <span className="text-[10px] text-[#8a8171] flex items-center gap-1">
+                    <span className="text-[10px] text-[#8E8E93] flex items-center gap-1">
                       🔒 익명의 탐구자 • {new Date(qa.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
                   <button
                     onClick={() => handleDelete(qa.id)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px]"
+                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-xl transition cursor-pointer flex items-center gap-1 text-[11px]"
                     title="질문 삭제"
                   >
                     <Trash2 size={14} />
@@ -397,11 +397,11 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                 </div>
 
                 {/* Question */}
-                <div className="bg-[#f4f2eb] border border-[#ece8df] p-3.5 rounded-2xl flex items-start gap-2.5">
-                  <span className="w-6 h-6 rounded-lg bg-[#2c3e2d] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                <div className="bg-[#F2F2F7] border border-[#E5E5EA] p-3.5 rounded-2xl flex items-start gap-2.5">
+                  <span className="w-6 h-6 rounded-xl bg-[#14603F] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                     Q
                   </span>
-                  <p className="text-xs sm:text-sm font-bold text-[#2c3e2d] leading-relaxed pt-0.5">
+                  <p className="text-xs sm:text-sm font-bold text-[#14603F] leading-relaxed pt-0.5">
                     {qa.question}
                   </p>
                 </div>
@@ -410,15 +410,15 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                 {!isExpanded ? (
                   <button
                     onClick={() => toggleExpand(qa.id)}
-                    className="w-full py-2.5 px-4 bg-[#f4f7f4] hover:bg-[#e8efe8] border border-[#d0ded0] text-[#2c3e2d] rounded-2xl text-xs font-bold transition flex items-center justify-between cursor-pointer group shadow-xs"
+                    className="w-full py-2.5 px-4 bg-[#F1F7F3] hover:bg-[#E2F1E8] border border-[#C9E5D5] text-[#14603F] rounded-2xl text-xs font-bold transition flex items-center justify-between cursor-pointer group shadow-xs"
                   >
                     <div className="flex items-center gap-2">
                       <Sparkles size={15} className="text-amber-600 group-hover:scale-110 transition" />
                       <span>AI 성경 학자 & 역사 해설</span>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-[#2c3e2d] font-extrabold bg-white px-2.5 py-1 rounded-xl border border-[#c2d6c2] shadow-2xs">
+                    <div className="flex items-center gap-1 text-xs text-[#14603F] font-extrabold bg-white px-2.5 py-1 rounded-2xl border border-[#C9E5D5] shadow-2xs">
                       <span>답변 열기</span>
-                      <ChevronDown size={15} className="text-[#4a6d4a]" />
+                      <ChevronDown size={15} className="text-[#17784C]" />
                     </div>
                   </button>
                 ) : (
@@ -426,11 +426,11 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="bg-[#fcfbf9] border border-[#e0dad0] p-4 rounded-2xl space-y-3 relative shadow-inner"
+                    className="bg-[#FFFFFF] border border-[#E5E5EA] p-4 rounded-2xl space-y-3 relative shadow-inner"
                   >
                     {/* Answer Header */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ece8df] pb-2.5">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#2c3e2d]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E5EA] pb-2.5">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#14603F]">
                         <Sparkles size={15} className="text-amber-500" />
                         <span>AI 성경 학자 & 역사 해설</span>
                       </div>
@@ -442,7 +442,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                         <button
                           onClick={() => handleRegenerate(qa.id)}
                           disabled={regeneratingId === qa.id}
-                          className="text-[10px] bg-[#2c3e2d] hover:bg-[#1f2d20] text-white px-2 py-0.5 rounded-md font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                          className="text-[10px] bg-[#14603F] hover:bg-[#0E4A30] text-white px-2 py-0.5 rounded-md font-bold transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
                           title="최신 Gemini 3.6 모델로 답변을 다시 생성합니다"
                         >
                           <Sparkles size={11} className={regeneratingId === qa.id ? "animate-spin text-amber-300" : "text-amber-300"} />
@@ -450,10 +450,10 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                         </button>
                         <button
                           onClick={() => toggleExpand(qa.id)}
-                          className="text-xs bg-[#f4f2eb] hover:bg-[#e8e4d8] text-[#2c3e2d] px-2.5 py-1 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer border border-[#ece8df]"
+                          className="text-xs bg-[#F2F2F7] hover:bg-[#E5E5EA] text-[#14603F] px-2.5 py-1 rounded-2xl font-bold transition flex items-center gap-1 cursor-pointer border border-[#E5E5EA]"
                         >
                           <span>답변 닫기</span>
-                          <ChevronUp size={15} className="text-[#4a6d4a]" />
+                          <ChevronUp size={15} className="text-[#17784C]" />
                         </button>
                       </div>
                     </div>
@@ -466,27 +466,27 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                     </div>
 
                     {/* Bottom Close Button */}
-                    <div className="pt-2 border-t border-[#f0ede6] flex justify-end">
+                    <div className="pt-2 border-t border-[#F2F2F7] flex justify-end">
                       <button
                         onClick={() => toggleExpand(qa.id)}
-                        className="text-xs text-[#2c3e2d] hover:bg-[#f4f2eb] px-3 py-1.5 rounded-xl font-bold flex items-center gap-1 cursor-pointer border border-[#ece8df] transition"
+                        className="text-xs text-[#14603F] hover:bg-[#F2F2F7] px-3 py-1.5 rounded-2xl font-bold flex items-center gap-1 cursor-pointer border border-[#E5E5EA] transition"
                       >
                         <span>답변 닫기</span>
-                        <ChevronUp size={15} className="text-[#4a6d4a]" />
+                        <ChevronUp size={15} className="text-[#17784C]" />
                       </button>
                     </div>
                   </motion.div>
                 )}
 
                 {/* Footer Controls (Likes, Comments Count) */}
-                <div className="flex items-center justify-between pt-1 text-xs border-t border-[#f4f2eb]">
+                <div className="flex items-center justify-between pt-1 text-xs border-t border-[#F2F2F7]">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleLike(qa.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition cursor-pointer font-bold ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-2xl transition cursor-pointer font-bold ${
                         isLiked
                           ? "bg-rose-50 text-rose-600 border border-rose-200"
-                          : "text-[#8a8171] hover:bg-[#f4f2eb]"
+                          : "text-[#8E8E93] hover:bg-[#F2F2F7]"
                       }`}
                     >
                       <Heart size={14} className={isLiked ? "fill-rose-500 text-rose-500" : ""} />
@@ -495,10 +495,10 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
 
                     <button
                       onClick={() => setActiveCommentId(isCommentOpen ? null : qa.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition cursor-pointer font-semibold ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-2xl transition cursor-pointer font-semibold ${
                         isCommentOpen
-                          ? "bg-[#4a6d4a] text-white"
-                          : "text-[#8a8171] hover:bg-[#f4f2eb]"
+                          ? "bg-[#17784C] text-white"
+                          : "text-[#8E8E93] hover:bg-[#F2F2F7]"
                       }`}
                     >
                       <MessageSquare size={14} />
@@ -506,7 +506,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                     </button>
                   </div>
 
-                  <span className="text-[10px] text-[#8a8171]">
+                  <span className="text-[10px] text-[#8E8E93]">
                     {new Date(qa.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -518,11 +518,11 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 pt-3 border-t border-[#ece8df] space-y-3"
+                      className="mt-3 pt-3 border-t border-[#E5E5EA] space-y-3"
                     >
-                      <div className="flex items-center justify-between text-xs font-bold text-[#2c3e2d]">
+                      <div className="flex items-center justify-between text-xs font-bold text-[#14603F]">
                         <span>💬 목회자 및 성도 추가 코멘트</span>
-                        <span className="text-[10px] text-[#8a8171]">질문과 답변에 대해 의견을 나눌 수 있습니다</span>
+                        <span className="text-[10px] text-[#8E8E93]">질문과 답변에 대해 의견을 나눌 수 있습니다</span>
                       </div>
 
                       {/* Comments List */}
@@ -535,15 +535,15 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                             return (
                               <div
                                 key={comment.id}
-                                className={`rounded-xl p-2.5 text-xs flex justify-between items-start gap-2 ${
+                                className={`rounded-2xl p-2.5 text-xs flex justify-between items-start gap-2 ${
                                   isPastorOrAdmin
                                     ? "bg-amber-50/80 border border-amber-200"
-                                    : "bg-[#f4f2eb]/70"
+                                    : "bg-[#F2F2F7]/70"
                                 }`}
                               >
                                 <div>
                                   <div className="flex items-center gap-1.5 mb-0.5">
-                                    <span className={`font-bold ${isPastorOrAdmin ? "text-amber-900" : "text-[#2c3e2d]"}`}>
+                                    <span className={`font-bold ${isPastorOrAdmin ? "text-amber-900" : "text-[#14603F]"}`}>
                                       {comment.userName}
                                     </span>
                                     {isPastorOrAdmin && (
@@ -551,11 +551,11 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                                         목양 코멘트
                                       </span>
                                     )}
-                                    <span className="text-[10px] text-[#8a8171]">
+                                    <span className="text-[10px] text-[#8E8E93]">
                                       {new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </div>
-                                  <p className="text-[#4a463f] leading-relaxed">{comment.content}</p>
+                                  <p className="text-[#3A3A3C] leading-relaxed">{comment.content}</p>
                                 </div>
 
                                 {canDeleteComment && (
@@ -571,7 +571,7 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-[11px] text-[#8a8171] text-center py-2 bg-[#f4f2eb]/50 rounded-xl">
+                        <p className="text-[11px] text-[#8E8E93] text-center py-2 bg-[#F2F2F7]/50 rounded-2xl">
                           등록된 코멘트가 없습니다. 목사님이나 성도님의 나눔/보충 설명을 남겨보세요!
                         </p>
                       )}
@@ -586,12 +586,12 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
                             if (e.key === 'Enter') handleAddComment(qa.id);
                           }}
                           placeholder={`${currentUser.name}님으로 코멘트/목양 나눔 남기기...`}
-                          className="flex-1 px-3 py-2 text-xs border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] bg-white text-slate-800"
+                          className="flex-1 px-3 py-2 text-xs border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] bg-white text-slate-800"
                         />
                         <button
                           onClick={() => handleAddComment(qa.id)}
                           disabled={submittingComment || !commentInput.trim()}
-                          className="p-2 bg-[#4a6d4a] hover:bg-[#3d5a3d] text-white rounded-xl disabled:opacity-50 transition cursor-pointer"
+                          className="p-2 bg-[#17784C] hover:bg-[#125E3B] text-white rounded-2xl disabled:opacity-50 transition cursor-pointer"
                         >
                           <Send size={14} />
                         </button>

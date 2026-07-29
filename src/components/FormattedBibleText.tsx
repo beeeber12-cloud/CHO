@@ -72,11 +72,11 @@ export default function FormattedBibleText({
           }`}
         >
           <p
-            className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#2c3e2d] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
+            className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#14603F] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
             style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
           >
             {v.verseNum && (
-              <span className="font-sans font-bold text-[#4a6d4a] text-xs sm:text-sm mr-2 inline-block select-none">
+              <span className="font-sans font-bold text-[#17784C] text-xs sm:text-sm mr-2 inline-block select-none">
                 {v.verseNum}
               </span>
             )}

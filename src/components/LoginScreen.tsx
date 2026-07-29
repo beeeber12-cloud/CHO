@@ -133,24 +133,24 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   };
 
   return (
-    <div id="login-container" className="min-h-screen bg-[#fdfbf7] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div id="login-container" className="min-h-screen bg-[#F7F7FA] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center justify-center p-3.5 bg-[#e0e7df] rounded-2xl shadow-md mb-4 text-[#2c3e2d]"
+          className="inline-flex items-center justify-center p-3.5 bg-[#E3F2E9] rounded-2xl shadow-md mb-4 text-[#14603F]"
         >
           <UserCheck size={36} />
         </motion.div>
-        <h2 className="text-3xl font-bold text-[#2c3e2d] tracking-tight">은혜교회</h2>
-        <p className="mt-2 text-sm text-[#8a8171]">
+        <h2 className="text-3xl font-bold text-[#14603F] tracking-tight">은혜교회</h2>
+        <p className="mt-2 text-sm text-[#8E8E93]">
           우리 성도님들과 소그룹을 위한 매일 말씀 묵상과 따뜻한 은혜 나눔터
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-md rounded-2xl sm:px-10 border border-[#ece8df]">
+        <div className="bg-white py-8 px-6 shadow-md rounded-2xl sm:px-10 border border-[#E5E5EA]">
           {error && (
             <div className="mb-4 bg-rose-50 border-l-4 border-rose-500 p-3 text-sm text-rose-700 flex items-center rounded-r-lg">
               <ShieldAlert className="mr-2 flex-shrink-0" size={18} />
@@ -168,15 +168,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           {!isRegistering ? (
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Login Mode Toggle Tabs */}
-              <div className="flex bg-[#f4f2eb] p-1 rounded-xl border border-[#ece8df]">
+              <div className="flex bg-[#F2F2F7] p-1 rounded-2xl border border-[#E5E5EA]">
                 <button
                   type="button"
                   onClick={() => {
                     setLoginMode('select');
                     setError("");
                   }}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                    loginMode === 'select' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
+                    loginMode === 'select' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
                   }`}
                 >
                   목록에서 선택
@@ -187,8 +187,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setLoginMode('type');
                     setError("");
                   }}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                    loginMode === 'type' ? "bg-[#2c3e2d] text-white shadow-sm" : "text-[#8a8171] hover:text-[#2c3e2d]"
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
+                    loginMode === 'type' ? "bg-[#14603F] text-white shadow-sm" : "text-[#8E8E93] hover:text-[#14603F]"
                   }`}
                 >
                   이름 직접 입력
@@ -196,13 +196,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#4a463f] mb-1 flex items-center justify-between">
+                <label className="block text-xs font-semibold text-[#3A3A3C] mb-1 flex items-center justify-between">
                   <span className="flex items-center">
-                    <Users size={15} className="mr-1.5 text-[#4a6d4a]" />
+                    <Users size={15} className="mr-1.5 text-[#17784C]" />
                     {loginMode === 'select' ? "묵상 지체 선택" : "성함 직접 입력"}
                   </span>
                   {loginMode === 'type' && (
-                    <span className="text-[10px] text-[#4a6d4a] font-bold">실명 및 닉네임</span>
+                    <span className="text-[10px] text-[#17784C] font-bold">실명 및 닉네임</span>
                   )}
                 </label>
 
@@ -214,7 +214,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                         setSelectedUser(e.target.value);
                         setError("");
                       }}
-                      className="w-full pl-3 pr-10 py-2.5 text-slate-800 bg-white border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] focus:border-[#4a6d4a] text-xs font-semibold appearance-none cursor-pointer shadow-sm"
+                      className="w-full pl-3 pr-10 py-2.5 text-slate-800 bg-white border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] focus:border-[#17784C] text-xs font-semibold appearance-none cursor-pointer shadow-sm"
                     >
                       <option value="">-- 목록에서 이름을 선택하세요 --</option>
                       {users.map((u) => (
@@ -238,14 +238,14 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                       setError("");
                     }}
                     placeholder="성함을 입력하세요 (예: 조재영)"
-                    className="w-full px-3 py-2.5 text-slate-800 font-semibold border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] text-xs shadow-sm bg-white"
+                    className="w-full px-3 py-2.5 text-slate-800 font-semibold border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] text-xs shadow-sm bg-white"
                   />
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#4a463f] mb-1 flex items-center">
-                  <Lock size={15} className="mr-1.5 text-[#4a6d4a]" />
+                <label className="block text-xs font-semibold text-[#3A3A3C] mb-1 flex items-center">
+                  <Lock size={15} className="mr-1.5 text-[#17784C]" />
                   4자리 비밀번호 (PIN)
                 </label>
                 <input
@@ -259,13 +259,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setError("");
                   }}
                   placeholder="숫자 4자리 비밀번호 입력"
-                  className="w-full px-3 py-2.5 text-slate-800 border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] focus:border-[#4a6d4a] text-xs tracking-widest text-center font-bold shadow-sm"
+                  className="w-full px-3 py-2.5 text-slate-800 border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] focus:border-[#17784C] text-xs tracking-widest text-center font-bold shadow-sm"
                 />
-                <div className="mt-2 bg-[#f4f2eb]/70 p-2.5 rounded-xl border border-[#ece8df] text-[11px] text-[#4a463f] leading-relaxed space-y-1">
-                  <p className="font-bold text-[#2c3e2d] flex items-center gap-1">
+                <div className="mt-2 bg-[#F2F2F7]/70 p-2.5 rounded-2xl border border-[#E5E5EA] text-[11px] text-[#3A3A3C] leading-relaxed space-y-1">
+                  <p className="font-bold text-[#14603F] flex items-center gap-1">
                     🔒 자동 로그인 안내
                   </p>
-                  <p className="text-[10px] text-[#8a8171]">
+                  <p className="text-[10px] text-[#8E8E93]">
                     한 번 로그인하시면 로그아웃 버튼을 누르기 전까지 오랫동안 재접속해도 <strong>자동 로그인 상태가 안전하게 유지</strong>됩니다.
                   </p>
                 </div>
@@ -275,7 +275,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-[#4a6d4a] hover:bg-[#3d5a3d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4a6d4a] transition cursor-pointer"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-2xl shadow-md text-xs font-bold text-white bg-[#17784C] hover:bg-[#125E3B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#17784C] transition cursor-pointer"
                 >
                   {loading ? "로그인 확인 중..." : "나눔방 들어가기"}
                 </button>
@@ -286,22 +286,22 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setIsRegistering(true);
                     setError("");
                   }}
-                  className="w-full flex items-center justify-center py-2.5 px-4 border border-[#ece8df] rounded-xl text-xs font-semibold text-slate-700 bg-[#f4f2eb] hover:bg-[#e0dcd0] transition cursor-pointer"
+                  className="w-full flex items-center justify-center py-2.5 px-4 border border-[#E5E5EA] rounded-2xl text-xs font-semibold text-slate-700 bg-[#F2F2F7] hover:bg-[#D8D8DE] transition cursor-pointer"
                 >
-                  <UserPlus size={15} className="mr-1.5 text-[#4a6d4a]" />
+                  <UserPlus size={15} className="mr-1.5 text-[#17784C]" />
                   처음 오셨나요? 새 식구 등록하기
                 </button>
               </div>
             </form>
           ) : (
             <form onSubmit={handleRegister} className="space-y-6">
-              <h3 className="text-lg font-bold text-[#2c3e2d] flex items-center">
-                <UserPlus className="mr-1.5 text-[#4a6d4a]" size={20} />
+              <h3 className="text-lg font-bold text-[#14603F] flex items-center">
+                <UserPlus className="mr-1.5 text-[#17784C]" size={20} />
                 새로운 묵상 식구 등록
               </h3>
 
               <div>
-                <label className="block text-sm font-semibold text-[#4a463f] mb-1">
+                <label className="block text-sm font-semibold text-[#3A3A3C] mb-1">
                   성함 (실명을 사용해주시면 좋습니다)
                 </label>
                 <input
@@ -310,12 +310,12 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
                   placeholder="예: 김성경"
-                  className="w-full px-3 py-2.5 text-slate-800 border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] focus:border-[#4a6d4a] text-sm shadow-sm"
+                  className="w-full px-3 py-2.5 text-slate-800 border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] focus:border-[#17784C] text-sm shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#4a463f] mb-1">
+                <label className="block text-sm font-semibold text-[#3A3A3C] mb-1">
                   비밀번호 4자리 (PIN)
                 </label>
                 <input
@@ -327,12 +327,12 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   value={regPin}
                   onChange={(e) => setRegPin(e.target.value.replace(/[^0-9]/g, "")) }
                   placeholder="로그인에 사용할 숫자 4자리"
-                  className="w-full px-3 py-2.5 text-slate-800 border border-[#ece8df] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4a6d4a] focus:border-[#4a6d4a] text-sm text-center tracking-widest shadow-sm"
+                  className="w-full px-3 py-2.5 text-slate-800 border border-[#E5E5EA] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#17784C] focus:border-[#17784C] text-sm text-center tracking-widest shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#4a463f] mb-1">
+                <label className="block text-sm font-semibold text-[#3A3A3C] mb-1">
                   역할 구분
                 </label>
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
@@ -342,7 +342,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                       name="role"
                       checked={regRole === "member"}
                       onChange={() => setRegRole("member")}
-                      className="h-4 w-4 text-[#4a6d4a] focus:ring-[#4a6d4a] border-slate-300 mr-2"
+                      className="h-4 w-4 text-[#17784C] focus:ring-[#17784C] border-slate-300 mr-2"
                     />
                     일반 지체 (읽기, 쓰기, 소통)
                   </label>
@@ -352,7 +352,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                       name="role"
                       checked={regRole === "admin"}
                       onChange={() => setRegRole("admin")}
-                      className="h-4 w-4 text-[#4a6d4a] focus:ring-[#4a6d4a] border-slate-300 mr-2"
+                      className="h-4 w-4 text-[#17784C] focus:ring-[#17784C] border-slate-300 mr-2"
                     />
                     관리자 (말씀 공지 등록 권한)
                   </label>
@@ -366,14 +366,14 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setIsRegistering(false);
                     setError("");
                   }}
-                  className="w-1/2 py-2.5 px-4 border border-[#ece8df] rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-[#f4f2eb] focus:outline-none transition cursor-pointer"
+                  className="w-1/2 py-2.5 px-4 border border-[#E5E5EA] rounded-2xl text-sm font-semibold text-slate-700 bg-white hover:bg-[#F2F2F7] focus:outline-none transition cursor-pointer"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-1/2 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-[#4a6d4a] hover:bg-[#3d5a3d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4a6d4a] transition cursor-pointer"
+                  className="w-1/2 py-2.5 px-4 border border-transparent rounded-2xl shadow-md text-sm font-bold text-white bg-[#17784C] hover:bg-[#125E3B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#17784C] transition cursor-pointer"
                 >
                   {loading ? "등록 중..." : "등록 완료"}
                 </button>
