@@ -102,6 +102,21 @@ export interface BibleQA {
   createdAt: string;
 }
 
+/** 한 기기(브라우저)의 푸시 구독 정보. 사람 한 명이 폰·PC 등 여러 개를 가질 수 있다. */
+export interface PushSubscriptionRecord {
+  userId: string;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  userAgent?: string;
+  createdAt: string;
+}
+
+/** 푸시 발신자 신원(VAPID). 한 번 만들면 바뀌면 안 된다 — 바뀌면 기존 구독이 전부 무효가 됨. */
+export interface VapidKeys {
+  publicKey: string;
+  privateKey: string;
+}
+
 export interface DatabaseSchema {
   users: User[];
   notices: Notice[];
@@ -113,6 +128,8 @@ export interface DatabaseSchema {
   alarmConfigs: AlarmConfig[];
   biblePlan?: BiblePlan;
   userBibleProgress?: Record<string, UserBibleProgress>;
+  pushSubscriptions?: PushSubscriptionRecord[];
+  vapidKeys?: VapidKeys;
   updatedAt?: string;
 }
 

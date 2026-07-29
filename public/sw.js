@@ -35,6 +35,50 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
+// ── 웹 푸시 수신 ───────────────────────────────────────────
+// 앱이 완전히 닫혀 있어도 이 핸들러는 OS 가 깨워서 실행한다.
+self.addEventListener("push", (e) => {
+  let data = {};
+  try {
+    data = e.data ? e.data.json() : {};
+  } catch (err) {
+    data = { title: "말씀나눔", body: e.data ? e.data.text() : "" };
+  }
+
+  const title = data.title || "말씀나눔";
+  const options = {
+    body: data.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    // 같은 tag 면 알림이 쌓이지 않고 최신 것으로 대체된다
+    tag: data.tag || "default",
+    renotify: true,
+    data: { url: data.url || "/" }
+  };
+
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+// 알림을 누르면 이미 열린 탭이 있으면 그 탭으로, 없으면 새로 연다.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || "/";
+
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (client.url.startsWith(self.location.origin) && "focus" in client) {
+          client.navigate(target);
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(target);
+      }
+    })
+  );
+});
+
 self.addEventListener("fetch", (e) => {
   // Only handle GET requests and local assets
   if (e.request.method !== "GET" || !e.request.url.startsWith(self.location.origin)) {

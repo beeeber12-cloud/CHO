@@ -4,7 +4,8 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
-import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup } from "./src/types";
+import webpush from "web-push";
+import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText } from "./server/bibleData.js";
 import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
 
@@ -18,6 +19,38 @@ let saveQueue = Promise.resolve();
 
 // Firestore 를 한 번이라도 정상적으로 읽었는지 (원격 데이터 보호용)
 let remoteEverRead = false;
+
+/**
+ * Firestore 쓰기를 "절대 서버를 멈추지 않게" 감싼 버전.
+ *
+ * 2026-07-29 사고: 무료 쓰기 할당량이 소진되자 Firestore SDK 가 최대 백오프로 무한 재시도했고,
+ * 기동 중 `await saveToFirestore(...)` 가 영원히 반환되지 않아 **API 서버가 아예 뜨지 않았다**.
+ * (정적 페이지는 뜨는데 모든 /api 요청이 타임아웃)
+ * 따라서 쓰기에는 반드시 시간 제한을 두고, 실패해도 진행한다.
+ */
+const FIRESTORE_WRITE_TIMEOUT_MS = 8000;
+
+async function saveToFirestoreSafely(data: DatabaseSchema, reason: string): Promise<boolean> {
+  try {
+    // Firestore 는 undefined 필드를 거부한다. JSON 왕복으로 undefined 를 제거한 사본을 보낸다.
+    const clean: DatabaseSchema = JSON.parse(JSON.stringify(data));
+    await Promise.race([
+      saveToFirestore(clean),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Firestore write timeout")), FIRESTORE_WRITE_TIMEOUT_MS)
+      )
+    ]);
+    return true;
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    if (msg.includes("RESOURCE_EXHAUSTED") || err?.code === "resource-exhausted") {
+      console.error(`[DB] Firestore 일일 쓰기 할당량 초과 (${reason}). 로컬 저장만 유지합니다.`);
+    } else {
+      console.error(`[DB] Firestore 쓰기 실패/시간초과 (${reason}):`, msg);
+    }
+    return false;
+  }
+}
 
 /**
  * "방금 만들어진 초기 상태(시드) DB"인지 판별.
@@ -63,7 +96,16 @@ function getKSTDateString(d: Date = new Date()): string {
 }
 
 // Helper to sync and refresh with Firestore
-async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
+/**
+ * 원격 Firestore 와 메모리 상태를 맞춘다.
+ *
+ * @param writeBack  병합 결과를 원격에 되쓸지 여부.
+ *   ⚠️ 2026-07-29 사고 원인: 이 함수가 항상 되쓰기를 했고, API 미들웨어가 1.5초마다 이걸 호출했다.
+ *   클라이언트가 4초 주기로 폴링하므로 1분에 수십 번씩 67KB 문서를 통째로 다시 썼고,
+ *   Firestore 무료 쓰기 한도(하루 20,000단위)가 20분 만에 소진됐다.
+ *   → 평상시 새로고침은 읽기만 하고, 되쓰기는 기동 시와 실제 데이터 변경 시에만 한다.
+ */
+async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<DatabaseSchema> {
   try {
     const localDb = loadDb();
     const remoteDb = await fetchFromFirestore();
@@ -220,6 +262,11 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
       }
       const mergedSokGroups = Array.from(sokMap.values());
 
+      // 푸시 구독은 기기 단위(endpoint)로 합친다. 한쪽에만 있는 구독이 사라지면 알림이 끊긴다.
+      const subMap = new Map<string, PushSubscriptionRecord>();
+      for (const s of localDb.pushSubscriptions || []) subMap.set(s.endpoint, s);
+      for (const s of remoteDb.pushSubscriptions || []) subMap.set(s.endpoint, s);
+
       const mergedDb: DatabaseSchema = {
         users: mergedUsers,
         notices: mergedNotices,
@@ -231,8 +278,16 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
         alarmConfigs: remoteDb.alarmConfigs || localDb.alarmConfigs || [],
         userBibleProgress: mergedProgress,
         biblePlan: remoteDb.biblePlan || localDb.biblePlan || { book: "요한복음", currentChapter: 1, active: false },
+        pushSubscriptions: Array.from(subMap.values()),
         updatedAt: new Date().toISOString()
       };
+
+      // ⚠️ VAPID 키가 바뀌면 교인들이 등록해 둔 구독이 전부 무효가 된다. 기존 것을 최우선 보존.
+      // (Firestore 는 undefined 필드를 거부하므로 값이 있을 때만 넣는다)
+      const keptVapid = remoteDb.vapidKeys || localDb.vapidKeys;
+      if (keptVapid?.publicKey && keptVapid?.privateKey) {
+        mergedDb.vapidKeys = keptVapid;
+      }
 
       dbCache = mergedDb;
       db = mergedDb;
@@ -242,7 +297,10 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
         console.error("Failed to save merged DB to local file:", err);
       }
 
-      await saveToFirestore(mergedDb);
+      // 쓰기가 실패해도(할당량 초과 등) 서버 기동을 막아선 안 된다.
+      if (writeBack) {
+        await saveToFirestoreSafely(mergedDb, "startup-merge");
+      }
       return mergedDb;
     } else {
       // ⚠️ 여기 도달 = Firestore 를 읽지 못했거나 원격 문서가 없는 상태.
@@ -253,8 +311,8 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
         console.error(
           "[SAFETY] Firestore 읽기 실패/비어있음 + 로컬이 초기상태 → 원격 쓰기를 건너뜁니다. (데이터 보호)"
         );
-      } else {
-        await saveToFirestore(current);
+      } else if (writeBack) {
+        await saveToFirestoreSafely(current, "startup-local");
       }
       return current;
     }
@@ -265,16 +323,68 @@ async function syncAndRefreshWithFirestore(): Promise<DatabaseSchema> {
 }
 
 async function syncFirestoreOnStartup() {
-  await syncAndRefreshWithFirestore();
+  // 기동 시에는 로컬/원격 병합 결과를 한 번 확정해 둔다 (되쓰기 허용)
+  await syncAndRefreshWithFirestore(true);
   console.log("Initial Firestore sync completed.");
 }
+
+// ── Firestore 쓰기 합치기(debounce) ────────────────────────────
+// 이 앱은 DB 전체를 문서 하나에 담아 매번 통째로 덮어쓴다.
+// Firestore 는 1KB 당 쓰기 단위 1개를 소모하므로, 67KB 문서면 한 번 저장에 약 67단위다.
+// 무료 한도(하루 20,000단위) 기준으로 하루 300번만 저장해도 바닥나서
+// 실제로 2026-07-29 할당량 초과가 발생했다.
+// → 좋아요·댓글 같은 연속 동작을 한 번의 쓰기로 묶어 보낸다.
+//   로컬 db.json 은 즉시 저장하므로 컨테이너가 살아있는 동안의 정합성은 유지된다.
+const FIRESTORE_FLUSH_MS = 15000;
+let flushTimer: NodeJS.Timeout | null = null;
+let pendingFirestoreWrite = false;
+
+async function flushToFirestore(reason: string = "debounce") {
+  if (!pendingFirestoreWrite) return;
+  pendingFirestoreWrite = false;
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  try {
+    // ⚠️ 원격을 한 번도 못 읽은 상태에서 초기(빈) DB 를 쓰면 기존 데이터가 삭제된다.
+    if (!remoteEverRead && isSeedLikeDb(db)) {
+      console.error("[SAFETY] 원격 미확인 + 초기상태 DB → Firestore 쓰기 차단 (데이터 보호)");
+      return;
+    }
+    await saveToFirestoreSafely(db, reason);
+  } catch (err) {
+    console.error(`Failed to sync save to Firestore (${reason}):`, err);
+  }
+}
+
+function scheduleFirestoreWrite() {
+  pendingFirestoreWrite = true;
+  if (flushTimer) return; // 이미 예약돼 있으면 그 타이머가 처리
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    flushToFirestore();
+  }, FIRESTORE_FLUSH_MS);
+}
+
+// 컨테이너가 내려갈 때 남은 변경분을 반드시 넘긴다 (Cloud Run 축소 시 유실 방지)
+let shuttingDown = false;
+async function gracefulFlush(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[DB] ${signal} 수신 → 남은 변경분 Firestore 반영 중...`);
+  await flushToFirestore(signal);
+  process.exit(0);
+}
+process.on("SIGTERM", () => { gracefulFlush("SIGTERM"); });
+process.on("SIGINT", () => { gracefulFlush("SIGINT"); });
 
 // Helper to save database atomically and to Firestore
 function saveDb(dbData: DatabaseSchema) {
   db = dbData;
   dbCache = dbData;
   saveQueue = saveQueue.then(() => {
-    return new Promise<void>(async (resolve) => {
+    return new Promise<void>((resolve) => {
       try {
         const tempFile = `${DB_FILE}.tmp`;
         fs.writeFileSync(tempFile, JSON.stringify(dbData, null, 2), "utf-8");
@@ -282,19 +392,8 @@ function saveDb(dbData: DatabaseSchema) {
       } catch (err) {
         console.error("Failed to save DB safely:", err);
       }
-
-      // Save to Firebase Firestore in the background
-      try {
-        // ⚠️ 원격을 한 번도 못 읽은 상태에서 초기(빈) DB 를 쓰면 기존 데이터가 삭제된다.
-        if (!remoteEverRead && isSeedLikeDb(dbData)) {
-          console.error("[SAFETY] 원격 미확인 + 초기상태 DB → Firestore 쓰기 차단 (데이터 보호)");
-        } else {
-          await saveToFirestore(dbData);
-        }
-      } catch (fErr) {
-        console.error("Failed to sync save to Firestore:", fErr);
-      }
-
+      // Firestore 는 즉시 쓰지 않고 모아서 보낸다
+      scheduleFirestoreWrite();
       resolve();
     });
   });
@@ -334,6 +433,114 @@ if (!db.biblePlan) {
 }
 if (!fs.existsSync(DB_FILE)) {
   saveDb(db);
+}
+
+// ─────────────────────────────────────────────────────────────
+// 웹 푸시 (앱을 닫아둬도 도착하는 진짜 알림)
+// ─────────────────────────────────────────────────────────────
+// VAPID 키는 "발신자 신원"이라 한 번 정하면 절대 바뀌면 안 된다.
+// 바뀌는 순간 교인들이 이미 등록해 둔 구독이 전부 무효가 되기 때문.
+// 그래서 환경변수가 있으면 그걸 쓰고, 없으면 DB(Firestore)에 만들어 저장해
+// 재배포·재시작에도 같은 키가 유지되게 한다.
+let pushReady = false;
+
+function initWebPush() {
+  try {
+    let publicKey = process.env.VAPID_PUBLIC_KEY || "";
+    let privateKey = process.env.VAPID_PRIVATE_KEY || "";
+
+    if (!publicKey || !privateKey) {
+      if (db.vapidKeys?.publicKey && db.vapidKeys?.privateKey) {
+        publicKey = db.vapidKeys.publicKey;
+        privateKey = db.vapidKeys.privateKey;
+      } else {
+        const generated = webpush.generateVAPIDKeys();
+        publicKey = generated.publicKey;
+        privateKey = generated.privateKey;
+        db.vapidKeys = { publicKey, privateKey };
+        saveDb(db);
+        console.log("[Push] VAPID 키를 새로 생성해 DB에 저장했습니다.");
+      }
+    }
+
+    webpush.setVapidDetails("mailto:beeeber12@gmail.com", publicKey, privateKey);
+    activeVapidPublicKey = publicKey;
+    // 동기화로 db 가 교체돼도 키가 남아있도록 다시 심어둔다.
+    db.vapidKeys = { publicKey, privateKey };
+    pushReady = true;
+    console.log("[Push] 웹 푸시 준비 완료.");
+  } catch (err) {
+    console.error("[Push] 초기화 실패:", err);
+    pushReady = false;
+  }
+}
+
+function getVapidPublicKey(): string {
+  return process.env.VAPID_PUBLIC_KEY || db.vapidKeys?.publicKey || activeVapidPublicKey;
+}
+
+// 주기적 동기화가 db 객체를 통째로 교체해도 실제 사용 중인 키를 잃지 않도록 따로 보관.
+let activeVapidPublicKey = "";
+
+interface PushPayload {
+  title: string;
+  body: string;
+  url?: string;
+  tag?: string;
+}
+
+/**
+ * 지정한 사용자들에게 푸시를 보낸다.
+ * - 발신 본인은 제외(excludeUserId)
+ * - 만료된 구독(404/410)은 조용히 정리한다. 안 그러면 죽은 구독이 계속 쌓인다.
+ */
+async function sendPushToUsers(
+  userIds: string[],
+  payload: PushPayload,
+  excludeUserId?: string
+): Promise<void> {
+  if (!pushReady) return;
+  if (!db.pushSubscriptions || db.pushSubscriptions.length === 0) return;
+
+  const targets = new Set(userIds.filter((id) => id && id !== excludeUserId));
+  if (targets.size === 0) return;
+
+  const subs = db.pushSubscriptions.filter((s) => targets.has(s.userId));
+  if (subs.length === 0) return;
+
+  const body = JSON.stringify(payload);
+  const dead: string[] = [];
+
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: s.keys } as any,
+          body
+        );
+      } catch (err: any) {
+        const code = err?.statusCode;
+        if (code === 404 || code === 410) {
+          dead.push(s.endpoint);
+        } else {
+          console.warn("[Push] 전송 실패:", code, err?.body || err?.message);
+        }
+      }
+    })
+  );
+
+  if (dead.length > 0) {
+    db.pushSubscriptions = (db.pushSubscriptions || []).filter(
+      (s) => !dead.includes(s.endpoint)
+    );
+    saveDb(db);
+    console.log(`[Push] 만료된 구독 ${dead.length}건 정리`);
+  }
+}
+
+/** 전체 교인에게 (발신자 제외) */
+async function pushToEveryone(payload: PushPayload, excludeUserId?: string) {
+  await sendPushToUsers((db.users || []).map((u) => u.id), payload, excludeUserId);
 }
 
 // Initialize Gemini SDK safely
@@ -486,6 +693,9 @@ async function startServer() {
   // Synchronize with persistent Firebase Firestore on server startup
   await syncFirestoreOnStartup();
 
+  // 원격 DB 를 읽은 뒤에 초기화해야 기존 VAPID 키를 그대로 이어받는다.
+  initWebPush();
+
   // Ensure no notice in database has corrupted or placeholder text
   if (db.notices && db.notices.length > 0) {
     let sanitized = false;
@@ -505,16 +715,23 @@ async function startServer() {
   }
 
   let lastSyncTime = 0;
-  // Middleware to ensure fresh database state from Firestore
+  // 원격 상태를 다시 읽어오는 주기.
+  // 인스턴스를 1개로 고정해 운영하므로 이 컨테이너의 메모리가 사실상 최신이다.
+  // 자주 읽을 이유가 없고, 읽기도 무료 한도를 소모하므로 넉넉히 잡는다.
+  const REMOTE_REFRESH_MS = 60000;
+
   app.use("/api", async (req: Request, res: Response, next: express.NextFunction) => {
     const now = Date.now();
-    // Re-sync with Firestore at most once every 1.5s per request batch
-    if (now - lastSyncTime > 1500) {
+    if (now - lastSyncTime > REMOTE_REFRESH_MS) {
       lastSyncTime = now;
-      try {
-        await syncAndRefreshWithFirestore();
-      } catch (err) {
-        console.error("Auto sync in API middleware error:", err);
+      // 아직 원격에 못 넘긴 로컬 변경이 있으면 병합하지 않는다.
+      // (병합은 합집합이라, 방금 지운 항목이 원격 사본에서 되살아난다)
+      if (!pendingFirestoreWrite) {
+        try {
+          await syncAndRefreshWithFirestore(false); // 읽기 전용 — 되쓰지 않는다
+        } catch (err) {
+          console.error("Auto sync in API middleware error:", err);
+        }
       }
     }
     next();
@@ -730,6 +947,65 @@ async function startServer() {
     res.json(db.biblePlan);
   });
 
+  // ── 웹 푸시 구독 관리 ──────────────────────────────────────
+  app.get("/api/push/public-key", (req: Request, res: Response) => {
+    const key = getVapidPublicKey();
+    if (!key) return res.status(503).json({ error: "푸시 설정이 아직 준비되지 않았습니다." });
+    res.json({ publicKey: key });
+  });
+
+  app.post("/api/push/subscribe", (req: Request, res: Response) => {
+    const { userId, subscription, userAgent } = req.body;
+    if (!userId || !subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+      return res.status(400).json({ error: "구독 정보가 올바르지 않습니다." });
+    }
+
+    if (!db.pushSubscriptions) db.pushSubscriptions = [];
+
+    // 같은 기기(endpoint)면 갱신, 없으면 추가.
+    const idx = db.pushSubscriptions.findIndex((s) => s.endpoint === subscription.endpoint);
+    const record: PushSubscriptionRecord = {
+      userId,
+      endpoint: subscription.endpoint,
+      keys: { p256dh: subscription.keys.p256dh, auth: subscription.keys.auth },
+      userAgent: typeof userAgent === "string" ? userAgent.slice(0, 200) : undefined,
+      createdAt: new Date().toISOString()
+    };
+    if (idx >= 0) db.pushSubscriptions[idx] = record;
+    else db.pushSubscriptions.push(record);
+
+    saveDb(db);
+    res.json({ success: true, count: db.pushSubscriptions.filter(s => s.userId === userId).length });
+  });
+
+  app.post("/api/push/unsubscribe", (req: Request, res: Response) => {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: "endpoint 가 필요합니다." });
+    db.pushSubscriptions = (db.pushSubscriptions || []).filter((s) => s.endpoint !== endpoint);
+    saveDb(db);
+    res.json({ success: true });
+  });
+
+  /** 설정 화면에서 "내 폰에 실제로 오는지" 확인용 */
+  app.post("/api/push/test", async (req: Request, res: Response) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "userId 가 필요합니다." });
+    if (!pushReady) return res.status(503).json({ error: "푸시가 준비되지 않았습니다." });
+
+    const mine = (db.pushSubscriptions || []).filter((s) => s.userId === userId);
+    if (mine.length === 0) {
+      return res.status(404).json({ error: "이 기기에 등록된 알림이 없습니다. 먼저 알림을 켜주세요." });
+    }
+
+    await sendPushToUsers([userId], {
+      title: "🔔 알림 테스트",
+      body: "알림이 정상적으로 도착했습니다. 앱을 닫아두셔도 이렇게 받아보실 수 있어요.",
+      url: "/",
+      tag: "test"
+    });
+    res.json({ success: true, devices: mine.length });
+  });
+
   app.post("/api/notices/create", (req: Request, res: Response) => {
     const { verseTitle, verseText, content, createdBy, noticeId } = req.body;
     if (!verseTitle || !verseText) {
@@ -768,6 +1044,13 @@ async function startServer() {
     db.notices.unshift(newNotice);
     saveDb(db);
     res.json(newNotice);
+
+    pushToEveryone({
+      title: "📖 오늘의 말씀이 올라왔어요",
+      body: verseTitle,
+      url: "/",
+      tag: "notice"
+    }).catch((e) => console.warn("[Push] 공지 알림 실패:", e));
   });
 
   app.post("/api/notices/:id/read", (req: Request, res: Response) => {
@@ -916,6 +1199,22 @@ async function startServer() {
     db.meditations.unshift(newMed);
     saveDb(db);
     res.json(newMed);
+
+    // 속 나눔이면 그 속 식구에게만, 전체 공유면 모두에게
+    const audience = newMed.sokId
+      ? (db.sokGroups || []).find((s) => s.id === newMed.sokId)?.memberUserIds || []
+      : (db.users || []).map((u) => u.id);
+
+    sendPushToUsers(
+      audience,
+      {
+        title: "📖 새 묵상이 올라왔어요",
+        body: `${userName} 님 · ${title}`,
+        url: "/",
+        tag: "meditation"
+      },
+      userId
+    ).catch((e) => console.warn("[Push] 묵상 알림 실패:", e));
   });
 
   app.delete("/api/meditations/:id", (req: Request, res: Response) => {
@@ -984,6 +1283,19 @@ async function startServer() {
     med.comments.push(newComment);
     saveDb(db);
     res.json(med);
+
+    // 글쓴이 + 먼저 댓글 단 사람들에게 (본인 제외)
+    const participants = new Set<string>([med.userId, ...med.comments.map((c) => c.userId)]);
+    sendPushToUsers(
+      [...participants],
+      {
+        title: "💬 내 묵상에 댓글이 달렸어요",
+        body: `${userName} : ${content.slice(0, 60)}`,
+        url: "/",
+        tag: "comment-" + med.id
+      },
+      userId
+    ).catch((e) => console.warn("[Push] 댓글 알림 실패:", e));
   });
 
   app.delete("/api/meditations/:id/comment/:commentId", (req: Request, res: Response) => {
@@ -1440,6 +1752,16 @@ JSON format:
     db.gratitudes.unshift(newGratitude);
     saveDb(db);
     res.json(newGratitude);
+
+    pushToEveryone(
+      {
+        title: "🤍 새로운 감사 나눔",
+        body: `${newGratitude.isAnonymous ? "익명" : userName} : ${newGratitude.content.slice(0, 60)}`,
+        url: "/",
+        tag: "gratitude"
+      },
+      userId
+    ).catch((e) => console.warn("[Push] 감사 알림 실패:", e));
   });
 
   app.delete("/api/gratitudes/:id", (req: Request, res: Response) => {
@@ -1512,6 +1834,18 @@ JSON format:
     grat.comments.push(newComment);
     saveDb(db);
     res.json(grat);
+
+    const participants = new Set<string>([grat.userId, ...grat.comments.map((c) => c.userId)]);
+    sendPushToUsers(
+      [...participants],
+      {
+        title: "💬 감사 나눔에 댓글이 달렸어요",
+        body: `${userName} : ${newComment.content.slice(0, 60)}`,
+        url: "/",
+        tag: "grat-comment-" + grat.id
+      },
+      userId
+    ).catch((e) => console.warn("[Push] 감사 댓글 알림 실패:", e));
   });
 
   app.delete("/api/gratitudes/:id/comment/:commentId", (req: Request, res: Response) => {

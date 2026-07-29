@@ -3,6 +3,7 @@ import { AlarmConfig } from "../types";
 import { Bell, Clock, Calendar, Check, AlertCircle, Volume2, Sparkles, Send, BellOff, X, User, Lock, ShieldAlert, Trash2, Users, Type, ZoomIn, Smartphone, Download, Share, PlusSquare } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFontSize, FontScale } from "../context/FontSizeContext";
+import { checkPushSupport, enablePush, disablePush, isPushEnabled, sendTestPush, PushSupport } from "../lib/push";
 
 
 interface NotificationSettingsProps {
@@ -62,6 +63,131 @@ function FontSizeSettingCard() {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * 진짜 푸시 알림 설정.
+ * 브라우저를 닫아둬도 도착하는 알림이라, 기존의 "브라우저 열려 있을 때만 오는 알림"과는 다르다.
+ */
+function PushNotificationCard({ userId }: { userId: string }) {
+  const [support, setSupport] = useState<PushSupport>("unsupported");
+  const [enabled, setEnabled] = useState<boolean>(false);
+  const [busy, setBusy] = useState<boolean>(false);
+  const [msg, setMsg] = useState<string>("");
+  const [msgTone, setMsgTone] = useState<"ok" | "warn">("ok");
+
+  useEffect(() => {
+    setSupport(checkPushSupport());
+    isPushEnabled().then(setEnabled);
+  }, []);
+
+  const show = (text: string, tone: "ok" | "warn" = "ok") => {
+    setMsgTone(tone);
+    setMsg(text);
+  };
+
+  const handleToggle = async () => {
+    setBusy(true);
+    setMsg("");
+    try {
+      if (enabled) {
+        const ok = await disablePush();
+        if (ok) {
+          setEnabled(false);
+          show("이 기기에서 알림을 껐습니다.");
+        } else {
+          show("알림 해제에 실패했습니다.", "warn");
+        }
+      } else {
+        const res = await enablePush(userId);
+        if (res.ok) {
+          setEnabled(true);
+          show("알림이 켜졌습니다. 아래 '테스트 알림 받기'로 확인해 보세요.");
+        } else {
+          show(res.message || "알림을 켜지 못했습니다.", "warn");
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setBusy(true);
+    setMsg("");
+    const res = await sendTestPush(userId);
+    show(
+      res.ok ? "테스트 알림을 보냈습니다. 잠시 후 도착합니다." : res.message || "발송 실패",
+      res.ok ? "ok" : "warn"
+    );
+    setBusy(false);
+  };
+
+  return (
+    <div className="border-t border-[#E3E9E2] pt-5 space-y-3">
+      <div className="flex items-center gap-2">
+        <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
+          <Smartphone size={18} />
+        </div>
+        <div>
+          <h3 className="font-bold text-[#0C3B2E] text-base">앱을 닫아둬도 오는 알림</h3>
+          <p className="text-xs text-[#6F8377] font-medium">
+            새 말씀·묵상·댓글이 올라오면 휴대폰으로 바로 알려드립니다.
+          </p>
+        </div>
+      </div>
+
+      {support === "ios-needs-install" ? (
+        <div className="bg-[#FFF7E0] rounded-3xl p-3.5 text-xs text-[#0C3B2E] leading-relaxed font-medium space-y-1">
+          <p className="font-bold">아이폰은 앱으로 설치해야 알림을 받을 수 있습니다.</p>
+          <p className="text-[#6F8377]">
+            사파리 하단 <strong>공유 버튼</strong> → <strong>홈 화면에 추가</strong> 를 누른 뒤,
+            홈 화면에 생긴 아이콘으로 열어 이 화면에서 다시 켜주세요. (애플 정책이라 우회할 방법이 없습니다.)
+          </p>
+        </div>
+      ) : support === "unsupported" ? (
+        <div className="bg-[#F5F5F5] rounded-3xl p-3.5 text-xs text-[#6F8377] font-medium">
+          이 브라우저는 푸시 알림을 지원하지 않습니다. 크롬 또는 삼성 인터넷을 사용해 주세요.
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          <button
+            onClick={handleToggle}
+            disabled={busy}
+            className={`w-full flex items-center justify-center gap-2 text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50 ${
+              enabled
+                ? "bg-[#F5F5F5] text-[#0C3B2E] hover:bg-[#D2DDD3]"
+                : "bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#E8A900]"
+            }`}
+          >
+            {enabled ? <BellOff size={14} /> : <Bell size={14} />}
+            {busy ? "처리 중..." : enabled ? "이 기기에서 알림 끄기" : "휴대폰 알림 켜기"}
+          </button>
+
+          {enabled && (
+            <button
+              onClick={handleTest}
+              disabled={busy}
+              className="w-full flex items-center justify-center gap-2 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#0C3B2E] text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50"
+            >
+              <Send size={14} />
+              테스트 알림 받기
+            </button>
+          )}
+        </div>
+      )}
+
+      {msg && (
+        <p
+          className={`text-xs leading-relaxed font-medium whitespace-pre-line rounded-3xl p-3 ${
+            msgTone === "ok" ? "bg-[#F5F5F5] text-[#0C3B2E]" : "bg-[#FDF3F3] text-[#7A1913]"
+          }`}
+        >
+          {msg}
+        </p>
+      )}
     </div>
   );
 }
@@ -415,6 +541,9 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           </button>
         </div>
       </form>
+
+      {/* 진짜 푸시 알림 (앱을 닫아둬도 도착) */}
+      <PushNotificationCard userId={currentUser.id} />
 
       {/* Interactive push simulator */}
       <div className="border-t border-[#E3E9E2] pt-5 space-y-3">

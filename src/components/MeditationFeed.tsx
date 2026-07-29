@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Meditation, Comment, SokGroup } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Clock, PenTool, X, ShieldAlert, Bell, Radio, CheckCircle, Users, Globe, Settings, UserPlus, Check, Edit3 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { enablePush, isPushEnabled } from "../lib/push";
 
 
 interface MeditationFeedProps {
@@ -32,9 +33,12 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
   // Real-time toast alert state
   const [realtimeToast, setRealtimeToast] = useState<string | null>(null);
-  const [notiPermission, setNotiPermission] = useState<string>(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default"
-  );
+  // "granted" = 이 기기가 실제로 푸시를 구독한 상태 (권한만 있고 구독이 없으면 버튼을 계속 보여줘야 한다)
+  const [notiPermission, setNotiPermission] = useState<string>("default");
+
+  useEffect(() => {
+    isPushEnabled().then((on) => setNotiPermission(on ? "granted" : "default"));
+  }, []);
 
   // Known item refs to compare for new posts/comments
   const knownMedIdsRef = useRef<Set<string>>(new Set());
@@ -109,13 +113,15 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   }, [prefilledVerse]);
 
   const requestNotificationPermission = async () => {
-    if ("Notification" in window) {
-      const perm = await Notification.requestPermission();
-      setNotiPermission(perm);
-      if (perm === "granted") {
-        setRealtimeToast("🔔 브라우저 및 스마트폰 알림이 성공적으로 허용되었습니다!");
-        setTimeout(() => setRealtimeToast(null), 3000);
-      }
+    // 앱을 닫아둬도 오는 진짜 푸시로 등록한다.
+    const res = await enablePush(currentUser.id);
+    if (res.ok) {
+      setNotiPermission("granted");
+      setRealtimeToast("🔔 알림이 켜졌습니다. 이제 앱을 닫아두셔도 새 소식을 받아보실 수 있어요.");
+      setTimeout(() => setRealtimeToast(null), 4000);
+    } else {
+      setRealtimeToast(res.message || "알림을 켜지 못했습니다.");
+      setTimeout(() => setRealtimeToast(null), 7000);
     }
   };
 
