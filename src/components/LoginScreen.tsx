@@ -133,13 +133,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   };
 
   return (
-    <div id="login-container" className="min-h-screen bg-[#EDF0EA] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div id="login-container" className="min-h-screen bg-[#F0F0F0] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center justify-center p-3.5 bg-[#E4EDE5] rounded-3xl shadow-md mb-4 text-[#0C3B2E]"
+          className="inline-flex items-center justify-center p-3.5 bg-[#F5F5F5] rounded-3xl shadow-md mb-4 text-[#0C3B2E]"
         >
           <UserCheck size={36} />
         </motion.div>
@@ -159,7 +159,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           )}
 
           {regSuccess && (
-            <div className="mb-4 bg-[#F1F4EE] border-l-4 border-[#4A6B57] p-3 text-sm text-[#0C3B2E] flex items-center rounded-r-lg">
+            <div className="mb-4 bg-[#F5F5F5] border-l-4 border-[#4A6B57] p-3 text-sm text-[#0C3B2E] flex items-center rounded-r-lg">
               <CheckCircle2 className="mr-2 flex-shrink-0" size={18} />
               <span>{regSuccess}</span>
             </div>
@@ -168,7 +168,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           {!isRegistering ? (
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Login Mode Toggle Tabs */}
-              <div className="flex bg-[#F1F4EE] p-1 rounded-3xl">
+              <div className="flex bg-[#F5F5F5] p-1 rounded-3xl">
                 <button
                   type="button"
                   onClick={() => {
@@ -214,7 +214,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                         setSelectedUser(e.target.value);
                         setError("");
                       }}
-                      className="w-full pl-3 pr-10 py-2.5 text-[#14261E] bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-xs font-semibold appearance-none cursor-pointer shadow-sm"
+                      className="w-full pl-3 pr-10 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-xs font-semibold appearance-none cursor-pointer shadow-sm"
                     >
                       <option value="">-- 목록에서 이름을 선택하세요 --</option>
                       {users.map((u) => (
@@ -238,7 +238,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                       setError("");
                     }}
                     placeholder="성함을 입력하세요 (예: 조재영)"
-                    className="w-full px-3 py-2.5 text-[#14261E] font-semibold bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-xs shadow-sm bg-white"
+                    className="w-full px-3 py-2.5 text-[#14261E] font-semibold bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-xs shadow-sm bg-white"
                   />
                 )}
               </div>
@@ -259,9 +259,9 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setError("");
                   }}
                   placeholder="숫자 4자리 비밀번호 입력"
-                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-xs tracking-widest text-center font-bold shadow-sm"
+                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-xs tracking-widest text-center font-bold shadow-sm"
                 />
-                <div className="mt-2 bg-[#F1F4EE]/70 p-2.5 rounded-3xl text-2xs text-[#4A6B57] leading-relaxed space-y-1">
+                <div className="mt-2 bg-[#F5F5F5]/70 p-2.5 rounded-3xl text-2xs text-[#4A6B57] leading-relaxed space-y-1">
                   <p className="font-bold text-[#0C3B2E] flex items-center gap-1">
                     🔒 자동 로그인 안내
                   </p>
@@ -286,7 +286,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setIsRegistering(true);
                     setError("");
                   }}
-                  className="w-full flex items-center justify-center py-2.5 px-4 bg-[#F1F4EE] rounded-3xl text-xs font-semibold text-[#4A6B57] bg-[#F1F4EE] hover:bg-[#D2DDD3] transition cursor-pointer"
+                  className="w-full flex items-center justify-center py-2.5 px-4 bg-[#F5F5F5] rounded-3xl text-xs font-semibold text-[#4A6B57] bg-[#F5F5F5] hover:bg-[#D2DDD3] transition cursor-pointer"
                 >
                   <UserPlus size={15} className="mr-1.5 text-[#4A6B57]" />
                   처음 오셨나요? 새 식구 등록하기
@@ -310,7 +310,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
                   placeholder="예: 김성경"
-                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm shadow-sm"
+                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm shadow-sm"
                 />
               </div>
 
@@ -327,7 +327,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   value={regPin}
                   onChange={(e) => setRegPin(e.target.value.replace(/[^0-9]/g, "")) }
                   placeholder="로그인에 사용할 숫자 4자리"
-                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm text-center tracking-widest shadow-sm"
+                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm text-center tracking-widest shadow-sm"
                 />
               </div>
 
@@ -366,7 +366,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setIsRegistering(false);
                     setError("");
                   }}
-                  className="w-1/2 py-2.5 px-4 bg-[#F1F4EE] rounded-3xl text-sm font-semibold text-[#4A6B57] bg-white hover:bg-[#F1F4EE] focus:outline-none transition cursor-pointer"
+                  className="w-1/2 py-2.5 px-4 bg-[#F5F5F5] rounded-3xl text-sm font-semibold text-[#4A6B57] bg-white hover:bg-[#F5F5F5] focus:outline-none transition cursor-pointer"
                 >
                   취소
                 </button>

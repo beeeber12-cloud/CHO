@@ -24,7 +24,7 @@ function FontSizeSettingCard() {
   return (
     <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
       <div className="flex items-center gap-2">
-        <div className="p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl">
+        <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
           <ZoomIn size={18} />
         </div>
         <div>
@@ -42,7 +42,7 @@ function FontSizeSettingCard() {
             className={`flex items-center justify-between p-3.5 rounded-3xl border transition text-left cursor-pointer ${
               fontScale === s.key
                 ? "bg-[#0C3B2E] text-white border-[#0C3B2E] shadow-sm"
-                : "bg-[#EDF0EA] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#F1F4EE]"
+                : "bg-[#F0F0F0] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#F5F5F5]"
             }`}
           >
             <div>
@@ -50,12 +50,12 @@ function FontSizeSettingCard() {
                 <Type size={14} />
                 {s.label}
               </div>
-              <div className={`text-2xs mt-0.5 ${fontScale === s.key ? "text-[#E4EDE5]" : "text-[#6F8377]"}`}>
+              <div className={`text-2xs mt-0.5 ${fontScale === s.key ? "text-[#F5F5F5]" : "text-[#6F8377]"}`}>
                 {s.desc}
               </div>
             </div>
             {fontScale === s.key && (
-              <span className="text-2xs bg-[#E4EDE5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-black">
+              <span className="text-2xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-black">
                 적용중
               </span>
             )}
@@ -314,7 +314,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
   return (
     <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-5">
       <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3">
-        <div className="p-1.5 sm:p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl shrink-0">
+        <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
           <Bell size={18} />
         </div>
         <div>
@@ -325,10 +325,10 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
 
       <form onSubmit={handleSave} className="space-y-5">
         {/* Enabled Status Toggle */}
-        <div className="flex items-center justify-between p-3.5 bg-[#F1F4EE] rounded-3xl">
+        <div className="flex items-center justify-between p-3.5 bg-[#F5F5F5] rounded-3xl">
           <div className="flex items-center gap-2.5">
             {enabled ? (
-              <div className="p-1.5 bg-[#E4EDE5] text-[#0C3B2E] rounded-xl">
+              <div className="p-1.5 bg-[#F5F5F5] text-[#0C3B2E] rounded-xl">
                 <Bell size={18} />
               </div>
             ) : (
@@ -363,7 +363,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="px-3.5 py-2.5 bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold shadow-sm"
+            className="px-3.5 py-2.5 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold shadow-sm"
           />
         </div>
 
@@ -386,8 +386,8 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                     isSelected
                       ? "bg-[#0C3B2E] border-[#0C3B2E] text-white"
                       : isWeekend
-                      ? "bg-[#F1F4EE] border-[#E3E9E2] text-[#B3261E] hover:bg-[#D2DDD3]"
-                      : "bg-[#F1F4EE] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#D2DDD3]"
+                      ? "bg-[#F5F5F5] border-[#E3E9E2] text-[#B3261E] hover:bg-[#D2DDD3]"
+                      : "bg-[#F5F5F5] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#D2DDD3]"
                   }`}
                 >
                   {label}
@@ -398,7 +398,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
         </div>
 
         {success && (
-          <p className="text-xs text-[#4A6B57] font-semibold bg-[#F1F4EE] p-2.5 rounded-3xl flex items-center gap-1.5">
+          <p className="text-xs text-[#4A6B57] font-semibold bg-[#F5F5F5] p-2.5 rounded-3xl flex items-center gap-1.5">
             <Check size={14} className="stroke-[3px]" />
             {success}
           </p>
@@ -428,7 +428,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
 
         <button
           onClick={triggerSimulatedNotification}
-          className="w-full flex items-center justify-center gap-2 bg-[#E4EDE5] hover:bg-[#D2DDD3] text-[#0C3B2E] text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#0C3B2E] text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer"
         >
           <Send size={14} />
           아침 묵상 독려 알림 가상 수신하기
@@ -448,18 +448,18 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                   <Volume2 size={16} />
                 </div>
                 <div className="space-y-1">
-                  <span className="block text-2xs uppercase font-bold text-[#E4EDE5] tracking-widest flex items-center gap-1">
+                  <span className="block text-2xs uppercase font-bold text-[#F5F5F5] tracking-widest flex items-center gap-1">
                     <Bell size={10} className="animate-bounce" />
                     BIBLE MEDITATION NOTIFICATION
                   </span>
-                  <p className="text-xs leading-relaxed text-[#E4EDE5] font-medium">
+                  <p className="text-xs leading-relaxed text-[#F5F5F5] font-medium">
                     {simulatedAlert}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSimulatedAlert(null)}
-                className="absolute right-2 top-2 p-1 text-[#E4EDE5] hover:text-white rounded-lg cursor-pointer"
+                className="absolute right-2 top-2 p-1 text-[#F5F5F5] hover:text-white rounded-lg cursor-pointer"
               >
                 <X size={12} />
               </button>
@@ -474,7 +474,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       {/* PWA App Installation Guide Card */}
       <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl">
+          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
             <Smartphone size={18} />
           </div>
           <div>
@@ -483,7 +483,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           </div>
         </div>
 
-        <div className="bg-[#F1F4EE] rounded-3xl p-4 space-y-3 text-xs text-[#4A6B57]">
+        <div className="bg-[#F5F5F5] rounded-3xl p-4 space-y-3 text-xs text-[#4A6B57]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-white p-3 rounded-3xl space-y-1.5">
               <span className="font-bold text-[#0C3B2E] flex items-center gap-1">
@@ -510,7 +510,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
 
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl">
+          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
             <User size={18} />
           </div>
           <div>
@@ -527,7 +527,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
             </div>
           )}
           {profileSuccess && (
-            <div className="bg-[#F1F4EE] border-l-4 border-[#4A6B57] p-2.5 text-[#0C3B2E] font-semibold rounded-r-lg flex items-center">
+            <div className="bg-[#F5F5F5] border-l-4 border-[#4A6B57] p-2.5 text-[#0C3B2E] font-semibold rounded-r-lg flex items-center">
               <Check className="mr-1.5 flex-shrink-0" size={14} />
               <span>{profileSuccess}</span>
             </div>
@@ -540,7 +540,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               placeholder="예: 김성경"
-              className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-3xl text-[#14261E] font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
+              className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
               required
             />
             <p className="text-2xs text-[#6F8377] mt-0.5">괄호 부분 등 원하는 직분이나 꼬리말도 수정할 수 있습니다 (예: 관리자(목사님) ➡️ 김목사)</p>
@@ -556,7 +556,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
               value={profilePin}
               onChange={(e) => setProfilePin(e.target.value.replace(/[^0-9]/g, ""))}
               placeholder="변경할 4자리 숫자 비밀번호"
-              className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-3xl text-[#14261E] font-bold tracking-widest text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
+              className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-bold tracking-widest text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
               required
             />
           </div>
@@ -596,13 +596,13 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
             ) : allUsers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {allUsers.map((u) => (
-                  <div key={u.id} className="flex justify-between items-center p-2.5 bg-[#F1F4EE] rounded-3xl">
+                  <div key={u.id} className="flex justify-between items-center p-2.5 bg-[#F5F5F5] rounded-3xl">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 bg-[#0C3B2E] text-white text-2xs rounded-full flex items-center justify-center font-bold">
                         {u.name.slice(-2)}
                       </div>
                       <span className="font-bold text-[#14261E]">
-                        {u.name} {u.role === "admin" ? <span className="text-2xs text-[#0C3B2E] bg-[#F1F4EE] px-1 py-0.5 rounded font-black">관리자</span> : <span className="text-2xs text-[#6F8377] bg-[#E4EDE5] px-1 py-0.5 rounded">지체</span>}
+                        {u.name} {u.role === "admin" ? <span className="text-2xs text-[#0C3B2E] bg-[#F5F5F5] px-1 py-0.5 rounded font-black">관리자</span> : <span className="text-2xs text-[#6F8377] bg-[#F5F5F5] px-1 py-0.5 rounded">지체</span>}
                       </span>
                     </div>
                     {u.id !== currentUser.id ? (
@@ -641,7 +641,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                               setEditingPinUserId(u.id);
                               setAdminNewPin("");
                             }}
-                            className="text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] flex items-center gap-0.5 hover:bg-[#E4EDE5] px-1.5 py-1 rounded-xl transition cursor-pointer"
+                            className="text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] flex items-center gap-0.5 hover:bg-[#F5F5F5] px-1.5 py-1 rounded-xl transition cursor-pointer"
                             title="비밀번호 변경"
                           >
                             <Lock size={11} />

@@ -63,7 +63,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             data-verse={v.num}
             className={`group scroll-mt-4 transition-colors duration-500 ${
               isHighlighted
-                ? "bg-[#E4EDE5] border-l-4 border-[#4A6B57] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+                ? "bg-[#F5F5F5] border-l-4 border-[#4A6B57] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
                 : ""
             }`}
           >

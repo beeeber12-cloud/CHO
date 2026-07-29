@@ -43,6 +43,14 @@ html {
   /* 앱 전체 기본 글씨 크기 11% 확대 (Tailwind의 rem 기반 사이즈에 모두 반영됨) */
   font-size: 111%;
   -webkit-text-size-adjust: 100%;
+  /* 어떤 요소가 삐져나와도 화면이 좌우로 흔들리지 않도록 */
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -103,18 +111,17 @@ button {
   font-family: var(--font-serif);
 }
 
-/* 성경 본문 전용 타이포그래피
-   Lora(영문) + 나눔명조(한글) — 본문 읽기용으로 설계된 세리프.
-   자간을 살짝 넓히고 행간을 키워 긴 본문도 편하게 읽히도록 조정. */
+/* 성경 본문 전용 타이포그래피 — Pretendard, 본문보다 한 단계 두껍게 */
 .scripture-font {
-  font-family: "Lora", "Nanum Myeongjo", "Noto Serif KR", Georgia, serif;
-  letter-spacing: 0.01em;
+  font-family: "Pretendard", "Inter", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.005em;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 .scripture-font p {
-  line-height: 1.95;
+  line-height: 1.9;
+  font-weight: 600;
 }
 
 /* Font Scaling for Adults & Seniors */

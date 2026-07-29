@@ -218,7 +218,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
               setIsAnonymous(false);
               setError("");
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold rounded-3xl shadow-md transition cursor-pointer text-xs shrink-0"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] font-bold rounded-3xl shadow-md transition cursor-pointer text-xs shrink-0"
           >
             {showForm ? <X size={16} /> : <Plus size={16} />}
             {showForm ? "작성 창 닫기" : "오늘의 감사 고백하기"}
@@ -263,7 +263,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-medium bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
+                    className="w-full px-3 py-2 text-xs font-medium bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
                   />
                 </div>
 
@@ -278,8 +278,8 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                     onClick={() => setIsAnonymous(!isAnonymous)}
                     className={`w-full py-2 px-3 rounded-3xl border text-xs font-bold transition flex items-center justify-between cursor-pointer ${
                       isAnonymous
-                        ? "bg-[#F1F4EE] border-[#C7D8C9] text-[#0C3B2E]"
-                        : "bg-[#F1F4EE] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#E3E9E2]"
+                        ? "bg-[#F5F5F5] border-[#C7D8C9] text-[#0C3B2E]"
+                        : "bg-[#F5F5F5] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#E3E9E2]"
                     }`}
                   >
                     <span>{isAnonymous ? "🔒 익명으로 올려요" : `👤 실명으로 올려요 (${currentUser.name})`}</span>
@@ -300,7 +300,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="예) 오늘 퇴근길 하늘이 너무 예뻐서 마음이 평안해졌습니다. 힘든 업무 속에서도 힘주신 주님 감사합니다!"
-                  className="w-full p-3 text-xs font-medium bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed bg-white shadow-inner"
+                  className="w-full p-3 text-xs font-medium bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed bg-white shadow-inner"
                 />
               </div>
 
@@ -311,7 +311,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                     setShowForm(false);
                     setEditingId(null);
                   }}
-                  className="px-4 py-2 bg-[#F1F4EE] rounded-3xl text-xs font-semibold text-[#6F8377] hover:bg-[#F1F4EE] transition cursor-pointer"
+                  className="px-4 py-2 bg-[#F5F5F5] rounded-3xl text-xs font-semibold text-[#6F8377] hover:bg-[#F5F5F5] transition cursor-pointer"
                 >
                   취소
                 </button>
@@ -337,12 +337,12 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
             className={`px-3 py-1.5 rounded-3xl border text-xs font-semibold transition cursor-pointer ${
               filterMyOnly
                 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]"
-                : "bg-[#F1F4EE] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
+                : "bg-[#F5F5F5] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
             }`}
           >
             {filterMyOnly ? "✓ 내 감사글만 보기" : "전체 감사글"}
           </button>
-          <span className="text-2xs font-semibold text-[#6F8377] bg-[#F1F4EE] px-2.5 py-1 rounded-3xl">
+          <span className="text-2xs font-semibold text-[#6F8377] bg-[#F5F5F5] px-2.5 py-1 rounded-3xl">
             총 {filteredGratitudes.length}건
           </span>
         </div>
@@ -356,7 +356,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
         </div>
       ) : filteredGratitudes.length === 0 ? (
         <div className="bg-white rounded-[32px] p-10 text-center shadow-sm space-y-3">
-          <div className="w-12 h-12 rounded-3xl bg-[#F1F4EE] text-[#4A6B57] flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-3xl bg-[#F5F5F5] text-[#4A6B57] flex items-center justify-center mx-auto">
             <Sparkles size={24} />
           </div>
           <div>
@@ -397,8 +397,8 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                       grat.isAnonymous
-                        ? "bg-[#E4EDE5] text-[#0C3B2E]"
-                        : "bg-[#E4EDE5] text-[#0C3B2E]"
+                        ? "bg-[#F5F5F5] text-[#0C3B2E]"
+                        : "bg-[#F5F5F5] text-[#0C3B2E]"
                     }`}>
                       {grat.isAnonymous ? "익명" : grat.userName.slice(0, 1)}
                     </div>
@@ -432,19 +432,19 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                 </div>
 
                 {/* Content */}
-                <div className="bg-[#F1F4EE] rounded-3xl p-3.5 mb-3 text-xs sm:text-sm text-[#0C3B2E] font-medium leading-relaxed shadow-inner">
+                <div className="bg-[#F5F5F5] rounded-3xl p-3.5 mb-3 text-xs sm:text-sm text-[#0C3B2E] font-medium leading-relaxed shadow-inner">
                   &ldquo;{grat.content}&rdquo;
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between pt-1 border-t border-[#F1F4EE] text-xs">
+                <div className="flex items-center justify-between pt-1 border-t border-[#F5F5F5] text-xs">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleLike(grat.id)}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-3xl transition cursor-pointer font-bold ${
                         isLiked
                           ? "bg-[#FDF3F3] text-[#B3261E]"
-                          : "text-[#6F8377] hover:bg-[#F1F4EE]"
+                          : "text-[#6F8377] hover:bg-[#F5F5F5]"
                       }`}
                     >
                       <Heart size={14} className={isLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
@@ -456,7 +456,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-3xl transition cursor-pointer font-semibold ${
                         isCommentOpen
                           ? "bg-[#4A6B57] text-white"
-                          : "text-[#6F8377] hover:bg-[#F1F4EE]"
+                          : "text-[#6F8377] hover:bg-[#F5F5F5]"
                       }`}
                     >
                       <MessageSquare size={14} />
@@ -484,7 +484,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                           {grat.comments.map((comment) => {
                             const canDeleteComment = comment.userId === currentUser.id || currentUser.role === "admin";
                             return (
-                              <div key={comment.id} className="bg-[#F1F4EE]/70 rounded-3xl p-2.5 text-xs flex justify-between items-start gap-2">
+                              <div key={comment.id} className="bg-[#F5F5F5]/70 rounded-3xl p-2.5 text-xs flex justify-between items-start gap-2">
                                 <div>
                                   <div className="flex items-center gap-1.5 mb-0.5">
                                     <span className="font-bold text-[#0C3B2E] bg-[#FFBA00] px-1.5 py-0.5 rounded-lg">{comment.userName}</span>
@@ -523,7 +523,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                             if (e.key === 'Enter') handleAddComment(grat.id);
                           }}
                           placeholder="따뜻한 축하와 위로의 댓글을 남겨보세요..."
-                          className="flex-1 px-3 py-2 text-xs bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
+                          className="flex-1 px-3 py-2 text-xs bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
                         />
                         <button
                           onClick={() => handleAddComment(grat.id)}

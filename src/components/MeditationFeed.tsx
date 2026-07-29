@@ -461,7 +461,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
               <div className="p-2 bg-[#4A6B57] rounded-3xl text-white animate-bounce shrink-0">
                 <Bell size={16} />
               </div>
-              <p className="text-xs font-semibold leading-relaxed text-[#E4EDE5]">
+              <p className="text-xs font-semibold leading-relaxed text-[#F5F5F5]">
                 {realtimeToast}
               </p>
             </div>
@@ -475,35 +475,21 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         )}
       </AnimatePresence>
 
-      {/* Real-time Status Indicator & Push Notification Enable Strip */}
-      <div className="bg-[#F1F4EE] rounded-3xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div className="flex items-center gap-2 text-[#0C3B2E] font-bold">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6F8377] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0C3B2E]"></span>
-          </span>
-          <span className="text-2xs sm:text-xs">실시간 나눔 자동 반영 중</span>
-          <span className="text-2xs text-[#6F8377] font-normal hidden sm:inline">(지체들의 글과 댓글이 4초마다 자동 동기화됩니다)</span>
-        </div>
-
-        {notiPermission !== "granted" ? (
+      {/* 알림 켜기 — 아직 허용 전일 때만 노출 (실시간 동기화 안내 배너는 제거) */}
+      {notiPermission !== "granted" && (
+        <div className="flex justify-end">
           <button
             onClick={requestNotificationPermission}
-            className="flex items-center gap-1 text-2xs font-bold text-[#4A6B57] bg-white hover:bg-[#E4EDE5]/50 px-2.5 py-1 rounded-3xl transition cursor-pointer"
+            className="flex items-center gap-1.5 text-2xs font-bold text-[#4A6B57] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-3 py-1.5 rounded-3xl transition cursor-pointer"
           >
-            <Bell size={12} className="animate-pulse" />
-            새 묵상 스마트폰/브라우저 알림 켜기
+            <Bell size={12} />
+            새 묵상 알림 켜기
           </button>
-        ) : (
-          <span className="flex items-center gap-1 text-2xs font-bold text-[#0C3B2E] bg-[#F1F4EE] px-2 py-0.5 rounded-xl">
-            <CheckCircle size={11} />
-            알림 수신 중
-          </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Sok Group Navigation Tabs & Manage Button */}
-      <div className="bg-[#F1F4EE] p-2 rounded-3xl flex flex-wrap items-center justify-between gap-2 shadow-xs">
+      <div className="bg-[#F5F5F5] p-2 rounded-3xl flex flex-wrap items-center justify-between gap-2 shadow-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 max-w-full">
           {/* Public All Tab */}
           <button
@@ -528,13 +514,13 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 className={`px-3 py-1.5 rounded-3xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                   isSelected
                     ? "bg-[#4A6B57] text-white shadow-xs"
-                    : "bg-white text-[#0C3B2E] hover:bg-[#E4EDE5]"
+                    : "bg-white text-[#0C3B2E] hover:bg-[#F5F5F5]"
                 }`}
               >
                 <Users size={13} />
                 <span>{sok.name}</span>
                 {sok.memberUserIds?.length > 0 && (
-                  <span className={`text-2xs px-1.5 py-0.2 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-[#F1F4EE] text-[#4A6B57]"}`}>
+                  <span className={`text-2xs px-1.5 py-0.2 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-[#F5F5F5] text-[#4A6B57]"}`}>
                     {sok.memberUserIds.length}명
                   </span>
                 )}
@@ -556,43 +542,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         )}
       </div>
 
-      {/* Search and Write Button Controls */}
-      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-        <div className="flex flex-1 flex-col sm:flex-row gap-2">
-
-          {/* User selector filter */}
-          <select
-            value={selectedUserFilter}
-            onChange={(e) => setSelectedUserFilter(e.target.value)}
-            className="px-2.5 py-2 bg-[#F1F4EE] rounded-3xl focus:outline-none text-[#14261E] text-xs font-semibold cursor-pointer"
-          >
-            <option value="">모든 식구 글 보기</option>
-            {allUsers.map(u => (
-              <option key={u.id} value={u.id}>{u.name} 성도님</option>
-            ))}
-          </select>
-
-          {/* Date Picker Filter */}
-          <div className="flex items-center gap-1 bg-[#F1F4EE] rounded-3xl px-2">
-            <input
-              type="date"
-              value={selectedDateFilter}
-              onChange={(e) => setSelectedDateFilter(e.target.value)}
-              className="bg-transparent border-none text-[#14261E] text-xs font-semibold py-2 focus:outline-none cursor-pointer"
-              title="날짜별 검색"
-            />
-            {selectedDateFilter && (
-              <button
-                onClick={() => setSelectedDateFilter("")}
-                className="text-[#6F8377] hover:text-[#4A6B57] p-1 cursor-pointer"
-                title="날짜 선택 해제"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-
+      {/* 글쓰기 버튼 (식구/날짜 필터는 제거) */}
+      <div className="flex justify-end">
         <button
           onClick={() => {
             setShowWriteForm(!showWriteForm);
@@ -637,7 +588,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     value={verseTitle}
                     onChange={(e) => setVerseTitle(e.target.value)}
                     placeholder="예: 이사야 41:10 (또는 위 공지 클릭)"
-                    className="w-full text-xs px-3 py-2.5 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
+                    className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
                   />
                 </div>
 
@@ -649,7 +600,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="예: 두려움을 이기는 참된 위로"
-                    className="w-full text-xs px-3 py-2.5 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
+                    className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
                   />
                 </div>
               </div>
@@ -662,7 +613,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="말씀을 묵상하며 깨달은 생각, 삶의 적용, 소그룹 식구들과 나누고픈 은혜를 정성스럽게 적어보세요..."
-                  className="w-full text-xs px-3 py-2.5 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                  className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
                 />
               </div>
 
@@ -673,7 +624,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   value={prayer}
                   onChange={(e) => setPrayer(e.target.value)}
                   placeholder="소그룹 지체들과 함께 기도하고 싶은 주간 기도제목을 기입해주세요..."
-                  className="w-full text-xs px-3 py-2.5 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                  className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
                 />
               </div>
 
@@ -684,7 +635,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 <select
                   value={sokIdForForm || ""}
                   onChange={(e) => setSokIdForForm(e.target.value || null)}
-                  className="w-full text-xs px-3 py-2.5 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold bg-[#FFFFFF] cursor-pointer"
+                  className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold bg-[#FFFFFF] cursor-pointer"
                 >
                   <option value="">🌐 전체 공유 (교회 모든 식구와 나눔)</option>
                   {accessibleSoks.map((sok) => (
@@ -703,7 +654,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     setEditingId(null);
                     setFormError("");
                   }}
-                  className="px-4 py-2 text-xs font-semibold rounded-3xl text-[#4A6B57] bg-white hover:bg-[#F1F4EE] transition cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold rounded-3xl text-[#4A6B57] bg-white hover:bg-[#F5F5F5] transition cursor-pointer"
                 >
                   취소
                 </button>
@@ -744,22 +695,19 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 {/* Header info */}
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-3xl bg-[#E4EDE5] flex items-center justify-center font-bold text-[#0C3B2E] text-sm">
-                      {med.userName.slice(-2)}
-                    </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="font-bold text-[#0C3B2E] text-sm bg-[#FFBA00] px-2 py-0.5 rounded-lg">{med.userName}</span>
-                        <span className="text-2xs bg-[#F1F4EE] text-[#4A6B57] px-2 py-0.5 rounded-full font-bold">
+                        <span className="text-2xs bg-[#F5F5F5] text-[#4A6B57] px-2 py-0.5 rounded-full font-bold">
                           {med.verseTitle}
                         </span>
                         {med.sokId ? (
-                          <span className="text-2xs bg-[#E4EDE5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                          <span className="text-2xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
                             <Users size={11} />
                             {sokGroups.find(s => s.id === med.sokId)?.name || "속 나눔"}
                           </span>
                         ) : (
-                          <span className="text-2xs bg-[#F1F4EE] text-[#6F8377] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                          <span className="text-2xs bg-[#F5F5F5] text-[#6F8377] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
                             <Globe size={11} />
                             전체 공유
                           </span>
@@ -777,14 +725,14 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditClick(med)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F1F4EE] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
                         title="수정"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(med.id)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#F1F4EE] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
                         title="삭제"
                       >
                         <Trash2 size={14} />
@@ -797,7 +745,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 <div className="space-y-2">
                   <h4 className="text-base font-bold text-[#0C3B2E]">{med.title}</h4>
 
-                  <p className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#EDF0EA] p-4 rounded-3xl">
+                  <p className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
                     {med.content}
                   </p>
                 </div>
@@ -805,7 +753,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* Optional Prayer target */}
                 {med.prayer && (
-                  <div className="bg-[#E4EDE5]/40 bg-[#F1F4EE] rounded-3xl p-4 text-xs">
+                  <div className="bg-[#F5F5F5]/40 bg-[#F5F5F5] rounded-3xl p-4 text-xs">
                     <span className="font-bold text-[#0C3B2E] block mb-1">🙏 이번 주 동역자 기도제목</span>
                     <p className="text-[#4A6B57] leading-relaxed font-medium italic">
                       &quot;{med.prayer}&quot;
@@ -849,7 +797,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* Comments Thread Section */}
                 {commentsOpen && (
-                  <div className="bg-[#F1F4EE]/60 bg-[#F1F4EE] rounded-3xl p-4 space-y-3 mt-2">
+                  <div className="bg-[#F5F5F5]/60 bg-[#F5F5F5] rounded-3xl p-4 space-y-3 mt-2">
                     {/* List existing comments */}
                     {med.comments.length > 0 ? (
                       <div className="space-y-2.5">
@@ -895,7 +843,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                         value={commentInputs[med.id] || ""}
                         onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
                         placeholder="은혜로운 지지와 나눔의 말을 기입하세요..."
-                        className="flex-1 text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                        className="flex-1 text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
                       />
                       <button
                         onClick={() => handleAddComment(med.id)}
@@ -910,7 +858,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             );
           })
         ) : (
-          <div className="bg-[#F1F4EE] rounded-[32px] p-12 text-center text-[#6F8377]">
+          <div className="bg-[#F5F5F5] rounded-[32px] p-12 text-center text-[#6F8377]">
             <BookOpen className="mx-auto text-[#6F8377] mb-2" size={32} />
             <p className="text-sm font-semibold text-[#4A6B57]">아직 조건에 맞는 묵상 나눔 글이 없습니다.</p>
             <p className="text-xs text-[#6F8377] mt-1">지체 중 첫 번째로 묵상 고백을 올려보세요!</p>
@@ -935,7 +883,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             >
               <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-4">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl font-bold">
+                  <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl font-bold">
                     <Users size={18} />
                   </div>
                   <div>
@@ -952,7 +900,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
               </div>
 
               {/* Add New Sok Form */}
-              <form onSubmit={handleCreateSok} className="bg-[#EDF0EA] p-4 rounded-3xl space-y-3">
+              <form onSubmit={handleCreateSok} className="bg-[#F0F0F0] p-4 rounded-3xl space-y-3">
                 <h3 className="text-xs font-bold text-[#0C3B2E] flex items-center gap-1">
                   <Plus size={14} className="text-[#4A6B57]" />
                   새 속(소그룹) 추가
@@ -964,14 +912,14 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     placeholder="속 이름 (예: 1속, 청년1속, 사랑속)"
                     value={newSokName}
                     onChange={(e) => setNewSokName(e.target.value)}
-                    className="text-xs p-2.5 bg-[#F1F4EE] rounded-3xl font-bold focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
+                    className="text-xs p-2.5 bg-[#F5F5F5] rounded-3xl font-bold focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
                   />
                   <input
                     type="text"
                     placeholder="속 설명 (선택)"
                     value={newSokDesc}
                     onChange={(e) => setNewSokDesc(e.target.value)}
-                    className="text-xs p-2.5 bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
+                    className="text-xs p-2.5 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
                   />
                 </div>
                 <div className="flex justify-end">
@@ -989,7 +937,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
               <div className="space-y-3">
                 <h3 className="text-xs font-bold text-[#0C3B2E]">개설된 속 목록 ({sokGroups.length}개)</h3>
                 {sokGroups.length === 0 ? (
-                  <p className="text-xs text-[#6F8377] py-4 text-center bg-[#F1F4EE] rounded-3xl">
+                  <p className="text-xs text-[#6F8377] py-4 text-center bg-[#F5F5F5] rounded-3xl">
                     아직 생성된 속이 없습니다. 위에서 속을 추가해 보세요!
                   </p>
                 ) : (
@@ -999,7 +947,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     const membersCount = sok.memberUserIds?.length || 0;
 
                     return (
-                      <div key={sok.id} className="bg-[#F1F4EE] rounded-3xl p-4 space-y-3 shadow-xs">
+                      <div key={sok.id} className="bg-[#F5F5F5] rounded-3xl p-4 space-y-3 shadow-xs">
                         {isEditing ? (
                           <div className="space-y-2">
                             <div className="flex gap-2">
@@ -1007,14 +955,14 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                                 type="text"
                                 value={editingSokName}
                                 onChange={(e) => setEditingSokName(e.target.value)}
-                                className="text-xs p-2 bg-[#F1F4EE] rounded-xl font-bold flex-1"
+                                className="text-xs p-2 bg-[#F5F5F5] rounded-xl font-bold flex-1"
                                 placeholder="속 이름"
                               />
                               <input
                                 type="text"
                                 value={editingSokDesc}
                                 onChange={(e) => setEditingSokDesc(e.target.value)}
-                                className="text-xs p-2 bg-[#F1F4EE] rounded-xl flex-1"
+                                className="text-xs p-2 bg-[#F5F5F5] rounded-xl flex-1"
                                 placeholder="설명"
                               />
                             </div>
@@ -1022,7 +970,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                               <button
                                 type="button"
                                 onClick={() => setEditingSokId(null)}
-                                className="px-3 py-1 text-xs bg-[#F1F4EE] rounded-xl cursor-pointer"
+                                className="px-3 py-1 text-xs bg-[#F5F5F5] rounded-xl cursor-pointer"
                               >
                                 취소
                               </button>
@@ -1040,7 +988,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-sm text-[#0C3B2E]">{sok.name}</span>
-                                <span className="text-2xs bg-[#E4EDE5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-semibold">
+                                <span className="text-2xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-semibold">
                                   구성원 {membersCount}명
                                 </span>
                               </div>
@@ -1057,7 +1005,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                                 className={`px-2.5 py-1 text-xs font-bold rounded-3xl transition flex items-center gap-1 cursor-pointer ${
                                   isMemberSettingsOpen
                                     ? "bg-[#0C3B2E] text-white"
-                                    : "bg-[#F1F4EE] hover:bg-[#E4EDE5] text-[#0C3B2E]"
+                                    : "bg-[#F5F5F5] hover:bg-[#F5F5F5] text-[#0C3B2E]"
                                 }`}
                               >
                                 <UserPlus size={13} />
@@ -1069,7 +1017,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                                   setEditingSokName(sok.name);
                                   setEditingSokDesc(sok.description || "");
                                 }}
-                                className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F1F4EE] rounded-xl transition cursor-pointer"
+                                className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
                                 title="이름 수정"
                               >
                                 <Edit3 size={14} />
@@ -1087,7 +1035,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                         {/* Member assignment dropdown panel */}
                         {isMemberSettingsOpen && (
-                          <div className="bg-[#F1F4EE] rounded-3xl p-3 space-y-2.5 mt-2">
+                          <div className="bg-[#F5F5F5] rounded-3xl p-3 space-y-2.5 mt-2">
                             <div className="flex items-center justify-between text-xs font-bold text-[#0C3B2E]">
                               <span>속 구성원 지정 ({sok.name})</span>
                               <span className="text-2xs text-[#6F8377] font-normal">

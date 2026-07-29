@@ -205,7 +205,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
     <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 overflow-hidden">
       <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3 mb-3.5">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 sm:p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl shrink-0">
+          <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
             <BookOpen size={18} />
           </div>
           <div>
@@ -217,7 +217,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
         {currentUser.role === "admin" && !isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#4A6B57] bg-[#F1F4EE] px-3 py-1.5 rounded-xl hover:bg-[#D2DDD3] transition cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#4A6B57] bg-[#F5F5F5] px-3 py-1.5 rounded-xl hover:bg-[#D2DDD3] transition cursor-pointer"
           >
             {notice ? <Edit3 size={14} /> : <Plus size={14} />}
             {notice ? "말씀 수정" : "새 말씀 공지"}
@@ -227,7 +227,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
 
       {/* Bible Auto Notice Planner Section for Admins */}
       {currentUser.role === "admin" && (
-        <div className="mb-4 bg-[#F1F4EE]/60 bg-[#F1F4EE] rounded-3xl p-4">
+        <div className="mb-4 bg-[#F5F5F5]/60 bg-[#F5F5F5] rounded-3xl p-4">
           <button
             onClick={() => setShowPlannerConfig(!showPlannerConfig)}
             className="flex items-center justify-between w-full text-xs font-bold text-[#0C3B2E] hover:text-[#4A6B57] transition cursor-pointer"
@@ -235,7 +235,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
             <span className="flex items-center gap-1.5">
               📖 말씀 일일 자동 공지 플래너 설정
               {plannerActive ? (
-                <span className="bg-[#E4EDE5] text-[#0C3B2E] text-2xs px-2 py-0.5 rounded-full font-bold">활성화됨</span>
+                <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs px-2 py-0.5 rounded-full font-bold">활성화됨</span>
               ) : (
                 <span className="bg-[#D2DDD3] text-[#6F8377] text-2xs px-2 py-0.5 rounded-full font-bold">비활성화</span>
               )}
@@ -264,7 +264,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
                       value={plannerBook}
                       onChange={(e) => setPlannerBook(e.target.value)}
                       placeholder="예: 요한복음, 창세기, 시편"
-                      className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-white text-[#14261E] font-semibold"
+                      className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white text-[#14261E] font-semibold"
                       required
                     />
                   </div>
@@ -275,7 +275,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
                       min={1}
                       value={plannerChapter}
                       onChange={(e) => setPlannerChapter(Number(e.target.value))}
-                      className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-white text-[#14261E] font-semibold"
+                      className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white text-[#14261E] font-semibold"
                       required
                     />
                   </div>
@@ -348,7 +348,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
                     }
                   }}
                   placeholder="예: 이사야 41:10"
-                  className="flex-1 text-sm px-3 py-2 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-medium"
+                  className="flex-1 text-sm px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-medium"
                 />
                 <button
                   type="button"
@@ -382,7 +382,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
                 value={verseText}
                 onChange={(e) => setVerseText(e.target.value)}
                 placeholder="성경 본문을 기입하세요..."
-                className="w-full text-sm px-3 py-2 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                className="w-full text-sm px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
               />
             </div>
 
@@ -393,7 +393,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="공동체에 전할 따뜻한 권면이나 해설을 적어주세요..."
-                className="w-full text-sm px-3 py-2 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                className="w-full text-sm px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
               />
             </div>
 
@@ -401,7 +401,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-[#4A6B57] bg-white hover:bg-[#F1F4EE] transition cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-[#4A6B57] bg-white hover:bg-[#F5F5F5] transition cursor-pointer"
               >
                 취소
               </button>
@@ -421,15 +421,16 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
             animate={{ opacity: 1 }}
             className="space-y-3 sm:space-y-4"
           >
-            <div className="bg-white rounded-3xl sm:rounded-[32px] p-2.5 sm:p-6 md:p-8 shadow-sm">
-              <div className="flex justify-between items-center gap-2 mb-2.5">
+            {/* 말씀 카드 — 별도 내부 박스 없이 이 카드 안에 본문을 바로 싣는다 */}
+            <div className="scripture-font bg-white rounded-3xl sm:rounded-[32px] p-3.5 sm:p-6 md:p-8 shadow-sm">
+              <div className="flex justify-between items-center gap-2 mb-3">
                 <span className="text-2xs sm:text-xs font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
-                  {notice.date} TODAY&apos;S BIBLE
+                  {notice.date}
                 </span>
                 {onVerseSelect && (
                   <button
                     onClick={() => onVerseSelect(notice.verseTitle)}
-                    className="flex items-center gap-1 text-2xs sm:text-xs text-[#0C3B2E] bg-[#E4EDE5] hover:bg-[#C7D8C9] px-2.5 py-1 rounded-3xl font-bold cursor-pointer transition shadow-xs whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1 text-2xs sm:text-xs text-[#0C3B2E] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-2.5 py-1 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap shrink-0"
                   >
                     <BookOpen size={13} className="text-[#4A6B57]" />
                     <span>성경 읽기방에서 보기</span>
@@ -437,21 +438,19 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
                 )}
               </div>
 
-              <div className="scripture-font bg-white p-3 sm:p-6 rounded-3xl sm:rounded-3xl">
-                <div className="max-h-72 md:max-h-96 overflow-y-auto pr-1 border-b border-[#E3E9E2]/60 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
-                  <FormattedBibleText
-                    text={notice.verseText}
-                  />
-                </div>
-                <p className="text-right text-[#4A6B57] font-bold text-xs sm:text-sm md:text-base">
-                  {notice.verseTitle}
-                </p>
+              <div className="max-h-72 md:max-h-96 overflow-y-auto pr-1 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
+                <FormattedBibleText
+                  text={notice.verseText}
+                />
               </div>
+              <p className="text-right text-[#4A6B57] font-bold text-xs sm:text-sm md:text-base">
+                {notice.verseTitle}
+              </p>
             </div>
 
 
             {notice.content && (
-              <div className="bg-[#F1F4EE] rounded-3xl sm:rounded-[32px] p-3.5 sm:p-5">
+              <div className="bg-[#F5F5F5] rounded-3xl sm:rounded-[32px] p-3.5 sm:p-5">
                 <span className="block text-xs font-black text-[#6F8377] uppercase tracking-[0.1em] mb-1.5 whitespace-nowrap">말씀 가이드 / 소그룹 광고</span>
                 <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line">
                   {notice.content}
@@ -483,7 +482,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
 
             {/* List of readers */}
             {notice.readBy.length > 0 && (
-              <div className="bg-[#F1F4EE]/60 rounded-3xl p-3 sm:p-4 text-xs">
+              <div className="bg-[#F5F5F5]/60 rounded-3xl p-3 sm:p-4 text-xs">
                 <span className="font-bold text-[#0C3B2E] block mb-1 whitespace-nowrap">
                   체크인 한 동역자들 ({notice.readBy.length}명 / {allUsers.length}명 읽음)
                 </span>
@@ -494,13 +493,13 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
             )}
           </motion.div>
         ) : (
-          <div className="text-center py-10 bg-[#F1F4EE] rounded-3xl">
+          <div className="text-center py-10 bg-[#F5F5F5] rounded-3xl">
             <HelpCircle className="mx-auto text-[#6F8377] mb-2" size={28} />
             <p className="text-sm text-[#4A6B57]">등록된 오늘의 말씀 공지가 없습니다.</p>
             {currentUser.role === "admin" && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="mt-3 text-xs font-bold text-[#4A6B57] bg-white px-3 py-1.5 rounded-xl hover:bg-[#F1F4EE] cursor-pointer"
+                className="mt-3 text-xs font-bold text-[#4A6B57] bg-white px-3 py-1.5 rounded-xl hover:bg-[#F5F5F5] cursor-pointer"
               >
                 첫 말씀 등록하기
               </button>

@@ -99,13 +99,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EDF0EA] text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
+    <div className="min-h-screen bg-[#F0F0F0] text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
       <PWAInstallPrompt />
       {/* Dynamic Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[#E3E9E2] shadow-sm">
         <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2.5 flex justify-between items-center gap-1.5">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E4EDE5] rounded-xl flex items-center justify-center text-[#0C3B2E] shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F5F5F5] rounded-xl flex items-center justify-center text-[#0C3B2E] shrink-0">
               <BookMarked size={18} className="sm:w-5 sm:h-5" />
             </div>
             <div className="shrink-0">
@@ -114,16 +114,14 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* min-w-0 이 있어야 안쪽 이름이 줄어들 수 있어 헤더가 화면 밖으로 밀리지 않는다 */}
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 justify-end">
             {/* Font Size Selector for Adults & Seniors */}
             <FontSizeControl />
 
             {/* Profile badge */}
-            <div className="flex items-center gap-1.5 bg-[#F1F4EE] px-2 sm:px-3 py-1 sm:py-1.5 rounded-3xl text-2xs sm:text-xs text-[#4A6B57] whitespace-nowrap">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-[#0C3B2E] text-white font-bold rounded-full flex items-center justify-center text-2xs sm:text-2xs shrink-0">
-                {currentUser.name.slice(-2)}
-              </div>
-              <span className="font-bold text-[#4A6B57] truncate max-w-[80px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 bg-[#F5F5F5] px-2 sm:px-3 py-1 sm:py-1.5 rounded-3xl text-2xs sm:text-xs text-[#4A6B57] min-w-0">
+              <span className="font-bold text-[#4A6B57] truncate">
                 {currentUser.name} {currentUser.role === 'admin' ? '(관리자)' : '성도님'}
               </span>
             </div>
@@ -131,7 +129,7 @@ export default function App() {
             {/* Logout button */}
             <button
               onClick={handleLogout}
-              className="p-1.5 text-[#6F8377] hover:text-[#0C3B2E] hover:bg-[#F1F4EE] rounded-3xl transition cursor-pointer shrink-0"
+              className="p-1.5 text-[#6F8377] hover:text-[#0C3B2E] hover:bg-[#F5F5F5] rounded-3xl transition cursor-pointer shrink-0"
               title="로그아웃"
             >
               <LogOut size={16} />
@@ -143,7 +141,7 @@ export default function App() {
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-1 sm:px-4 py-2 sm:py-6">
         {/* PC Desktop Tabs Grid */}
-        <div className="hidden md:grid grid-cols-7 gap-1.5 border-b border-[#E3E9E2] bg-[#F1F4EE] p-1 rounded-3xl">
+        <div className="hidden md:grid grid-cols-7 gap-1.5 border-b border-[#E3E9E2] bg-[#F5F5F5] p-1 rounded-3xl">
           <button
             onClick={() => setActiveTab('notice')}
             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${

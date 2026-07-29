@@ -109,7 +109,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
   return (
     <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6">
       <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3 mb-4">
-        <div className="p-1.5 sm:p-2 bg-[#E4EDE5] text-[#0C3B2E] rounded-3xl shrink-0">
+        <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
           <Sparkles size={18} />
         </div>
         <div>
@@ -119,7 +119,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
       </div>
 
       {/* Generation control panel for Admin */}
-      <div className="bg-[#F1F4EE] rounded-3xl sm:rounded-[32px] p-3.5 sm:p-5 mb-5">
+      <div className="bg-[#F5F5F5] rounded-3xl sm:rounded-[32px] p-3.5 sm:p-5 mb-5">
         <h4 className="text-sm font-bold text-[#0C3B2E] mb-1 flex items-center">
           <Sparkles className="mr-1 text-[#4A6B57] animate-pulse shrink-0" size={16} />
           {currentUser.role === "admin" ? "새로운 주간 묵상 종합 요약 생성" : "주간 요약 보고서 정보"}
@@ -141,7 +141,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
                   value={weekLabel}
                   onChange={(e) => setWeekLabel(e.target.value)}
                   placeholder={`${new Date().getMonth() + 1}월 ${Math.ceil(new Date().getDate() / 7)}주차 묵상 종합`}
-                  className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
+                  className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
                 />
               </div>
 
@@ -150,7 +150,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
                 <select
                   value={daysCount}
                   onChange={(e) => setDaysCount(Number(e.target.value))}
-                  className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E] font-semibold cursor-pointer"
+                  className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E] font-semibold cursor-pointer"
                 >
                   <option value={3}>최근 3일 동안의 묵상 분석</option>
                   <option value={7}>최근 7일 동안의 묵상 분석 (기본)</option>
@@ -161,7 +161,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
             </div>
 
             {error && <p className="text-xs text-[#B3261E] font-semibold bg-[#FDF3F3] p-2 rounded-xl">{error}</p>}
-            {success && <p className="text-xs text-[#4A6B57] font-semibold bg-[#F1F4EE] p-2 rounded-xl">{success}</p>}
+            {success && <p className="text-xs text-[#4A6B57] font-semibold bg-[#F5F5F5] p-2 rounded-xl">{success}</p>}
 
             <div className="flex justify-end pt-1">
               <button
@@ -211,7 +211,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-[#F1F4EE]/60 rounded-[32px] p-5 space-y-3"
+                className="bg-[#F5F5F5]/60 rounded-[32px] p-5 space-y-3"
               >
                 <div className="flex justify-between items-start flex-wrap gap-2">
                   <h5 className="font-bold text-base text-[#0C3B2E] flex items-center gap-1.5 font-serif">
@@ -232,7 +232,7 @@ export default function WeeklySummarizer({ currentUser }: WeeklySummarizerProps)
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 bg-[#F1F4EE] rounded-[32px] text-[#6F8377]">
+          <div className="text-center py-10 bg-[#F5F5F5] rounded-[32px] text-[#6F8377]">
             <BookOpen className="mx-auto text-[#6F8377] mb-2" size={28} />
             <p className="text-sm">아직 생성된 묵상 요약 보고서가 없습니다.</p>
           </div>

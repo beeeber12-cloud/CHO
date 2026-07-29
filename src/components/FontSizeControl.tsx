@@ -19,7 +19,7 @@ export default function FontSizeControl() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#E4EDE5] hover:bg-[#C7D8C9] rounded-3xl text-xs font-bold text-[#0C3B2E] transition cursor-pointer shadow-xs whitespace-nowrap"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F5F5F5] hover:bg-[#C7D8C9] rounded-3xl text-xs font-bold text-[#0C3B2E] transition cursor-pointer shadow-xs whitespace-nowrap"
         title="글씨 크기 조절"
       >
         <Type size={14} className="text-[#4A6B57]" />
@@ -46,7 +46,7 @@ export default function FontSizeControl() {
               initial={{ opacity: 0, scale: 0.95, y: 5 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 5 }}
-              className="fixed top-16 left-1/2 -translate-x-1/2 sm:translate-x-0 w-[90vw] max-w-xs sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-64 bg-[#F1F4EE] rounded-3xl shadow-xl z-50 p-3 space-y-1 text-[#14261E]"
+              className="fixed top-16 left-1/2 -translate-x-1/2 sm:translate-x-0 w-[90vw] max-w-xs sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-64 bg-[#F5F5F5] rounded-3xl shadow-xl z-50 p-3 space-y-1 text-[#14261E]"
             >
               <div className="flex justify-between items-center px-2 py-1 border-b border-[#E3E9E2] mb-1">
                 <span className="text-xs font-bold text-[#0C3B2E] flex items-center gap-1">
@@ -65,8 +65,8 @@ export default function FontSizeControl() {
                   }}
                   className={`w-full flex items-center justify-between p-2 rounded-3xl text-left transition cursor-pointer ${
                     fontScale === s.key
-                      ? "bg-[#E4EDE5] text-[#0C3B2E] font-bold"
-                      : "hover:bg-[#F1F4EE] text-[#4A6B57]"
+                      ? "bg-[#F5F5F5] text-[#0C3B2E] font-bold"
+                      : "hover:bg-[#F5F5F5] text-[#4A6B57]"
                   }`}
                 >
                   <div>

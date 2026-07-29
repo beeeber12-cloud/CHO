@@ -362,7 +362,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               <div className="flex justify-center text-[#FFFFFF] mb-0.5">
                 <HeartHandshake size={16} />
               </div>
-              <span className="text-2xs text-[#E4EDE5]/90 font-semibold block">감사 작성</span>
+              <span className="text-2xs text-[#F5F5F5]/90 font-semibold block">감사 작성</span>
               <strong className="text-base sm:text-lg font-black text-[#FFFFFF]">{totalGratitudes}회</strong>
             </div>
 
@@ -396,12 +396,12 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="내 기록 내용 및 구절 검색..."
-              className="w-full pl-9 pr-4 py-2.5 bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-xs font-semibold"
+              className="w-full pl-9 pr-4 py-2.5 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-xs font-semibold"
             />
           </div>
 
           {/* Date Picker Filter */}
-          <div className="flex items-center gap-1 bg-[#F1F4EE] rounded-3xl px-2">
+          <div className="flex items-center gap-1 bg-[#F5F5F5] rounded-3xl px-2">
             <input
               type="date"
               value={selectedDateFilter}
@@ -428,7 +428,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             className={`px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 ${
               recordTypeFilter === 'all'
                 ? "bg-[#0C3B2E] text-white shadow-sm"
-                : "bg-[#F1F4EE] text-[#6F8377] hover:text-[#0C3B2E]"
+                : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#0C3B2E]"
             }`}
           >
             <span>전체 기록</span>
@@ -439,7 +439,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             className={`px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 ${
               recordTypeFilter === 'meditation'
                 ? "bg-[#0C3B2E] text-white shadow-sm"
-                : "bg-[#F1F4EE] text-[#6F8377] hover:text-[#0C3B2E]"
+                : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#0C3B2E]"
             }`}
           >
             <BookOpen size={13} />
@@ -451,7 +451,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             className={`px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 ${
               recordTypeFilter === 'gratitude'
                 ? "bg-[#0C3B2E] text-white shadow-sm"
-                : "bg-[#F1F4EE] text-[#6F8377] hover:text-[#072A20]"
+                : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#072A20]"
             }`}
           >
             <HeartHandshake size={13} />
@@ -492,7 +492,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                 type="text"
                 value={editVerseTitle}
                 onChange={(e) => setEditVerseTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-[#EDF0EA] text-[#14261E] font-semibold"
+                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] font-semibold"
                 required
               />
             </div>
@@ -503,7 +503,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-[#EDF0EA] text-[#14261E] font-semibold"
+                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] font-semibold"
                 required
               />
             </div>
@@ -514,7 +514,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={6}
-                className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-[#EDF0EA] text-[#14261E] leading-relaxed font-medium"
+                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] leading-relaxed font-medium"
                 required
               />
             </div>
@@ -525,7 +525,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                 type="text"
                 value={editPrayer}
                 onChange={(e) => setEditPrayer(e.target.value)}
-                className="w-full text-xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-[#EDF0EA] text-[#14261E] font-medium"
+                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] font-medium"
               />
             </div>
 
@@ -533,7 +533,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               <button
                 type="button"
                 onClick={() => setEditingId(null)}
-                className="px-3.5 py-1.5 text-[#4A6B57] hover:bg-[#F1F4EE] transition font-bold rounded-xl cursor-pointer"
+                className="px-3.5 py-1.5 text-[#4A6B57] hover:bg-[#F5F5F5] transition font-bold rounded-xl cursor-pointer"
               >
                 취소
               </button>
@@ -579,7 +579,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                       <div>
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-[#0C3B2E] text-xs">{currentUser.name}</span>
-                          <span className="bg-[#E4EDE5] text-[#0C3B2E] text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                          <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                             {med.verseTitle}
                           </span>
                         </div>
@@ -593,14 +593,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditClick(med)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F1F4EE] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
                         title="수정"
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
                         onClick={() => handleDeleteMeditation(med.id)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#F1F4EE] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
                         title="삭제"
                       >
                         <Trash2 size={13} />
@@ -610,13 +610,13 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-[#0C3B2E]">{med.title}</h4>
-                    <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#EDF0EA] p-4 rounded-3xl">
+                    <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
                       {med.content}
                     </p>
                   </div>
 
                   {med.prayer && (
-                    <div className="bg-[#E4EDE5]/40 bg-[#F1F4EE] rounded-3xl p-4 text-2xs">
+                    <div className="bg-[#F5F5F5]/40 bg-[#F5F5F5] rounded-3xl p-4 text-2xs">
                       <span className="font-bold text-[#0C3B2E] block mb-1">🙏 이번 주 동역자 기도제목</span>
                       <p className="text-[#4A6B57] leading-relaxed font-medium italic">
                         "{med.prayer}"
@@ -655,7 +655,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   </div>
 
                   {commentsOpen && (
-                    <div className="bg-[#F1F4EE]/60 bg-[#F1F4EE] rounded-3xl p-4 space-y-3 mt-2">
+                    <div className="bg-[#F5F5F5]/60 bg-[#F5F5F5] rounded-3xl p-4 space-y-3 mt-2">
                       {med.comments.length > 0 ? (
                         <div className="space-y-2">
                           {med.comments.map((comment) => {
@@ -699,7 +699,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           value={commentInputs[med.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
                           placeholder="은혜로운 답글을 남겨보세요..."
-                          className="flex-1 text-2xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                          className="flex-1 text-2xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
                         />
                         <button
                           onClick={() => handleAddComment(med.id, false)}
@@ -724,7 +724,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#F1F4EE]/40 rounded-[32px] shadow-sm p-5 space-y-4 hover:border-[#C7D8C9] transition-colors"
+                  className="bg-[#F5F5F5]/40 rounded-[32px] shadow-sm p-5 space-y-4 hover:border-[#C7D8C9] transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
@@ -736,7 +736,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           <span className="font-bold text-[#0C3B2E] text-xs">
                             {grat.isAnonymous ? "익명 (감사 지체)" : currentUser.name}
                           </span>
-                          <span className="bg-[#E4EDE5] text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
                             <Sparkles size={10} className="text-[#4A6B57]" /> 오늘의 감사
                           </span>
                         </div>
@@ -791,7 +791,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   </div>
 
                   {commentsOpen && (
-                    <div className="bg-[#E4EDE5]/50 rounded-3xl p-4 space-y-3 mt-2">
+                    <div className="bg-[#F5F5F5]/50 rounded-3xl p-4 space-y-3 mt-2">
                       {grat.comments.length > 0 ? (
                         <div className="space-y-2">
                           {grat.comments.map((comment) => {
@@ -835,7 +835,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           value={commentInputs[grat.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [grat.id]: e.target.value }))}
                           placeholder="감사 나눔에 댓글 남기기..."
-                          className="flex-1 text-2xs px-3 py-2 bg-[#F1F4EE] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                          className="flex-1 text-2xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
                         />
                         <button
                           onClick={() => handleAddComment(grat.id, true)}
@@ -851,7 +851,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }
           })
         ) : (
-          <div className="bg-[#F1F4EE]/50 rounded-[32px] p-12 text-center text-[#6F8377]">
+          <div className="bg-[#F5F5F5]/50 rounded-[32px] p-12 text-center text-[#6F8377]">
             <BookOpen className="mx-auto text-[#6F8377] mb-2" size={32} />
             <p className="text-xs font-semibold text-[#4A6B57]">기록된 영성 발자취가 없습니다.</p>
             <p className="text-2xs text-[#6F8377] mt-1">
