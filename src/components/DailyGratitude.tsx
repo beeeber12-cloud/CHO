@@ -195,16 +195,16 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
   return (
     <div className="space-y-5">
       {/* Real-time sync banner & header */}
-      <div className="bg-gradient-to-r from-[#004643] to-[#003330] text-white rounded-3xl p-5 shadow-sm relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0C3B2E] to-[#072A20] text-white rounded-[32px] p-5 shadow-sm relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="p-1.5 bg-[#4A5654]/20 text-[#FFFFFF] rounded-2xl border border-[#FFFFFF]/30">
+              <span className="p-1.5 bg-[#4A6B57]/20 text-[#FFFFFF] rounded-3xl">
                 <Sparkles size={18} />
               </span>
               <h2 className="text-xl sm:text-2xl font-bold tracking-tight">오늘의 감사 나눔터</h2>
             </div>
-            <p className="text-xs text-[#D3DAD9]/80 leading-relaxed max-w-xl">
+            <p className="text-xs text-[#D2DDD3]/80 leading-relaxed max-w-xl">
               범사에 감사하라 이것이 그리스도 예수 안에서 너희를 향하신 하나님의 뜻이니라 (살전 5:18).<br />
               오늘 하루 발견한 작고 소중한 감사를 한 줄로 나눠보세요.
             </p>
@@ -218,7 +218,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
               setIsAnonymous(false);
               setError("");
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#004643] hover:bg-[#003330] text-white font-bold rounded-2xl shadow-md transition cursor-pointer text-xs shrink-0"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold rounded-3xl shadow-md transition cursor-pointer text-xs shrink-0"
           >
             {showForm ? <X size={16} /> : <Plus size={16} />}
             {showForm ? "작성 창 닫기" : "오늘의 감사 고백하기"}
@@ -235,19 +235,19 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-[#E4E8E7] shadow-sm p-4 sm:p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#E4E8E7] pb-3">
-                <h3 className="text-sm font-bold text-[#004643] flex items-center gap-1.5">
-                  <Sparkles size={16} className="text-[#4A5654]" />
+            <form onSubmit={handleSubmit} className="bg-white rounded-[32px] shadow-sm p-4 sm:p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E3E9E2] pb-3">
+                <h3 className="text-sm font-bold text-[#0C3B2E] flex items-center gap-1.5">
+                  <Sparkles size={16} className="text-[#4A6B57]" />
                   {editingId ? "감사 고백 수정하기" : "오늘의 감사 등록"}
                 </h3>
-                <span className="text-xs text-[#7F8C8A]">
+                <span className="text-xs text-[#6F8377]">
                   작성자: <strong>{currentUser.name}</strong>
                 </span>
               </div>
 
               {error && (
-                <div className="p-3 bg-[#FDF3F3] border border-[#EFD2D2] text-[#A32020] text-xs rounded-2xl font-medium">
+                <div className="p-3 bg-[#FDF3F3] text-[#8F1E17] text-xs rounded-3xl font-medium">
                   {error}
                 </div>
               )}
@@ -255,35 +255,35 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Date Selection */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#4A5654] mb-1 flex items-center gap-1">
-                    <Calendar size={14} className="text-[#4A5654]" />
+                  <label className="block text-xs font-semibold text-[#4A6B57] mb-1 flex items-center gap-1">
+                    <Calendar size={14} className="text-[#4A6B57]" />
                     감사 날짜
                   </label>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-medium border border-[#E4E8E7] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A5654] bg-white text-[#1F2A29]"
+                    className="w-full px-3 py-2 text-xs font-medium bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
                   />
                 </div>
 
                 {/* Anonymous Option Toggle */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#4A5654] mb-1 flex items-center gap-1">
-                    {isAnonymous ? <EyeOff size={14} className="text-[#4A5654]" /> : <UserCheck size={14} className="text-[#4A5654]" />}
+                  <label className="block text-xs font-semibold text-[#4A6B57] mb-1 flex items-center gap-1">
+                    {isAnonymous ? <EyeOff size={14} className="text-[#4A6B57]" /> : <UserCheck size={14} className="text-[#4A6B57]" />}
                     이름 공개 여부
                   </label>
                   <button
                     type="button"
                     onClick={() => setIsAnonymous(!isAnonymous)}
-                    className={`w-full py-2 px-3 rounded-2xl border text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                    className={`w-full py-2 px-3 rounded-3xl border text-xs font-bold transition flex items-center justify-between cursor-pointer ${
                       isAnonymous
-                        ? "bg-[#F2F4F3] border-[#CBD9D7] text-[#004643]"
-                        : "bg-[#F2F4F3] border-[#E4E8E7] text-[#4A5654] hover:bg-[#E4E8E7]"
+                        ? "bg-[#F1F4EE] border-[#C7D8C9] text-[#0C3B2E]"
+                        : "bg-[#F1F4EE] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#E3E9E2]"
                     }`}
                   >
                     <span>{isAnonymous ? "🔒 익명으로 올려요" : `👤 실명으로 올려요 (${currentUser.name})`}</span>
-                    <span className="text-2xs px-2 py-0.5 rounded-md bg-white/80 font-normal">
+                    <span className="text-2xs px-2 py-0.5 rounded-lg bg-white/80 font-normal">
                       {isAnonymous ? "익명 (감사 지체)" : "이름 표시"}
                     </span>
                   </button>
@@ -292,7 +292,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
 
               {/* Gratitude Content */}
               <div>
-                <label className="block text-xs font-semibold text-[#4A5654] mb-1">
+                <label className="block text-xs font-semibold text-[#4A6B57] mb-1">
                   감사 고백 내용 (한 줄 또는 짧은 메시지)
                 </label>
                 <textarea
@@ -300,7 +300,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="예) 오늘 퇴근길 하늘이 너무 예뻐서 마음이 평안해졌습니다. 힘든 업무 속에서도 힘주신 주님 감사합니다!"
-                  className="w-full p-3 text-xs font-medium border border-[#E4E8E7] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A5654] text-[#1F2A29] leading-relaxed bg-white shadow-inner"
+                  className="w-full p-3 text-xs font-medium bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed bg-white shadow-inner"
                 />
               </div>
 
@@ -311,14 +311,14 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                     setShowForm(false);
                     setEditingId(null);
                   }}
-                  className="px-4 py-2 border border-[#E4E8E7] rounded-2xl text-xs font-semibold text-[#7F8C8A] hover:bg-[#F2F4F3] transition cursor-pointer"
+                  className="px-4 py-2 bg-[#F1F4EE] rounded-3xl text-xs font-semibold text-[#6F8377] hover:bg-[#F1F4EE] transition cursor-pointer"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#4A5654] hover:bg-[#003330] text-white text-xs font-bold rounded-2xl shadow transition cursor-pointer flex items-center gap-1.5"
+                  className="px-5 py-2 bg-[#4A6B57] hover:bg-[#072A20] text-white text-xs font-bold rounded-3xl shadow transition cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles size={14} />
                   {submitting ? "저장 중..." : editingId ? "수정 완료" : "감사 나누기"}
@@ -330,19 +330,19 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
       </AnimatePresence>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-[#E4E8E7] p-3 shadow-sm flex items-center justify-end gap-2.5">
+      <div className="bg-white rounded-3xl p-3 shadow-sm flex items-center justify-end gap-2.5">
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <button
             onClick={() => setFilterMyOnly(!filterMyOnly)}
-            className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-3xl border text-xs font-semibold transition cursor-pointer ${
               filterMyOnly
-                ? "bg-[#004643] text-white border-[#004643]"
-                : "bg-[#F2F4F3] text-[#4A5654] border-[#E4E8E7] hover:bg-[#D3DAD9]"
+                ? "bg-[#0C3B2E] text-white border-[#0C3B2E]"
+                : "bg-[#F1F4EE] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
             }`}
           >
             {filterMyOnly ? "✓ 내 감사글만 보기" : "전체 감사글"}
           </button>
-          <span className="text-2xs font-semibold text-[#7F8C8A] bg-[#F2F4F3] px-2.5 py-1 rounded-2xl border border-[#E4E8E7]">
+          <span className="text-2xs font-semibold text-[#6F8377] bg-[#F1F4EE] px-2.5 py-1 rounded-3xl">
             총 {filteredGratitudes.length}건
           </span>
         </div>
@@ -350,18 +350,18 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
 
       {/* Gratitudes Feed List */}
       {loading ? (
-        <div className="bg-white rounded-3xl p-10 text-center text-[#7F8C8A] text-xs font-medium border border-[#E4E8E7] shadow-sm">
-          <Sparkles className="mx-auto mb-2 text-[#4A5654] animate-spin" size={24} />
+        <div className="bg-white rounded-[32px] p-10 text-center text-[#6F8377] text-xs font-medium shadow-sm">
+          <Sparkles className="mx-auto mb-2 text-[#4A6B57] animate-spin" size={24} />
           감사 고백을 불러오는 중입니다...
         </div>
       ) : filteredGratitudes.length === 0 ? (
-        <div className="bg-white rounded-3xl p-10 text-center border border-[#E4E8E7] shadow-sm space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#F2F4F3] text-[#4A5654] border border-[#E4E8E7] flex items-center justify-center mx-auto">
+        <div className="bg-white rounded-[32px] p-10 text-center shadow-sm space-y-3">
+          <div className="w-12 h-12 rounded-3xl bg-[#F1F4EE] text-[#4A6B57] flex items-center justify-center mx-auto">
             <Sparkles size={24} />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-[#004643]">등록된 감사 고백이 없습니다.</h4>
-            <p className="text-xs text-[#7F8C8A] mt-1">
+            <h4 className="text-sm font-bold text-[#0C3B2E]">등록된 감사 고백이 없습니다.</h4>
+            <p className="text-xs text-[#6F8377] mt-1">
               오늘 첫 번째 감사 제목을 나눠 공동체를 따뜻하게 밝혀주세요!
             </p>
           </div>
@@ -370,7 +370,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
               setShowForm(true);
               setEditingId(null);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4A5654] text-white font-bold text-xs rounded-2xl shadow hover:bg-[#003330] transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4A6B57] text-white font-bold text-xs rounded-3xl shadow hover:bg-[#072A20] transition cursor-pointer"
           >
             <Plus size={14} />
             첫 감사 고백 남기기
@@ -390,30 +390,30 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl sm:rounded-3xl border border-[#E4E8E7] shadow-sm p-4 sm:p-5 transition hover:border-[#4A5654]/40"
+                className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-4 sm:p-5 transition hover:border-[#4A6B57]/40"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                       grat.isAnonymous
-                        ? "bg-[#E8EFEE] text-[#004643] border border-[#CBD9D7]"
-                        : "bg-[#E8EFEE] text-[#004643] border border-[#4A5654]/30"
+                        ? "bg-[#E4EDE5] text-[#0C3B2E]"
+                        : "bg-[#E4EDE5] text-[#0C3B2E]"
                     }`}>
                       {grat.isAnonymous ? "익명" : grat.userName.slice(0, 1)}
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#004643] bg-[#FFEF4D] px-2 py-0.5 rounded-lg">
+                        <span className="text-xs font-bold text-[#0C3B2E] bg-[#FFBA00] px-2 py-0.5 rounded-lg">
                           {grat.isAnonymous ? "익명 (감사 지체)" : grat.userName}
                         </span>
                         {isAuthor && (
-                          <span className="text-2xs bg-[#4A5654] text-white px-1.5 py-0.2 rounded font-semibold">
+                          <span className="text-2xs bg-[#4A6B57] text-white px-1.5 py-0.2 rounded font-semibold">
                             나
                           </span>
                         )}
                       </div>
-                      <span className="text-2xs text-[#7F8C8A] block">
+                      <span className="text-2xs text-[#6F8377] block">
                         {grat.date}
                       </span>
                     </div>
@@ -423,7 +423,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                   {canDelete && (
                     <button
                       onClick={() => handleDelete(grat.id)}
-                      className="p-1.5 text-[#7F8C8A] hover:text-[#C62828] rounded-xl transition cursor-pointer"
+                      className="p-1.5 text-[#6F8377] hover:text-[#B3261E] rounded-xl transition cursor-pointer"
                       title="삭제"
                     >
                       <Trash2 size={14} />
@@ -432,31 +432,31 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                 </div>
 
                 {/* Content */}
-                <div className="bg-[#F2F4F3] border border-[#E4E8E7] rounded-2xl p-3.5 mb-3 text-xs sm:text-sm text-[#004643] font-medium leading-relaxed shadow-inner">
+                <div className="bg-[#F1F4EE] rounded-3xl p-3.5 mb-3 text-xs sm:text-sm text-[#0C3B2E] font-medium leading-relaxed shadow-inner">
                   &ldquo;{grat.content}&rdquo;
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between pt-1 border-t border-[#F2F4F3] text-xs">
+                <div className="flex items-center justify-between pt-1 border-t border-[#F1F4EE] text-xs">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleLike(grat.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-2xl transition cursor-pointer font-bold ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-3xl transition cursor-pointer font-bold ${
                         isLiked
-                          ? "bg-[#FDF3F3] text-[#C62828] border border-[#EFD2D2]"
-                          : "text-[#7F8C8A] hover:bg-[#F2F4F3]"
+                          ? "bg-[#FDF3F3] text-[#B3261E]"
+                          : "text-[#6F8377] hover:bg-[#F1F4EE]"
                       }`}
                     >
-                      <Heart size={14} className={isLiked ? "fill-[#C62828] text-[#C62828]" : ""} />
+                      <Heart size={14} className={isLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
                       <span>{grat.likes.length}</span>
                     </button>
 
                     <button
                       onClick={() => setActiveCommentId(isCommentOpen ? null : grat.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-2xl transition cursor-pointer font-semibold ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-3xl transition cursor-pointer font-semibold ${
                         isCommentOpen
-                          ? "bg-[#4A5654] text-white"
-                          : "text-[#7F8C8A] hover:bg-[#F2F4F3]"
+                          ? "bg-[#4A6B57] text-white"
+                          : "text-[#6F8377] hover:bg-[#F1F4EE]"
                       }`}
                     >
                       <MessageSquare size={14} />
@@ -464,7 +464,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                     </button>
                   </div>
 
-                  <span className="text-2xs text-[#7F8C8A]">
+                  <span className="text-2xs text-[#6F8377]">
                     {new Date(grat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -476,7 +476,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 pt-3 border-t border-[#E4E8E7] space-y-3"
+                      className="mt-3 pt-3 border-t border-[#E3E9E2] space-y-3"
                     >
                       {/* Comments List */}
                       {grat.comments.length > 0 ? (
@@ -484,21 +484,21 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                           {grat.comments.map((comment) => {
                             const canDeleteComment = comment.userId === currentUser.id || currentUser.role === "admin";
                             return (
-                              <div key={comment.id} className="bg-[#F2F4F3]/70 rounded-2xl p-2.5 text-xs flex justify-between items-start gap-2">
+                              <div key={comment.id} className="bg-[#F1F4EE]/70 rounded-3xl p-2.5 text-xs flex justify-between items-start gap-2">
                                 <div>
                                   <div className="flex items-center gap-1.5 mb-0.5">
-                                    <span className="font-bold text-[#004643] bg-[#FFEF4D] px-1.5 py-0.5 rounded-md">{comment.userName}</span>
-                                    <span className="text-2xs text-[#7F8C8A]">
+                                    <span className="font-bold text-[#0C3B2E] bg-[#FFBA00] px-1.5 py-0.5 rounded-lg">{comment.userName}</span>
+                                    <span className="text-2xs text-[#6F8377]">
                                       {new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </div>
-                                  <p className="text-[#4A5654] leading-relaxed">{comment.content}</p>
+                                  <p className="text-[#4A6B57] leading-relaxed">{comment.content}</p>
                                 </div>
 
                                 {canDeleteComment && (
                                   <button
                                     onClick={() => handleDeleteComment(grat.id, comment.id)}
-                                    className="text-[#7F8C8A] hover:text-[#C62828] transition p-1 cursor-pointer shrink-0"
+                                    className="text-[#6F8377] hover:text-[#B3261E] transition p-1 cursor-pointer shrink-0"
                                   >
                                     <Trash2 size={12} />
                                   </button>
@@ -508,7 +508,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-2xs text-[#7F8C8A] text-center py-2">
+                        <p className="text-2xs text-[#6F8377] text-center py-2">
                           첫 댓글을 남겨 이 감사의 고백에 함께 기뻐해 주세요!
                         </p>
                       )}
@@ -523,12 +523,12 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                             if (e.key === 'Enter') handleAddComment(grat.id);
                           }}
                           placeholder="따뜻한 축하와 위로의 댓글을 남겨보세요..."
-                          className="flex-1 px-3 py-2 text-xs border border-[#E4E8E7] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A5654] bg-white text-[#1F2A29]"
+                          className="flex-1 px-3 py-2 text-xs bg-[#F1F4EE] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
                         />
                         <button
                           onClick={() => handleAddComment(grat.id)}
                           disabled={submittingComment || !commentInput.trim()}
-                          className="p-2 bg-[#4A5654] hover:bg-[#003330] text-white rounded-2xl disabled:opacity-50 transition cursor-pointer"
+                          className="p-2 bg-[#4A6B57] hover:bg-[#072A20] text-white rounded-3xl disabled:opacity-50 transition cursor-pointer"
                         >
                           <Send size={14} />
                         </button>

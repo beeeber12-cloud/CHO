@@ -67,7 +67,7 @@ export default function FormattedBibleText({
           data-verse={v.verseNum}
           className={`group scroll-mt-4 transition-colors duration-500 ${
             highlightVerse != null && v.verseNum != null && Number(v.verseNum) === highlightVerse
-              ? "bg-[#E8EFEE] border-l-4 border-[#4A5654] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+              ? "bg-[#E4EDE5] border-l-4 border-[#4A6B57] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
               : ""
           }`}
         >
@@ -76,7 +76,7 @@ export default function FormattedBibleText({
             style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
           >
             {v.verseNum && (
-              <span className="font-sans font-bold text-[#4A5654] text-xs sm:text-sm mr-2 inline-block select-none">
+              <span className="font-sans font-bold text-[#4A6B57] text-xs sm:text-sm mr-2 inline-block select-none">
                 {v.verseNum}
               </span>
             )}
