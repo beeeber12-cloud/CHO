@@ -13,24 +13,24 @@
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1.45;
 
-  /* Base: PINE + MILK.  Accents: Fresh Mint / Orange (사용 최소화) */
-  --color-forest-primary: #0B5C3C;
-  --color-forest-dark: #00311F;   /* PINE */
-  --color-forest-hover: #004A2E;
-  --color-warm-bg: #FBFBEF;       /* MILK */
+  /* Base chip: #2c2f36 charcoal / #85888f gray / #ffffff white / #ff0000 red
+     밝은 중립색(EFF1F3·F4F5F7·E3E4E7)은 #85888f 에서 파생 — 배경·카드·테두리 위계용 */
+  --color-forest-primary: #4B4E55;
+  --color-forest-dark: #2C2F36;   /* CHARCOAL */
+  --color-forest-hover: #1E2128;
+  --color-warm-bg: #EFF1F3;       /* page */
   --color-warm-card: #ffffff;
-  --color-warm-border: #E7E5D8;
-  --color-warm-secondary: #F4F2E6;
-  --color-warm-text: #1A1A1A;
-  --color-warm-muted: #8B8B82;
-  --color-warm-darktext: #55554E;
+  --color-warm-border: #E3E4E7;
+  --color-warm-secondary: #F4F5F7;
+  --color-warm-text: #1A1C21;
+  --color-warm-muted: #85888F;
+  --color-warm-darktext: #4B4E55;
 
-  /* Point colors — 구별이 필요한 지점에만 */
-  --color-point-mint: #6FF7A0;
-  --color-point-orange: #F44A22;
+  /* Point color — 구별이 필요한 지점에만 */
+  --color-point-red: #FF0000;
 
   /* 성경 본문 전용: 가독성 위해 거의 검정에 가까운 진회색 */
-  --color-scripture: #1A1A1A;
+  --color-scripture: #1A1C21;
 }
 
 html {

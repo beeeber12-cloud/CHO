@@ -333,7 +333,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* User Stats Card */}
-      <div className="bg-gradient-to-br from-[#00311F] to-[#0B5C3C] rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#2C2F36] to-[#4B4E55] rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
         <div className="absolute right-[-20px] bottom-[-20px] opacity-10 text-white pointer-events-none">
           <BookOpen size={180} />
         </div>
@@ -344,75 +344,75 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               MY DEVOTIONAL JOURNAL
             </span>
             <h3 className="font-bold text-xl sm:text-2xl mt-1.5">{currentUser.name}님의 영성 기록 발자취</h3>
-            <p className="text-xs text-emerald-100/80 mt-1 leading-relaxed">
+            <p className="text-xs text-[#D5D7DB]/80 mt-1 leading-relaxed">
               주님과 친밀하게 나누어 온 묵상과 감사의 고백들이 은혜로 쌓여 가고 있습니다.
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 self-stretch md:self-auto border-t border-white/10 pt-3 md:pt-0 md:border-t-0">
             <div className="text-center bg-white/10 px-3 py-2.5 rounded-2xl min-w-[75px]">
-              <div className="flex justify-center text-emerald-300 mb-0.5">
+              <div className="flex justify-center text-[#C3C5CA] mb-0.5">
                 <Activity size={16} />
               </div>
-              <span className="text-2xs text-emerald-100/70 font-semibold block">묵상 작성</span>
+              <span className="text-2xs text-[#D5D7DB]/70 font-semibold block">묵상 작성</span>
               <strong className="text-base sm:text-lg font-black">{totalWritten}회</strong>
             </div>
 
-            <div className="text-center bg-[#0B5C3C]/20 border border-[#C9EAD6]/30 px-3 py-2.5 rounded-2xl min-w-[75px]">
-              <div className="flex justify-center text-[#6FF7A0] mb-0.5">
+            <div className="text-center bg-[#4B4E55]/20 border border-[#DCDEE1]/30 px-3 py-2.5 rounded-2xl min-w-[75px]">
+              <div className="flex justify-center text-[#FFFFFF] mb-0.5">
                 <HeartHandshake size={16} />
               </div>
-              <span className="text-2xs text-amber-100/90 font-semibold block">감사 작성</span>
-              <strong className="text-base sm:text-lg font-black text-[#6FF7A0]">{totalGratitudes}회</strong>
+              <span className="text-2xs text-[#EDEEF0]/90 font-semibold block">감사 작성</span>
+              <strong className="text-base sm:text-lg font-black text-[#FFFFFF]">{totalGratitudes}회</strong>
             </div>
 
             <div className="text-center bg-white/10 px-3 py-2.5 rounded-2xl min-w-[75px]">
-              <div className="flex justify-center text-emerald-300 mb-0.5">
+              <div className="flex justify-center text-[#C3C5CA] mb-0.5">
                 <Calendar size={16} />
               </div>
-              <span className="text-2xs text-emerald-100/70 font-semibold block">기록한 날</span>
+              <span className="text-2xs text-[#D5D7DB]/70 font-semibold block">기록한 날</span>
               <strong className="text-base sm:text-lg font-black">{distinctDays}일</strong>
             </div>
 
             <div className="text-center bg-white/10 px-3 py-2.5 rounded-2xl min-w-[75px]">
-              <div className="flex justify-center text-[#6FF7A0] mb-0.5">
+              <div className="flex justify-center text-[#FFFFFF] mb-0.5">
                 <Award size={16} />
               </div>
-              <span className="text-2xs text-emerald-100/70 font-semibold block">연속 일수</span>
-              <strong className="text-base sm:text-lg font-black text-[#6FF7A0]">{activeStreak}일</strong>
+              <span className="text-2xs text-[#D5D7DB]/70 font-semibold block">연속 일수</span>
+              <strong className="text-base sm:text-lg font-black text-[#FFFFFF]">{activeStreak}일</strong>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter and Search controls */}
-      <div className="bg-white rounded-3xl border border-[#E7E5D8] shadow-sm p-4 space-y-3">
+      <div className="bg-white rounded-3xl border border-[#E3E4E7] shadow-sm p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Keyword Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3.5 text-[#8B8B82]" size={16} />
+            <Search className="absolute left-3 top-3.5 text-[#85888F]" size={16} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="내 기록 내용 및 구절 검색..."
-              className="w-full pl-9 pr-4 py-2.5 bg-[#F4F2E6] border border-[#E7E5D8] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0B5C3C] text-[#1A1A1A] text-xs font-semibold"
+              className="w-full pl-9 pr-4 py-2.5 bg-[#F4F5F7] border border-[#E3E4E7] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4B4E55] text-[#1A1C21] text-xs font-semibold"
             />
           </div>
 
           {/* Date Picker Filter */}
-          <div className="flex items-center gap-1 bg-[#F4F2E6] border border-[#E7E5D8] rounded-2xl px-2">
+          <div className="flex items-center gap-1 bg-[#F4F5F7] border border-[#E3E4E7] rounded-2xl px-2">
             <input
               type="date"
               value={selectedDateFilter}
               onChange={(e) => setSelectedDateFilter(e.target.value)}
-              className="bg-transparent border-none text-[#1A1A1A] text-xs font-semibold py-2 focus:outline-none cursor-pointer"
+              className="bg-transparent border-none text-[#1A1C21] text-xs font-semibold py-2 focus:outline-none cursor-pointer"
               title="날짜별 검색"
             />
             {selectedDateFilter && (
               <button
                 onClick={() => setSelectedDateFilter("")}
-                className="text-[#8B8B82] hover:text-[#55554E] p-1 cursor-pointer"
+                className="text-[#85888F] hover:text-[#4B4E55] p-1 cursor-pointer"
                 title="날짜 선택 해제"
               >
                 <X size={14} />
@@ -422,13 +422,13 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
         </div>
 
         {/* Record Type Category Pills */}
-        <div className="flex gap-2 border-t border-[#E7E5D8] pt-3 text-xs font-bold">
+        <div className="flex gap-2 border-t border-[#E3E4E7] pt-3 text-xs font-bold">
           <button
             onClick={() => setRecordTypeFilter('all')}
             className={`px-3 py-1.5 rounded-2xl transition cursor-pointer flex items-center gap-1.5 ${
               recordTypeFilter === 'all'
-                ? "bg-[#00311F] text-white shadow-sm"
-                : "bg-[#F4F2E6] text-[#8B8B82] hover:text-[#00311F]"
+                ? "bg-[#2C2F36] text-white shadow-sm"
+                : "bg-[#F4F5F7] text-[#85888F] hover:text-[#2C2F36]"
             }`}
           >
             <span>전체 기록</span>
@@ -438,8 +438,8 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             onClick={() => setRecordTypeFilter('meditation')}
             className={`px-3 py-1.5 rounded-2xl transition cursor-pointer flex items-center gap-1.5 ${
               recordTypeFilter === 'meditation'
-                ? "bg-[#00311F] text-white shadow-sm"
-                : "bg-[#F4F2E6] text-[#8B8B82] hover:text-[#00311F]"
+                ? "bg-[#2C2F36] text-white shadow-sm"
+                : "bg-[#F4F5F7] text-[#85888F] hover:text-[#2C2F36]"
             }`}
           >
             <BookOpen size={13} />
@@ -450,8 +450,8 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             onClick={() => setRecordTypeFilter('gratitude')}
             className={`px-3 py-1.5 rounded-2xl transition cursor-pointer flex items-center gap-1.5 ${
               recordTypeFilter === 'gratitude'
-                ? "bg-[#00311F] text-white shadow-sm"
-                : "bg-[#F4F2E6] text-[#8B8B82] hover:text-[#004A2E]"
+                ? "bg-[#2C2F36] text-white shadow-sm"
+                : "bg-[#F4F5F7] text-[#85888F] hover:text-[#1E2128]"
             }`}
           >
             <HeartHandshake size={13} />
@@ -466,16 +466,16 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl border-2 border-[#0B5C3C] p-5 shadow-md"
+          className="bg-white rounded-3xl border-2 border-[#4B4E55] p-5 shadow-md"
         >
-          <div className="flex justify-between items-center border-b border-[#E7E5D8] pb-3 mb-4">
-            <h4 className="font-bold text-[#00311F] text-sm flex items-center gap-1.5">
-              <Edit2 size={16} className="text-[#0B5C3C]" />
+          <div className="flex justify-between items-center border-b border-[#E3E4E7] pb-3 mb-4">
+            <h4 className="font-bold text-[#2C2F36] text-sm flex items-center gap-1.5">
+              <Edit2 size={16} className="text-[#4B4E55]" />
               내 묵상 기록 수정하기
             </h4>
             <button
               onClick={() => setEditingId(null)}
-              className="text-[#8B8B82] hover:text-[#55554E] cursor-pointer"
+              className="text-[#85888F] hover:text-[#4B4E55] cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -483,49 +483,49 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
           <form onSubmit={handleUpdateSubmit} className="space-y-3.5 text-xs">
             {formError && (
-              <div className="text-rose-500 bg-rose-50 p-2 rounded-xl font-semibold">{formError}</div>
+              <div className="text-[#FF0000] bg-[#FFF2F2] p-2 rounded-xl font-semibold">{formError}</div>
             )}
 
             <div>
-              <label className="block text-2xs font-bold text-[#8B8B82] mb-1">말씀 구절</label>
+              <label className="block text-2xs font-bold text-[#85888F] mb-1">말씀 구절</label>
               <input
                 type="text"
                 value={editVerseTitle}
                 onChange={(e) => setEditVerseTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-[#E7E5D8] rounded-xl bg-[#FBFBEF] text-[#1A1A1A] font-semibold"
+                className="w-full text-xs px-3 py-2 border border-[#E3E4E7] rounded-xl bg-[#EFF1F3] text-[#1A1C21] font-semibold"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#8B8B82] mb-1">묵상 제목</label>
+              <label className="block text-2xs font-bold text-[#85888F] mb-1">묵상 제목</label>
               <input
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-[#E7E5D8] rounded-xl bg-[#FBFBEF] text-[#1A1A1A] font-semibold"
+                className="w-full text-xs px-3 py-2 border border-[#E3E4E7] rounded-xl bg-[#EFF1F3] text-[#1A1C21] font-semibold"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#8B8B82] mb-1">묵상 고백 및 적용</label>
+              <label className="block text-2xs font-bold text-[#85888F] mb-1">묵상 고백 및 적용</label>
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={6}
-                className="w-full text-xs px-3 py-2 border border-[#E7E5D8] rounded-xl bg-[#FBFBEF] text-[#1A1A1A] leading-relaxed font-medium"
+                className="w-full text-xs px-3 py-2 border border-[#E3E4E7] rounded-xl bg-[#EFF1F3] text-[#1A1C21] leading-relaxed font-medium"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#8B8B82] mb-1">나의 동역자 중보기도 제목 (선택)</label>
+              <label className="block text-2xs font-bold text-[#85888F] mb-1">나의 동역자 중보기도 제목 (선택)</label>
               <input
                 type="text"
                 value={editPrayer}
                 onChange={(e) => setEditPrayer(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-[#E7E5D8] rounded-xl bg-[#FBFBEF] text-[#1A1A1A] font-medium"
+                className="w-full text-xs px-3 py-2 border border-[#E3E4E7] rounded-xl bg-[#EFF1F3] text-[#1A1C21] font-medium"
               />
             </div>
 
@@ -533,14 +533,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               <button
                 type="button"
                 onClick={() => setEditingId(null)}
-                className="px-3.5 py-1.5 border border-[#E7E5D8] text-[#55554E] hover:bg-slate-50 transition font-bold rounded-xl cursor-pointer"
+                className="px-3.5 py-1.5 border border-[#E3E4E7] text-[#4B4E55] hover:bg-[#F4F5F7] transition font-bold rounded-xl cursor-pointer"
               >
                 취소
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-1.5 bg-[#0B5C3C] hover:bg-[#004A2E] text-white font-bold rounded-xl transition cursor-pointer"
+                className="px-4 py-1.5 bg-[#4B4E55] hover:bg-[#1E2128] text-white font-bold rounded-xl transition cursor-pointer"
               >
                 {submitting ? "수정 중..." : "수정 완료"}
               </button>
@@ -553,8 +553,8 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
       <div className="space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader className="animate-spin text-[#0B5C3C] mb-2" size={24} />
-            <p className="text-xs text-[#8B8B82]">내 영성 기록을 불러오고 있습니다...</p>
+            <Loader className="animate-spin text-[#4B4E55] mb-2" size={24} />
+            <p className="text-xs text-[#85888F]">내 영성 기록을 불러오고 있습니다...</p>
           </div>
         ) : combinedItems.length > 0 ? (
           combinedItems.map((item) => {
@@ -569,21 +569,21 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-3xl border border-[#E7E5D8] shadow-sm p-5 space-y-4 hover:border-[#C9EAD6] transition-colors"
+                  className="bg-white rounded-3xl border border-[#E3E4E7] shadow-sm p-5 space-y-4 hover:border-[#DCDEE1] transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-[#00311F] text-white font-bold rounded-full flex items-center justify-center text-xs shadow-sm">
+                      <div className="w-9 h-9 bg-[#2C2F36] text-white font-bold rounded-full flex items-center justify-center text-xs shadow-sm">
                         {currentUser.name.slice(-2)}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-[#00311F] text-xs">{currentUser.name}</span>
-                          <span className="bg-[#E4F1E7] text-[#00311F] text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                          <span className="font-bold text-[#2C2F36] text-xs">{currentUser.name}</span>
+                          <span className="bg-[#EDEEF0] text-[#2C2F36] text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                             {med.verseTitle}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-2xs text-[#8B8B82] mt-0.5 font-medium">
+                        <div className="flex items-center gap-1 text-2xs text-[#85888F] mt-0.5 font-medium">
                           <Clock size={10} />
                           <span>{med.date} {new Date(med.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -593,14 +593,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditClick(med)}
-                        className="p-1.5 text-[#8B8B82] hover:text-[#0B5C3C] hover:bg-[#F4F2E6] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#85888F] hover:text-[#4B4E55] hover:bg-[#F4F5F7] rounded-xl transition cursor-pointer"
                         title="수정"
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
                         onClick={() => handleDeleteMeditation(med.id)}
-                        className="p-1.5 text-[#8B8B82] hover:text-rose-600 hover:bg-slate-50 rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#85888F] hover:text-[#FF0000] hover:bg-[#F4F5F7] rounded-xl transition cursor-pointer"
                         title="삭제"
                       >
                         <Trash2 size={13} />
@@ -609,37 +609,37 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold text-[#00311F]">{med.title}</h4>
-                    <p className="text-xs text-[#55554E] leading-relaxed whitespace-pre-line bg-[#FBFBEF] p-4 rounded-2xl border border-[#E7E5D8]">
+                    <h4 className="text-sm font-bold text-[#2C2F36]">{med.title}</h4>
+                    <p className="text-xs text-[#4B4E55] leading-relaxed whitespace-pre-line bg-[#EFF1F3] p-4 rounded-2xl border border-[#E3E4E7]">
                       {med.content}
                     </p>
                   </div>
 
                   {med.prayer && (
-                    <div className="bg-[#E4F1E7]/40 border border-[#E7E5D8] rounded-2xl p-4 text-2xs">
-                      <span className="font-bold text-[#00311F] block mb-1">🙏 이번 주 동역자 기도제목</span>
-                      <p className="text-slate-700 leading-relaxed font-medium italic">
+                    <div className="bg-[#EDEEF0]/40 border border-[#E3E4E7] rounded-2xl p-4 text-2xs">
+                      <span className="font-bold text-[#2C2F36] block mb-1">🙏 이번 주 동역자 기도제목</span>
+                      <p className="text-[#4B4E55] leading-relaxed font-medium italic">
                         "{med.prayer}"
                       </p>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between border-t border-[#E7E5D8] pt-3">
+                  <div className="flex items-center justify-between border-t border-[#E3E4E7] pt-3">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeToggle(med.id, false)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          hasLiked ? "text-rose-600" : "text-[#8B8B82] hover:text-rose-500"
+                          hasLiked ? "text-[#FF0000]" : "text-[#85888F] hover:text-[#FF0000]"
                         }`}
                       >
-                        <Heart size={14} className={hasLiked ? "fill-rose-600 text-rose-600" : ""} />
+                        <Heart size={14} className={hasLiked ? "fill-[#FF0000] text-[#FF0000]" : ""} />
                         <span>좋아요 {med.likes.length > 0 ? med.likes.length : ""}</span>
                       </button>
 
                       <button
                         onClick={() => toggleCommentsExpanded(med.id)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          commentsOpen ? "text-[#00311F]" : "text-[#8B8B82] hover:text-[#00311F]"
+                          commentsOpen ? "text-[#2C2F36]" : "text-[#85888F] hover:text-[#2C2F36]"
                         }`}
                       >
                         <MessageSquare size={14} />
@@ -648,28 +648,28 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </div>
 
                     {med.likes.length > 0 && (
-                      <div className="text-2xs text-[#8B8B82] font-medium">
+                      <div className="text-2xs text-[#85888F] font-medium">
                         {med.likes.length}명의 지체가 격려 중입니다
                       </div>
                     )}
                   </div>
 
                   {commentsOpen && (
-                    <div className="bg-[#F4F2E6]/60 border border-[#E7E5D8] rounded-2xl p-4 space-y-3 mt-2">
+                    <div className="bg-[#F4F5F7]/60 border border-[#E3E4E7] rounded-2xl p-4 space-y-3 mt-2">
                       {med.comments.length > 0 ? (
                         <div className="space-y-2">
                           {med.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-2xl border border-[#E7E5D8]">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-2xl border border-[#E3E4E7]">
                                 <div className="text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
-                                    <strong className="font-bold text-[#00311F]">{comment.userName}</strong>
-                                    <span className="text-2xs text-[#8B8B82]">
+                                    <strong className="font-bold text-[#2C2F36]">{comment.userName}</strong>
+                                    <span className="text-2xs text-[#85888F]">
                                       {new Date(comment.createdAt).toLocaleDateString()}
                                     </span>
                                   </div>
-                                  <p className="text-[#55554E] leading-relaxed font-medium">
+                                  <p className="text-[#4B4E55] leading-relaxed font-medium">
                                     {comment.content}
                                   </p>
                                 </div>
@@ -677,7 +677,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                                 {isMyComment && (
                                   <button
                                     onClick={() => handleDeleteComment(med.id, comment.id, false)}
-                                    className="text-slate-300 hover:text-rose-500 p-0.5 rounded cursor-pointer"
+                                    className="text-[#C3C5CA] hover:text-[#FF0000] p-0.5 rounded cursor-pointer"
                                     title="댓글 삭제"
                                   >
                                     <X size={12} />
@@ -688,7 +688,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-2xs text-[#8B8B82] text-center py-2">
+                        <p className="text-2xs text-[#85888F] text-center py-2">
                           아직 달린 댓글이 없습니다. 지체들과 은혜로운 댓글을 나눠보세요! 💬
                         </p>
                       )}
@@ -699,11 +699,11 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           value={commentInputs[med.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
                           placeholder="은혜로운 답글을 남겨보세요..."
-                          className="flex-1 text-2xs px-3 py-2 border border-[#E7E5D8] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#0B5C3C] text-[#1A1A1A]"
+                          className="flex-1 text-2xs px-3 py-2 border border-[#E3E4E7] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4B4E55] text-[#1A1C21]"
                         />
                         <button
                           onClick={() => handleAddComment(med.id, false)}
-                          className="px-3 bg-[#0B5C3C] hover:bg-[#004A2E] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
+                          className="px-3 bg-[#4B4E55] hover:bg-[#1E2128] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
                         >
                           <Send size={11} />
                         </button>
@@ -724,23 +724,23 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#F4F2E6]/40 rounded-3xl border border-[#E7E5D8]/80 shadow-sm p-5 space-y-4 hover:border-[#C9EAD6] transition-colors"
+                  className="bg-[#F4F5F7]/40 rounded-3xl border border-[#E3E4E7]/80 shadow-sm p-5 space-y-4 hover:border-[#DCDEE1] transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-[#00311F] text-white font-bold rounded-full flex items-center justify-center text-xs shadow-sm">
+                      <div className="w-9 h-9 bg-[#2C2F36] text-white font-bold rounded-full flex items-center justify-center text-xs shadow-sm">
                         <HeartHandshake size={18} />
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-[#00311F] text-xs">
+                          <span className="font-bold text-[#2C2F36] text-xs">
                             {grat.isAnonymous ? "익명 (감사 지체)" : currentUser.name}
                           </span>
-                          <span className="bg-[#E9F5EC] text-[#00311F] border border-[#E7E5D8] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles size={10} className="text-[#0B5C3C]" /> 오늘의 감사
+                          <span className="bg-[#EDEEF0] text-[#2C2F36] border border-[#E3E4E7] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Sparkles size={10} className="text-[#4B4E55]" /> 오늘의 감사
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-2xs text-[#00311F]/70 mt-0.5 font-medium">
+                        <div className="flex items-center gap-1 text-2xs text-[#2C2F36]/70 mt-0.5 font-medium">
                           <Clock size={10} />
                           <span>{grat.date} {new Date(grat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -749,33 +749,33 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
                     <button
                       onClick={() => handleDeleteGratitude(grat.id)}
-                      className="p-1.5 text-[#8B8B82] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      className="p-1.5 text-[#85888F] hover:text-[#FF0000] hover:bg-[#FFF2F2] rounded-xl transition cursor-pointer"
                       title="삭제"
                     >
                       <Trash2 size={13} />
                     </button>
                   </div>
 
-                  <p className="text-xs text-[#1A1A1A] leading-relaxed whitespace-pre-line bg-white/90 p-4 rounded-2xl border border-[#E7E5D8]/60 font-medium">
+                  <p className="text-xs text-[#1A1C21] leading-relaxed whitespace-pre-line bg-white/90 p-4 rounded-2xl border border-[#E3E4E7]/60 font-medium">
                     {grat.content}
                   </p>
 
-                  <div className="flex items-center justify-between border-t border-[#E7E5D8]/60 pt-3">
+                  <div className="flex items-center justify-between border-t border-[#E3E4E7]/60 pt-3">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeToggle(grat.id, true)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          hasLiked ? "text-rose-600" : "text-[#00311F]/70 hover:text-rose-500"
+                          hasLiked ? "text-[#FF0000]" : "text-[#2C2F36]/70 hover:text-[#FF0000]"
                         }`}
                       >
-                        <Heart size={14} className={hasLiked ? "fill-rose-600 text-rose-600" : ""} />
+                        <Heart size={14} className={hasLiked ? "fill-[#FF0000] text-[#FF0000]" : ""} />
                         <span>감사해요 {grat.likes.length > 0 ? grat.likes.length : ""}</span>
                       </button>
 
                       <button
                         onClick={() => toggleCommentsExpanded(grat.id)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          commentsOpen ? "text-[#00311F]" : "text-[#00311F]/70 hover:text-[#00311F]"
+                          commentsOpen ? "text-[#2C2F36]" : "text-[#2C2F36]/70 hover:text-[#2C2F36]"
                         }`}
                       >
                         <MessageSquare size={14} />
@@ -784,28 +784,28 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </div>
 
                     {grat.likes.length > 0 && (
-                      <div className="text-2xs text-[#00311F]/70 font-medium">
+                      <div className="text-2xs text-[#2C2F36]/70 font-medium">
                         {grat.likes.length}명이 이 감사에 함께하고 있습니다
                       </div>
                     )}
                   </div>
 
                   {commentsOpen && (
-                    <div className="bg-[#E9F5EC]/50 border border-[#E7E5D8]/70 rounded-2xl p-4 space-y-3 mt-2">
+                    <div className="bg-[#EDEEF0]/50 border border-[#E3E4E7]/70 rounded-2xl p-4 space-y-3 mt-2">
                       {grat.comments.length > 0 ? (
                         <div className="space-y-2">
                           {grat.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/90 p-3 rounded-2xl border border-[#E7E5D8]/60">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/90 p-3 rounded-2xl border border-[#E3E4E7]/60">
                                 <div className="text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
-                                    <strong className="font-bold text-[#1A1A1A]">{comment.userName}</strong>
-                                    <span className="text-2xs text-[#8B8B82]">
+                                    <strong className="font-bold text-[#1A1C21]">{comment.userName}</strong>
+                                    <span className="text-2xs text-[#85888F]">
                                       {new Date(comment.createdAt).toLocaleDateString()}
                                     </span>
                                   </div>
-                                  <p className="text-slate-700 leading-relaxed font-medium">
+                                  <p className="text-[#4B4E55] leading-relaxed font-medium">
                                     {comment.content}
                                   </p>
                                 </div>
@@ -813,7 +813,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                                 {isMyComment && (
                                   <button
                                     onClick={() => handleDeleteComment(grat.id, comment.id, true)}
-                                    className="text-slate-300 hover:text-rose-500 p-0.5 rounded cursor-pointer"
+                                    className="text-[#C3C5CA] hover:text-[#FF0000] p-0.5 rounded cursor-pointer"
                                     title="댓글 삭제"
                                   >
                                     <X size={12} />
@@ -824,7 +824,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-2xs text-[#00311F]/70 text-center py-2">
+                        <p className="text-2xs text-[#2C2F36]/70 text-center py-2">
                           아직 달린 댓글이 없습니다. 따뜻한 감사 격려 댓글을 남겨보세요! 🙏
                         </p>
                       )}
@@ -835,11 +835,11 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           value={commentInputs[grat.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [grat.id]: e.target.value }))}
                           placeholder="감사 나눔에 댓글 남기기..."
-                          className="flex-1 text-2xs px-3 py-2 border border-[#E7E5D8] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#0B5C3C] text-[#1A1A1A]"
+                          className="flex-1 text-2xs px-3 py-2 border border-[#E3E4E7] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4B4E55] text-[#1A1C21]"
                         />
                         <button
                           onClick={() => handleAddComment(grat.id, true)}
-                          className="px-3 bg-[#00311F] hover:bg-amber-700 text-white rounded-xl transition flex items-center justify-center cursor-pointer"
+                          className="px-3 bg-[#2C2F36] hover:bg-[#1E2128] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
                         >
                           <Send size={11} />
                         </button>
@@ -851,10 +851,10 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }
           })
         ) : (
-          <div className="bg-[#F4F2E6]/50 rounded-3xl p-12 text-center border border-dashed border-[#E7E5D8] text-[#8B8B82]">
-            <BookOpen className="mx-auto text-[#8B8B82] mb-2" size={32} />
-            <p className="text-xs font-semibold text-[#55554E]">기록된 영성 발자취가 없습니다.</p>
-            <p className="text-2xs text-[#8B8B82] mt-1">
+          <div className="bg-[#F4F5F7]/50 rounded-3xl p-12 text-center border border-dashed border-[#E3E4E7] text-[#85888F]">
+            <BookOpen className="mx-auto text-[#85888F] mb-2" size={32} />
+            <p className="text-xs font-semibold text-[#4B4E55]">기록된 영성 발자취가 없습니다.</p>
+            <p className="text-2xs text-[#85888F] mt-1">
               말씀 묵상 또는 오늘의 감사를 나누어 매일의 은혜를 기록해 보세요!
             </p>
           </div>
