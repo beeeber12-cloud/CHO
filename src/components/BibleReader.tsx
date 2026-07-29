@@ -1102,16 +1102,19 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                               key={ch}
                               type="button"
                               onClick={() => handleToggleChapterComplete(key)}
+                              // 읽음을 해제하면 안 읽은 장과 완전히 같은 색이어야 한다.
+                              // (현재 읽는 위치 표시는 아래 점으로만 남긴다)
                               className={`w-8 h-8 rounded-3xl font-bold text-xs transition cursor-pointer flex items-center justify-center relative ${
                                 isDone
-                                  ? "bg-[#0C3B2E] text-white shadow-sm font-bold"
-                                  : isCurrentReadingLocation
-                                  ? "bg-[#FFBA00] text-[#0C3B2E] font-bold"
+                                  ? "bg-[#0C3B2E] text-white shadow-sm"
                                   : "bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#4A6B57]"
                               }`}
                               title={`${key} ${isDone ? "완독 해제" : "완독 표시"}`}
                             >
                               {ch}
+                              {isCurrentReadingLocation && (
+                                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FFBA00]" />
+                              )}
                             </button>
                           );
                         })}

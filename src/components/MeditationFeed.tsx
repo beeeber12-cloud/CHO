@@ -3,6 +3,7 @@ import { Meditation, Comment, SokGroup } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Clock, PenTool, X, ShieldAlert, Bell, Radio, CheckCircle, Users, Globe, Settings, UserPlus, Check, Edit3 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { enablePush, isPushEnabled } from "../lib/push";
+import ReactionBar from "./ReactionBar";
 
 
 interface MeditationFeedProps {
@@ -294,10 +295,12 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!verseTitle.trim() || !title.trim() || !content.trim()) {
-      setFormError("말씀 구절, 제목, 묵상 내용을 모두 채워 주세요.");
+    if (!verseTitle.trim() || !content.trim()) {
+      setFormError("말씀 구절과 묵상 내용을 채워 주세요.");
       return;
     }
+    // 제목 입력칸은 없앴다. 알림·목록 표기에 쓰이므로 구절명으로 자동 생성한다.
+    const autoTitle = `${verseTitle.trim()} 묵상`;
 
     setSubmitting(true);
     setFormError("");
@@ -310,7 +313,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           userId: currentUser.id,
           userName: currentUser.name,
           verseTitle: verseTitle.trim(),
-          title: title.trim(),
+          title: autoTitle,
           content: content.trim(),
           prayer: prayer.trim(),
           sokId: sokIdForForm,
@@ -366,6 +369,23 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
       }
     } catch (err) {
       console.error("Failed to delete meditation:", err);
+    }
+  };
+
+  /** "이 기도제목으로 기도했어요" 토글 — 작성자에게 알림이 간다. */
+  const handlePrayToggle = async (id: string) => {
+    try {
+      const res = await fetch(`/api/meditations/${id}/pray`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setMeditations((prev) => prev.map((m) => (m.id === id ? updated : m)));
+      }
+    } catch (err) {
+      console.error("Failed to toggle prayer:", err);
     }
   };
 
@@ -598,17 +618,6 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#6F8377] mb-1">묵상 글 제목</label>
-                  <input
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="예: 두려움을 이기는 참된 위로"
-                    className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
-                  />
-                </div>
               </div>
 
               <div>
@@ -747,58 +756,66 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   )}
                 </div>
 
-                {/* Content body */}
-                <div className="space-y-2">
-                  <h4 className="text-base font-bold text-[#0C3B2E]">{med.title}</h4>
-
-                  <p className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
-                    {med.content}
-                  </p>
-                </div>
+                {/* Content body (제목 없이 본문만) */}
+                <p className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
+                  {med.content}
+                </p>
 
 
-                {/* Optional Prayer target */}
+                {/* 기도제목 + 함께 기도하기 */}
                 {med.prayer && (
-                  <div className="bg-[#F5F5F5]/40 bg-[#F5F5F5] rounded-3xl p-4 text-xs">
-                    <span className="font-bold text-[#0C3B2E] block mb-1">🙏 이번 주 동역자 기도제목</span>
-                    <p className="text-[#4A6B57] leading-relaxed font-medium italic">
-                      &quot;{med.prayer}&quot;
-                    </p>
+                  <div className="bg-[#F5F5F5] rounded-3xl p-4 text-xs space-y-3">
+                    <div>
+                      <span className="font-bold text-[#0C3B2E] block mb-1">🙏 이번 주 동역자 기도제목</span>
+                      <p className="text-[#4A6B57] leading-relaxed font-medium italic">
+                        &quot;{med.prayer}&quot;
+                      </p>
+                    </div>
+
+                    {/* 작성자에게는 "누가 기도해줬는지", 다른 사람에겐 "기도했어요" 버튼 */}
+                    {isMyMed ? (
+                      (med.prayedBy?.length || 0) > 0 && (
+                        <p className="text-xs font-bold text-[#0C3B2E] bg-[#FFBA00] rounded-3xl px-3 py-2">
+                          {med.prayedBy!.length}명이 당신을 위해 기도했습니다 🙏
+                        </p>
+                      )
+                    ) : (
+                      <button
+                        onClick={() => handlePrayToggle(med.id)}
+                        className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
+                          med.prayedBy?.includes(currentUser.id)
+                            ? "bg-[#FFBA00] text-[#0C3B2E]"
+                            : "bg-white text-[#0C3B2E] hover:bg-[#E8E8E8]"
+                        }`}
+                      >
+                        {med.prayedBy?.includes(currentUser.id)
+                          ? `🙏 기도했어요${(med.prayedBy?.length || 0) > 1 ? ` · 함께 ${med.prayedBy!.length}명` : ""}`
+                          : "🙏 이 기도제목으로 기도했어요"}
+                      </button>
+                    )}
                   </div>
                 )}
 
-                {/* Footer Likes and Comments actions */}
-                <div className="flex items-center justify-between border-t border-[#E3E9E2] pt-3">
-                  <div className="flex items-center gap-4">
-                    {/* Like button */}
-                    <button
-                      onClick={() => handleLikeToggle(med.id)}
-                      className={`flex items-center gap-1.5 text-xs font-bold transition cursor-pointer ${
-                        hasLiked ? "text-[#B3261E]" : "text-[#6F8377] hover:text-[#B3261E]"
-                      }`}
-                    >
-                      <Heart size={16} className={hasLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
-                      <span>좋아요 {med.likes.length > 0 ? med.likes.length : ""}</span>
-                    </button>
+                {/* 반응 + 댓글 */}
+                <div className="flex items-center justify-between gap-2 border-t border-[#E3E9E2] pt-3 flex-wrap">
+                  <ReactionBar
+                    reactions={med.reactions}
+                    currentUserId={currentUser.id}
+                    endpointBase={`/api/meditations/${med.id}`}
+                    onUpdated={(updated) =>
+                      setMeditations((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
+                    }
+                  />
 
-                    {/* Comment expand button */}
-                    <button
-                      onClick={() => toggleCommentsExpanded(med.id)}
-                      className={`flex items-center gap-1.5 text-xs font-bold transition cursor-pointer ${
-                        commentsOpen ? "text-[#0C3B2E]" : "text-[#6F8377] hover:text-[#0C3B2E]"
-                      }`}
-                    >
-                      <MessageSquare size={16} />
-                      <span>댓글 {med.comments.length > 0 ? med.comments.length : ""}</span>
-                    </button>
-                  </div>
-
-                  {/* Little avater indicator of who liked it */}
-                  {med.likes.length > 0 && (
-                    <div className="text-2xs text-[#6F8377] font-medium">
-                      {med.likes.length}명의 지체가 격려하고 있습니다
-                    </div>
-                  )}
+                  <button
+                    onClick={() => toggleCommentsExpanded(med.id)}
+                    className={`flex items-center gap-1.5 text-xs font-bold transition cursor-pointer ${
+                      commentsOpen ? "text-[#0C3B2E]" : "text-[#6F8377] hover:text-[#0C3B2E]"
+                    }`}
+                  >
+                    <MessageSquare size={16} />
+                    <span>댓글 {med.comments.length > 0 ? med.comments.length : ""}</span>
+                  </button>
                 </div>
 
                 {/* Comments Thread Section */}

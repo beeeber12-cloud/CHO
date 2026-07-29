@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { User, GratitudeNote } from "../types";
 import { Heart, MessageSquare, Send, Trash2, Sparkles, UserCheck, EyeOff, Calendar, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import ReactionBar from "./ReactionBar";
 
 interface DailyGratitudeProps {
   currentUser: Omit<User, 'pin' | 'createdAt'>;
@@ -437,19 +438,16 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between pt-1 border-t border-[#F5F5F5] text-xs">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleLike(grat.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-3xl transition cursor-pointer font-bold ${
-                        isLiked
-                          ? "bg-[#FDF3F3] text-[#B3261E]"
-                          : "text-[#6F8377] hover:bg-[#F5F5F5]"
-                      }`}
-                    >
-                      <Heart size={14} className={isLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
-                      <span>{grat.likes.length}</span>
-                    </button>
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#F5F5F5] text-xs flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <ReactionBar
+                      reactions={grat.reactions}
+                      currentUserId={currentUser.id}
+                      endpointBase={`/api/gratitudes/${grat.id}`}
+                      onUpdated={(updated) =>
+                        setGratitudes((prev) => prev.map((g) => (g.id === updated.id ? updated : g)))
+                      }
+                    />
 
                     <button
                       onClick={() => setActiveCommentId(isCommentOpen ? null : grat.id)}
