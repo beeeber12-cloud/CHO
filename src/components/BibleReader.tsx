@@ -358,7 +358,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   <span className="font-bold text-[#D2DDD3] flex items-center gap-1.5">
                     목표: {userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
                   </span>
-                  <span className="font-black text-[#FFFFFF] text-sm">
+                  <span className="font-bold text-[#FFFFFF] text-sm">
                     {completedCount}장 / {targetCount}장 ({progressPercent}%)
                   </span>
                 </div>
@@ -371,7 +371,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   />
                 </div>
 
-                <div className="flex justify-between items-center text-2xs text-[#D2DDD3]/80 mt-2 font-medium">
+                <div className="flex justify-between items-center text-xs text-[#D2DDD3]/80 mt-2 font-medium">
                   <span>일일 추천: 하루 {userProgress?.dailyTarget || 3}장씩</span>
                   <span>남은 분량: {Math.max(0, targetCount - completedCount)}장</span>
                 </div>
@@ -380,7 +380,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               {/* Today's Bookmark / Last Read Box */}
               <div className="bg-white/10 p-4 rounded-3xl flex flex-col justify-between">
                 <div>
-                  <span className="text-2xs text-[#D2DDD3]/80 font-bold block flex items-center gap-1">
+                  <span className="text-xs text-[#D2DDD3]/80 font-bold block flex items-center gap-1">
                     마지막 읽은 본문 북마크
                   </span>
                   <strong className="text-base font-bold text-white block mt-1">
@@ -408,11 +408,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       )}
 
       {/* 2. 원터치 성경 네비게이터 (구약/신약 → 권 → 장 → 절) */}
-      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-5 space-y-3 sm:space-y-4">
+      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-4 sm:p-6 space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3">
           <div>
-            <h4 className="font-bold text-[#0C3B2E] text-base sm:text-lg">성경 선택</h4>
-            <p className="text-xs text-[#6F8377]">구약 · 신약에서 권 · 장 · 절을 눌러 바로 펼쳐 보세요.</p>
+            <h4 className="font-bold text-[#0C3B2E] text-base sm:text-base">성경 선택</h4>
+            <p className="text-xs text-[#6F8377] font-medium">구약 · 신약에서 권 · 장 · 절을 눌러 바로 펼쳐 보세요.</p>
           </div>
         </div>
 
@@ -436,7 +436,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
         {/* Custom Search Input */}
         <div className="pt-3 border-t border-[#E3E9E2] space-y-1.5">
-          <label className="flex items-center gap-1.5 text-xs font-bold text-[#6F8377]">
+          <label className="flex items-center gap-1.5 text-xs font-medium text-[#6F8377]">
             단어로 구절 찾기
           </label>
           <form
@@ -453,7 +453,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="단어로 구절 찾기 (예: 사랑, 요한복음 1장, 로마서 8:28)..."
-                className="w-full pl-3 pr-9 py-2.5 bg-[#F5F5F5] rounded-3xl text-xs font-semibold text-[#14261E] focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
+                className="w-full pl-3 pr-9 py-2.5 bg-[#F5F5F5] rounded-3xl text-xs font-bold text-[#14261E] focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
               />
               <button
                 type="submit"
@@ -478,7 +478,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       <div ref={readerRef} className="scroll-mt-4" />
       <AnimatePresence mode="wait">
         {loading && (
-          <div className="bg-white rounded-[32px] p-12 text-center shadow-sm">
+          <div className="bg-white rounded-[32px] p-4 sm:p-6 py-12 text-center shadow-sm">
             <Loader className="animate-spin text-[#4A6B57] mx-auto mb-3" size={32} />
             <p className="text-sm font-bold text-[#0C3B2E]">성경 본문을 불러오고 있습니다...</p>
             <p className="text-xs text-[#6F8377] mt-1">1절부터 그 장의 마지막 절까지 전체 구절을 준비 중입니다.</p>
@@ -486,7 +486,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         )}
 
         {!loading && error && (
-          <div className="bg-[#FDF3F3] rounded-3xl sm:rounded-[32px] p-6 text-center text-[#7A1913] text-xs sm:text-sm font-semibold space-y-3">
+          <div className="bg-[#FDF3F3] rounded-3xl sm:rounded-[32px] p-4 sm:p-6 text-center text-[#7A1913] text-xs sm:text-sm font-bold space-y-3">
             <p>{error}</p>
             <button
               type="button"
@@ -507,11 +507,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             className="space-y-4"
           >
             {/* Main Chapter Content Card */}
-            <div className="bg-white rounded-3xl sm:rounded-[32px] p-2.5 sm:p-6 md:p-8 shadow-sm space-y-2.5 sm:space-y-4">
+            <div className="bg-white rounded-3xl sm:rounded-[32px] p-4 sm:p-6 shadow-sm space-y-2.5 sm:space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-[#E3E9E2] pb-3">
                 <div className="w-full sm:w-auto">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                    <span className="text-2xs sm:text-xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                    <span className="text-xs sm:text-xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                       {userProgress?.lastReadBook && userProgress?.lastReadChapter ? (
                         `내가 직전 통독 위치: ${userProgress.lastReadBook} ${userProgress.lastReadChapter}장`
                       ) : (
@@ -519,12 +519,12 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       )}
                     </span>
                     {userProgress?.lastReadBook === selectedBook.name && userProgress?.lastReadChapter === selectedChapter && (
-                      <span className="text-2xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                      <span className="text-xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                         ✨ 이어서 보는 중
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-[#0C3B2E] flex items-center gap-2">
+                  <h3 className="text-base sm:text-2xl font-bold text-[#0C3B2E] flex items-center gap-2">
                     <span>{result.reference}</span>
                   </h3>
                 </div>
@@ -643,9 +643,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <div className="bg-[#F5F5F5]/60 rounded-[32px] p-5">
                 <div className="flex items-center gap-1.5 text-[#0C3B2E] mb-2">
                   <Sparkles size={15} className="text-[#4A6B57]" />
-                  <span className="text-2xs font-black uppercase tracking-[0.1em] text-[#6F8377]">오늘의 통독 실천 제안</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#6F8377]">오늘의 통독 실천 제안</span>
                 </div>
-                <p className="text-xs text-[#0C3B2E] leading-relaxed font-semibold">
+                <p className="text-xs text-[#0C3B2E] leading-relaxed font-bold">
                   {result.meditationGuide}
                 </p>
               </div>
@@ -669,7 +669,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               className="bg-white w-full sm:max-w-2xl max-h-[88vh] rounded-t-3xl sm:rounded-[32px] p-4 sm:p-6 flex flex-col shadow-2xl"
             >
               <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3">
-                <h4 className="font-bold text-[#0C3B2E] text-base sm:text-lg flex items-center gap-2">
+                <h4 className="font-bold text-[#0C3B2E] text-base sm:text-base flex items-center gap-2">
                   <span
                     className={`inline-flex items-center justify-center w-7 h-7 rounded-3xl shrink-0 ${
                       navTestament === 'OT' ? "bg-[#FFBA00] text-[#0C3B2E]" : "bg-[#0C3B2E] text-white"
@@ -752,7 +752,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                           }`}
                         >
                           {ch}
-                          {isDone && <span className="absolute top-0.5 right-1 text-2xs">✓</span>}
+                          {isDone && <span className="absolute top-0.5 right-1 text-xs">✓</span>}
                         </button>
                       );
                     })}
@@ -762,7 +762,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 {/* STEP 3: 절 선택 */}
                 {navStep === 'verse' && navBook && navChapter && (
                   <div className="space-y-2.5">
-                    <p className="text-xs font-bold text-[#6F8377]">
+                    <p className="text-xs font-medium text-[#6F8377]">
                       절을 누르면 팝업이 닫히고 본문에서 그 절로 이동합니다.
                     </p>
                     {navVerseLoading ? (
@@ -783,7 +783,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         ))}
                       </div>
                     ) : (
-                      <p className="py-4 text-center text-xs text-[#6F8377]">절 정보를 표시할 수 없습니다.</p>
+                      <p className="py-4 text-center text-xs text-[#6F8377] font-medium">절 정보를 표시할 수 없습니다.</p>
                     )}
                   </div>
                 )}
@@ -842,7 +842,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     value={goalTitle}
                     onChange={(e) => setGoalTitle(e.target.value)}
                     placeholder="예: 1년 1독, 신약 통독, 100일 성경통독"
-                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-semibold focus:ring-2 focus:ring-[#4A6B57]"
+                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-bold focus:ring-2 focus:ring-[#4A6B57]"
                     required
                   />
                 </div>
@@ -857,7 +857,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setTargetChapters(1189);
                         setDailyTarget(3);
                       }}
-                      className={`p-2 rounded-3xl text-2xs font-bold border transition cursor-pointer ${
+                      className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 1189 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
                       }`}
                     >
@@ -870,7 +870,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setTargetChapters(260);
                         setDailyTarget(2);
                       }}
-                      className={`p-2 rounded-3xl text-2xs font-bold border transition cursor-pointer ${
+                      className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 260 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
                       }`}
                     >
@@ -883,7 +883,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setTargetChapters(929);
                         setDailyTarget(3);
                       }}
-                      className={`p-2 rounded-3xl text-2xs font-bold border transition cursor-pointer ${
+                      className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 929 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
                       }`}
                     >
@@ -894,7 +894,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     type="number"
                     value={targetChapters}
                     onChange={(e) => setTargetChapters(Number(e.target.value))}
-                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-semibold"
+                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-bold"
                     min={1}
                     max={1189}
                     required
@@ -907,7 +907,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     type="number"
                     value={dailyTarget}
                     onChange={(e) => setDailyTarget(Number(e.target.value))}
-                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-semibold"
+                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-bold"
                     min={1}
                     max={50}
                     required
@@ -952,7 +952,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     <ListChecks className="text-[#4A6B57]" size={20} />
                     {currentUser?.name} 성도님의 성경 66권 통독 체크리스트
                   </h4>
-                  <p className="text-2xs text-[#6F8377]">
+                  <p className="text-xs text-[#6F8377] font-medium">
                     초록색 체크 항목은 내가 이미 완독한 장입니다. 클릭하면 완독 여부를 언제든지 변경할 수 있습니다.
                   </p>
                 </div>
@@ -1001,7 +1001,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       type="button"
                       onClick={() => setChecklistTab('IN_PROGRESS')}
                       className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                        checklistTab === 'IN_PROGRESS' ? "bg-[#0C3B2E] text-white" : "hover:text-[#072A20] text-[#0C3B2E] font-black"
+                        checklistTab === 'IN_PROGRESS' ? "bg-[#0C3B2E] text-white" : "hover:text-[#072A20] text-[#0C3B2E] font-bold"
                       }`}
                     >
                       🔥 통독 진행 중
@@ -1075,17 +1075,17 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     }`}>
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-bold text-[#0C3B2E] text-sm flex items-center gap-2">
-                          <span className="text-2xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-black">
+                          <span className="text-xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-bold">
                             {b.testament === 'OT' ? '구약' : '신약'}
                           </span>
                           {b.name} ({b.chapters}장)
                           {isLastReadBook && (
-                            <span className="text-2xs font-extrabold bg-[#C7D8C9] text-[#0C3B2E] px-2 py-0.5 rounded-full">
+                            <span className="text-xs font-bold bg-[#C7D8C9] text-[#0C3B2E] px-2 py-0.5 rounded-full">
                               📍 내가 읽는 중
                             </span>
                           )}
                         </span>
-                        <span className="text-2xs font-bold text-[#4A6B57]">
+                        <span className="text-xs font-bold text-[#4A6B57]">
                           {bookCompletedCount} / {b.chapters}장 완료 ({Math.round((bookCompletedCount / b.chapters) * 100)}%)
                         </span>
                       </div>
@@ -1102,11 +1102,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                               key={ch}
                               type="button"
                               onClick={() => handleToggleChapterComplete(key)}
-                              className={`w-8 h-8 rounded-3xl font-bold text-2xs transition cursor-pointer flex items-center justify-center relative ${
+                              className={`w-8 h-8 rounded-3xl font-bold text-xs transition cursor-pointer flex items-center justify-center relative ${
                                 isDone
-                                  ? "bg-[#0C3B2E] text-white shadow-sm font-black"
+                                  ? "bg-[#0C3B2E] text-white shadow-sm font-bold"
                                   : isCurrentReadingLocation
-                                  ? "bg-[#FFBA00] text-[#0C3B2E] font-extrabold"
+                                  ? "bg-[#FFBA00] text-[#0C3B2E] font-bold"
                                   : "bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#4A6B57]"
                               }`}
                               title={`${key} ${isDone ? "완독 해제" : "완독 표시"}`}

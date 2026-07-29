@@ -70,7 +70,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* 개역개정 (krv/both 모드) */}
             {!nivOnly && (
               <p
-                className="text-sm sm:text-base md:text-lg leading-[1.62] text-[#333333] font-semibold scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
+                className="text-sm sm:text-base md:text-lg leading-[1.5] text-[#333333] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.num && (
@@ -85,7 +85,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* NIV (niv 단독, 또는 both 모드에서 개역개정 아래) */}
             {(nivOnly || (mode === "both" && niv)) && (
               <p
-                className={`text-sm sm:text-base leading-[1.62] text-[#8A6642] font-medium scripture-font [overflow-wrap:break-word] ${
+                className={`text-sm sm:text-base md:text-lg leading-[1.5] text-[#8A6642] font-medium scripture-font [overflow-wrap:break-word] ${
                   mode === "both" ? "mt-2.5 pl-0.5" : ""
                 }`}
                 style={{ overflowWrap: "break-word" }}
