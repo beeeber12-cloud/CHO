@@ -334,16 +334,10 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     <div className="space-y-4 sm:space-y-6">
       {/* User Stats Card */}
       <div className="bg-gradient-to-br from-[#0C3B2E] to-[#4A6B57] rounded-3xl sm:rounded-[32px] p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
-        <div className="absolute right-[-20px] bottom-[-20px] opacity-10 text-white pointer-events-none">
-          <BookOpen size={180} />
-        </div>
 
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
-            <span className="text-2xs font-black tracking-widest uppercase bg-white/20 px-2.5 py-1 rounded-full text-white/90 whitespace-nowrap shrink-0 inline-block">
-              MY DEVOTIONAL JOURNAL
-            </span>
-            <h3 className="font-bold text-xl sm:text-2xl mt-1.5">{currentUser.name}님의 영성 기록 발자취</h3>
+            <h3 className="font-bold text-xl sm:text-2xl">{currentUser.name}님의 영성 기록 발자취</h3>
             <p className="text-xs text-[#D2DDD3]/80 mt-1 leading-relaxed">
               주님과 친밀하게 나누어 온 묵상과 감사의 고백들이 은혜로 쌓여 가고 있습니다.
             </p>

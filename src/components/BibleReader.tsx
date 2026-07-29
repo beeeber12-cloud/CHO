@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, BookOpen, Quote, Sparkles, Send, Loader, CheckCircle2, Bookmark, Target, Award, ListChecks, ChevronRight, Settings, X, BookMarked, RefreshCw } from "lucide-react";
+import { Search, BookOpen, Sparkles, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, Settings, X, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
@@ -321,9 +321,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       {/* 1. Personal Bible Reading Tracker Header (Personalized per logged-in user) */}
       {currentUser && (
         <div className="bg-gradient-to-br from-[#0C3B2E] via-[#4A6B57] to-[#4A6B57] rounded-3xl sm:rounded-[32px] p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
-          <div className="absolute right-[-20px] bottom-[-20px] opacity-10 text-white pointer-events-none">
-            <BookMarked size={180} />
-          </div>
 
           <div className="relative z-10 space-y-3 sm:space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-white/10 pb-3 sm:pb-4">
@@ -348,7 +345,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   onClick={() => setShowChecklistModal(true)}
                   className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] rounded-3xl transition cursor-pointer shadow-sm whitespace-nowrap shrink-0"
                 >
-                  <ListChecks size={14} />
                   <span>통독 체크리스트</span>
                 </button>
               </div>
@@ -360,7 +356,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <div className="md:col-span-2 bg-white/10 p-4 rounded-3xl">
                 <div className="flex justify-between items-center text-xs mb-2">
                   <span className="font-bold text-[#D2DDD3] flex items-center gap-1.5">
-                    <Target size={15} className="text-[#FFFFFF]" />
                     목표: {userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
                   </span>
                   <span className="font-black text-[#FFFFFF] text-sm">
@@ -386,7 +381,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <div className="bg-white/10 p-4 rounded-3xl flex flex-col justify-between">
                 <div>
                   <span className="text-2xs text-[#D2DDD3]/80 font-bold block flex items-center gap-1">
-                    <Bookmark size={13} className="text-[#FFFFFF]" />
                     마지막 읽은 본문 북마크
                   </span>
                   <strong className="text-base font-bold text-white block mt-1">
@@ -416,9 +410,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       {/* 2. 원터치 성경 네비게이터 (구약/신약 → 권 → 장 → 절) */}
       <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-5 space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3">
-          <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
-            <BookOpen size={18} />
-          </div>
           <div>
             <h4 className="font-bold text-[#0C3B2E] text-base sm:text-lg">성경 선택</h4>
             <p className="text-xs text-[#6F8377]">구약 · 신약에서 권 · 장 · 절을 눌러 바로 펼쳐 보세요.</p>
@@ -432,7 +423,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             onClick={() => openNavModal('OT')}
             className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-3xl bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
           >
-            <BookOpen size={17} />
             <span>구약 (39권)</span>
           </button>
           <button
@@ -440,7 +430,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             onClick={() => openNavModal('NT')}
             className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-3xl bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
           >
-            <BookOpen size={17} />
             <span>신약 (27권)</span>
           </button>
         </div>
@@ -448,7 +437,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         {/* Custom Search Input */}
         <div className="pt-3 border-t border-[#E3E9E2] space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs font-bold text-[#6F8377]">
-            <Search size={13} /> 단어로 구절 찾기
+            단어로 구절 찾기
           </label>
           <form
             onSubmit={(e) => {
@@ -523,7 +512,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 <div className="w-full sm:w-auto">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">
                     <span className="text-2xs sm:text-xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                      <Bookmark size={12} className="text-[#4A6B57] fill-[#4A6B57] shrink-0" />
                       {userProgress?.lastReadBook && userProgress?.lastReadChapter ? (
                         `내가 직전 통독 위치: ${userProgress.lastReadBook} ${userProgress.lastReadChapter}장`
                       ) : (
@@ -537,7 +525,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     )}
                   </div>
                   <h3 className="text-lg sm:text-2xl font-bold text-[#0C3B2E] flex items-center gap-2">
-                    <Quote size={18} className="text-[#4A6B57] shrink-0" />
                     <span>{result.reference}</span>
                   </h3>
                 </div>

@@ -60,7 +60,7 @@ export default function FormattedBibleText({
   }
 
   return (
-    <div className={`space-y-3 sm:space-y-4 ${className}`}>
+    <div className={`space-y-5 sm:space-y-6 ${className}`}>
       {parsedVerses.map((v, idx) => (
         <div
           key={idx}
@@ -72,11 +72,11 @@ export default function FormattedBibleText({
           }`}
         >
           <p
-            className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#333333] font-medium tracking-normal scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
+            className="text-sm sm:text-base md:text-lg leading-[1.62] text-[#333333] font-semibold scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
             style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
           >
             {v.verseNum && (
-              <span className="font-sans font-bold text-[#4A6B57] text-xs sm:text-sm mr-2 inline-block select-none">
+              <span className="font-sans font-normal text-[#8B8B8B] text-xs sm:text-sm mr-2 inline-block select-none">
                 {v.verseNum}
               </span>
             )}

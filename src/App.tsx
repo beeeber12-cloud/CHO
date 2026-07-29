@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Calendar, Bell, LogOut, UserCheck, MessageSquare, Sparkles, BookMarked, HeartHandshake, HelpCircle } from "lucide-react";
+import { BookOpen, Calendar, Bell, LogOut, UserCheck, MessageSquare, Sparkles, BookMarked, HeartHandshake, HelpCircle, Cross } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
 import DailyNotice from "./components/DailyNotice";
@@ -106,7 +106,7 @@ export default function App() {
         <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2.5 flex justify-between items-center gap-1.5">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F5F5F5] rounded-xl flex items-center justify-center text-[#0C3B2E] shrink-0">
-              <BookMarked size={18} className="sm:w-5 sm:h-5" />
+              <Cross size={18} className="sm:w-5 sm:h-5" />
             </div>
             <div className="shrink-0">
               <h1 className="font-bold text-base sm:text-lg text-[#0C3B2E] tracking-tight leading-none whitespace-nowrap">은혜교회</h1>

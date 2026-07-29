@@ -53,7 +53,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
   const baseVerses = nivOnly ? nivVerses : krvVerses;
 
   return (
-    <div className={`space-y-3 sm:space-y-4 ${className}`}>
+    <div className={`space-y-5 sm:space-y-6 ${className}`}>
       {baseVerses.map((v, idx) => {
         const niv = v.num ? nivMap.get(v.num) : nivVerses[idx]?.body;
         const isHighlighted = highlightVerse != null && v.num != null && Number(v.num) === highlightVerse;
@@ -70,11 +70,11 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* 개역개정 (krv/both 모드) */}
             {!nivOnly && (
               <p
-                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#333333] font-medium tracking-normal scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
+                className="text-sm sm:text-base md:text-lg leading-[1.62] text-[#333333] font-semibold scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.num && (
-                  <span className="font-sans font-bold text-[#4A6B57] text-xs sm:text-sm mr-2 inline-block select-none">
+                  <span className="font-sans font-normal text-[#8B8B8B] text-xs sm:text-sm mr-2 inline-block select-none">
                     {v.num}
                   </span>
                 )}
@@ -85,13 +85,13 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* NIV (niv 단독, 또는 both 모드에서 개역개정 아래) */}
             {(nivOnly || (mode === "both" && niv)) && (
               <p
-                className={`text-sm sm:text-base leading-[1.7] text-[#4A6B57] scripture-font italic [overflow-wrap:break-word] ${
-                  mode === "both" ? "mt-1 pl-0.5" : ""
+                className={`text-sm sm:text-base leading-[1.62] text-[#8A6642] font-medium scripture-font [overflow-wrap:break-word] ${
+                  mode === "both" ? "mt-2.5 pl-0.5" : ""
                 }`}
                 style={{ overflowWrap: "break-word" }}
               >
                 {nivOnly && v.num && (
-                  <span className="font-sans font-bold text-[#6F8377] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
+                  <span className="font-sans font-normal text-[#8B8B8B] text-xs sm:text-sm mr-2 inline-block select-none">
                     {v.num}
                   </span>
                 )}

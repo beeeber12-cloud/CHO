@@ -111,16 +111,17 @@ button {
   font-family: var(--font-serif);
 }
 
-/* 성경 본문 전용 타이포그래피 — Pretendard, 본문보다 한 단계 두껍게 */
+/* 성경 본문 전용 타이포그래피 — Pretendard.
+   줄 사이는 촘촘하게(1.62) 두되 절과 절 사이는 넉넉히 띄워, 한 절이 한 덩어리로 읽히게 한다. */
 .scripture-font {
   font-family: "Pretendard", "Inter", ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.015em;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 .scripture-font p {
-  line-height: 1.9;
+  line-height: 1.62;
   font-weight: 600;
 }
 
