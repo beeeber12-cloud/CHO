@@ -6,17 +6,31 @@
   --font-sans: "Pretendard", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Noto Serif KR", "Playfair Display", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  
-  --color-forest-primary: #17784C;
-  --color-forest-dark: #14603F;
-  --color-forest-hover: #125E3B;
-  --color-warm-bg: #F2F2F7;
+
+  /* 통일 타입 스케일
+     2xs 뱃지·타임스탬프 / xs 본문 / sm 강조본문 / base~lg 소제목 / xl~2xl 탭 제목
+     (고정 px 대신 rem 기반이라 어르신 글씨 확대 설정에도 함께 커집니다) */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.45;
+
+  /* Base: PINE + MILK.  Accents: Fresh Mint / Orange (사용 최소화) */
+  --color-forest-primary: #0B5C3C;
+  --color-forest-dark: #00311F;   /* PINE */
+  --color-forest-hover: #004A2E;
+  --color-warm-bg: #FBFBEF;       /* MILK */
   --color-warm-card: #ffffff;
-  --color-warm-border: #E5E5EA;
-  --color-warm-secondary: #F2F2F7;
-  --color-warm-text: #1C1C1E;
-  --color-warm-muted: #8E8E93;
-  --color-warm-darktext: #3A3A3C;
+  --color-warm-border: #E7E5D8;
+  --color-warm-secondary: #F4F2E6;
+  --color-warm-text: #1A1A1A;
+  --color-warm-muted: #8B8B82;
+  --color-warm-darktext: #55554E;
+
+  /* Point colors — 구별이 필요한 지점에만 */
+  --color-point-mint: #6FF7A0;
+  --color-point-orange: #F44A22;
+
+  /* 성경 본문 전용: 가독성 위해 거의 검정에 가까운 진회색 */
+  --color-scripture: #1A1A1A;
 }
 
 html {

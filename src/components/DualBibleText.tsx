@@ -63,18 +63,18 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             data-verse={v.num}
             className={`group scroll-mt-4 transition-colors duration-500 ${
               isHighlighted
-                ? "bg-amber-100 border-l-4 border-amber-500 rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+                ? "bg-[#E9F5EC] border-l-4 border-[#0B5C3C] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
                 : ""
             }`}
           >
             {/* 개역개정 (krv/both 모드) */}
             {!nivOnly && (
               <p
-                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#14603F] tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
+                className="text-sm sm:text-base md:text-lg leading-[1.8] text-[#1A1A1A] font-medium tracking-normal font-serif [word-break:keep-all] [overflow-wrap:break-word]"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.num && (
-                  <span className="font-sans font-bold text-[#17784C] text-xs sm:text-sm mr-2 inline-block select-none">
+                  <span className="font-sans font-bold text-[#0B5C3C] text-xs sm:text-sm mr-2 inline-block select-none">
                     {v.num}
                   </span>
                 )}
@@ -85,13 +85,13 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             {/* NIV (niv 단독, 또는 both 모드에서 개역개정 아래) */}
             {(nivOnly || (mode === "both" && niv)) && (
               <p
-                className={`text-sm sm:text-base leading-[1.7] text-[#6E6E73] font-serif italic [overflow-wrap:break-word] ${
+                className={`text-sm sm:text-base leading-[1.7] text-[#55554E] font-serif italic [overflow-wrap:break-word] ${
                   mode === "both" ? "mt-1 pl-0.5" : ""
                 }`}
                 style={{ overflowWrap: "break-word" }}
               >
                 {nivOnly && v.num && (
-                  <span className="font-sans font-bold text-[#8E8E93] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
+                  <span className="font-sans font-bold text-[#8B8B82] text-xs sm:text-sm mr-2 inline-block select-none not-italic">
                     {v.num}
                   </span>
                 )}
