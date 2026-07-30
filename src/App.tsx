@@ -11,6 +11,7 @@ import NotificationSettings from "./components/NotificationSettings";
 import MyMeditations from "./components/MyMeditations";
 import FontSizeControl from "./components/FontSizeControl";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import GoalSummaryPopup from "./components/GoalSummaryPopup";
 
 interface UserProfile {
   id: string;
@@ -113,6 +114,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F0F0F0] text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
       <PWAInstallPrompt />
+      {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다 */}
+      <GoalSummaryPopup currentUser={currentUser} />
       {/* Dynamic Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[#E3E9E2] shadow-sm">
         <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2.5 flex justify-between items-center gap-1.5">

@@ -78,11 +78,22 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    fetchMyRecords();
+    fetchMyRecords(true);
+
+    // 묵상나눔·감사칭찬 탭과 같은 주기로 갱신한다.
+    // (다른 탭이나 다른 기기에서 글을 지우면 여기에도 바로 반영되도록)
+    const intervalId = setInterval(() => fetchMyRecords(false), 4000);
+    const handleFocus = () => fetchMyRecords(false);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
-  const fetchMyRecords = async () => {
-    setLoading(true);
+  const fetchMyRecords = async (isFirst = true) => {
+    if (isFirst) setLoading(true);
     try {
       const [medRes, gratRes] = await Promise.all([
         fetch("/api/meditations"),
@@ -103,7 +114,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     } catch (err) {
       console.error("Failed to load my records:", err);
     } finally {
-      setLoading(false);
+      if (isFirst) setLoading(false);
     }
   };
 
@@ -469,25 +480,6 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             />
           </div>
 
-          {/* Date Picker Filter */}
-          <div className="flex items-center gap-1 bg-[#F5F5F5] rounded-3xl px-2">
-            <input
-              type="date"
-              value={selectedDateFilter}
-              onChange={(e) => setSelectedDateFilter(e.target.value)}
-              className="bg-transparent border-none text-[#14261E] text-xs font-semibold py-2 focus:outline-none cursor-pointer"
-              title="날짜별 검색"
-            />
-            {selectedDateFilter && (
-              <button
-                onClick={() => setSelectedDateFilter("")}
-                className="text-[#6F8377] hover:text-[#4A6B57] p-1 cursor-pointer"
-                title="날짜 선택 해제"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Record Type Category Pills */}
@@ -524,7 +516,8 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }`}
           >
             <HeartHandshake size={13} />
-            <span>감사칭찬</span>
+            {/* '전체 기록'·'말씀 묵상'처럼 좁은 화면에서 두 줄로 접히도록 띄어쓰기를 둔다 */}
+            <span>감사 칭찬</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalGratitudes}</span>
           </button>
         </div>
