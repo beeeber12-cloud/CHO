@@ -449,7 +449,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }`}
           >
             <HeartHandshake size={13} />
-            <span>감사&칭찬</span>
+            <span>감사칭찬</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalGratitudes}</span>
           </button>
         </div>
@@ -731,7 +731,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                             {grat.isAnonymous ? "익명 (감사 지체)" : currentUser.name}
                           </span>
                           <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles size={10} className="text-[#4A6B57]" /> 감사&칭찬
+                            <Sparkles size={10} className="text-[#4A6B57]" /> 감사칭찬
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-2xs text-[#0C3B2E]/70 mt-0.5 font-medium">

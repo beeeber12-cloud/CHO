@@ -167,7 +167,7 @@ export default function App() {
             }`}
           >
             <HeartHandshake size={15} className={activeTab === 'gratitude' ? "text-[#FFFFFF]" : "text-[#4A6B57]"} />
-            감사&칭찬
+            감사칭찬
           </button>
           <button
             onClick={() => setActiveTab('bible')}
@@ -352,7 +352,7 @@ export default function App() {
           }`}
         >
           <HeartHandshake size={17} className={activeTab === 'gratitude' ? "text-[#4A6B57]" : ""} />
-          <span className="text-2xs font-bold mt-0.5">감사&칭찬</span>
+          <span className="text-2xs font-bold mt-0.5">감사칭찬</span>
         </button>
 
         <button
