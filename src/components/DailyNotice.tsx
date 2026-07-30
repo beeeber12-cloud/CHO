@@ -30,7 +30,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
     // 공지의 구절명("요한1서 5장")에서 책 이름과 장을 뽑아낸다.
     const ref = notice?.verseTitle || "";
-    const m = ref.match(/^(.+?)\s*(\d+)\s*[장편]?/);
+    // '요한1서'처럼 책 이름 안에 숫자가 있으므로 끝의 '장/편'을 기준으로 끊어야 한다.
+    // (앞에서부터 첫 숫자를 집으면 '요한1서 7장'이 '요한 1장'으로 잘린다)
+    const m = ref.match(/^(.+?)\s*(\d+)\s*[장편]\s*$/) || ref.match(/^(.+)\s+(\d+)\s*$/);
     if (currentUser?.id && m) {
       fetch("/api/saved-verses/toggle", {
         method: "POST",

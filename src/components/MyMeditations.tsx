@@ -7,7 +7,7 @@ interface MyMeditationsProps {
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
 }
 
-type RecordTypeFilter = 'all' | 'meditation' | 'gratitude';
+type RecordTypeFilter = 'meditation' | 'gratitude';
 
 export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   const [meditations, setMeditations] = useState<Meditation[]>([]);
@@ -94,7 +94,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>("");
-  const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>('all');
+  const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>('meditation');
 
   // Edit/Write state (for editing existing meditations within this page)
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -415,7 +415,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
   const combinedItems: CombinedItem[] = [];
 
-  if (recordTypeFilter === 'all' || recordTypeFilter === 'meditation') {
+  if (recordTypeFilter === 'meditation') {
     filteredMeditations.forEach(m => {
       combinedItems.push({
         type: 'meditation',
@@ -425,7 +425,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     });
   }
 
-  if (recordTypeFilter === 'all' || recordTypeFilter === 'gratitude') {
+  if (recordTypeFilter === 'gratitude') {
     filteredGratitudes.forEach(g => {
       combinedItems.push({
         type: 'gratitude',
@@ -515,52 +515,37 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
         </div>
 
-        {/* Record Type Category Pills */}
-        <div className="flex gap-2 border-t border-[#E3E9E2] pt-3 text-xs font-bold">
-          <button
-            onClick={() => setRecordTypeFilter('all')}
-            className={`px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 ${
-              recordTypeFilter === 'all'
-                ? "bg-[#0C3B2E] text-white shadow-sm"
-                : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <span>전체 기록</span>
-            <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalWritten + totalGratitudes}</span>
-          </button>
+        {/* Record Type Category Pills — 좁은 화면에서도 세 칩이 한 줄에 들어가야 한다 */}
+        <div className="flex gap-1 border-t border-[#E3E9E2] pt-3 text-xs font-bold">
           <button
             onClick={() => setRecordTypeFilter('meditation')}
-            className={`px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 ${
+            className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${
               recordTypeFilter === 'meditation'
                 ? "bg-[#0C3B2E] text-white shadow-sm"
                 : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#0C3B2E]"
             }`}
           >
-            <BookOpen size={13} />
-            <span>말씀 묵상</span>
+            <span className="whitespace-nowrap">말씀 묵상</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalWritten}</span>
           </button>
           <button
             onClick={() => setRecordTypeFilter('gratitude')}
-            className={`px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 ${
+            className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${
               recordTypeFilter === 'gratitude'
                 ? "bg-[#0C3B2E] text-white shadow-sm"
                 : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#072A20]"
             }`}
           >
-            <HeartHandshake size={13} />
-            {/* '전체 기록'·'말씀 묵상'처럼 좁은 화면에서 두 줄로 접히도록 띄어쓰기를 둔다 */}
-            <span>감사 칭찬</span>
+            <span className="whitespace-nowrap">감사 칭찬</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalGratitudes}</span>
           </button>
 
           {/* 성경 읽다 체크해 둔 구절 모아보기 */}
           <button
             onClick={openSavedVerses}
-            className="px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 bg-[#FFF6DC] text-[#0C3B2E] hover:bg-[#FFEFC4]"
+            className="flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 bg-[#FFF6DC] text-[#0C3B2E] hover:bg-[#FFEFC4]"
           >
-            <BookOpen size={13} />
-            <span>말씀 체크</span>
+            <span className="whitespace-nowrap">말씀 체크</span>
             {savedVerses.length > 0 && (
               <span className="text-2xs bg-[#FFBA00] px-1.5 py-0.2 rounded-full">{savedVerses.length}</span>
             )}
