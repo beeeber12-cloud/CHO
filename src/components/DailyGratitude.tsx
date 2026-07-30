@@ -69,7 +69,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
-      setError("오늘의 감사 내용을 한 줄 입력해 주세요.");
+      setError("감사 또는 칭찬 내용을 한 줄 입력해 주세요.");
       return;
     }
 
@@ -203,7 +203,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
               <span className="p-1.5 bg-[#4A6B57]/20 text-[#FFFFFF] rounded-3xl">
                 <Sparkles size={18} />
               </span>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">오늘의 감사 나눔터</h2>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">감사&칭찬 나눔터</h2>
             </div>
             <p className="text-xs text-[#D2DDD3]/80 leading-relaxed max-w-xl">
               범사에 감사하라 이것이 그리스도 예수 안에서 너희를 향하신 하나님의 뜻이니라 (살전 5:18).<br />
@@ -222,7 +222,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
             className="flex items-center justify-center gap-2 px-4 py-3 bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] font-bold rounded-3xl shadow-md transition cursor-pointer text-xs shrink-0"
           >
             {showForm ? <X size={16} /> : <Plus size={16} />}
-            {showForm ? "작성 창 닫기" : "오늘의 감사 고백하기"}
+            {showForm ? "작성 창 닫기" : "감사·칭찬 나누기"}
           </button>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
               <div className="flex items-center justify-between border-b border-[#E3E9E2] pb-3">
                 <h3 className="text-sm font-bold text-[#0C3B2E] flex items-center gap-1.5">
                   <Sparkles size={16} className="text-[#4A6B57]" />
-                  {editingId ? "감사 고백 수정하기" : "오늘의 감사 등록"}
+                  {editingId ? "감사·칭찬 수정하기" : "감사·칭찬 등록"}
                 </h3>
                 <span className="text-xs text-[#6F8377]">
                   작성자: <strong>{currentUser.name}</strong>
@@ -396,13 +396,6 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-2.5">
                   <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                      grat.isAnonymous
-                        ? "bg-[#F5F5F5] text-[#0C3B2E]"
-                        : "bg-[#F5F5F5] text-[#0C3B2E]"
-                    }`}>
-                      {grat.isAnonymous ? "익명" : grat.userName.slice(0, 1)}
-                    </div>
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-[#0C3B2E] bg-[#FFBA00] px-2 py-0.5 rounded-lg">
@@ -439,7 +432,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
 
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#F5F5F5] text-xs flex-wrap">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <ReactionBar
                       reactions={grat.reactions}
                       currentUserId={currentUser.id}
@@ -451,14 +444,17 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
 
                     <button
                       onClick={() => setActiveCommentId(isCommentOpen ? null : grat.id)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-3xl transition cursor-pointer font-semibold ${
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-3xl text-2xs font-bold transition cursor-pointer whitespace-nowrap ${
                         isCommentOpen
-                          ? "bg-[#4A6B57] text-white"
-                          : "text-[#6F8377] hover:bg-[#F5F5F5]"
+                          ? "bg-[#0C3B2E] text-white"
+                          : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#E8E8E8]"
                       }`}
                     >
-                      <MessageSquare size={14} />
-                      <span>댓글 {grat.comments.length}</span>
+                      <MessageSquare size={13} />
+                      <span>댓글</span>
+                      {grat.comments.length > 0 && (
+                        <span className="tabular-nums">{grat.comments.length}</span>
+                      )}
                     </button>
                   </div>
 

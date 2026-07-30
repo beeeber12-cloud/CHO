@@ -33,7 +33,7 @@ export interface SokGroup {
 }
 
 /** 글에 남길 수 있는 반응. 글쓰기가 부담스러운 분도 누를 수 있는 최저 문턱. */
-export type ReactionType = "pray" | "grace" | "congrats";
+export type ReactionType = "like" | "pray";
 
 /** 반응 종류별로 누른 사람 ID 목록 */
 export type Reactions = Partial<Record<ReactionType, string[]>>;
@@ -48,9 +48,8 @@ export interface Meditation {
   content: string;
   prayer: string; // Prayer topic/response
   likes: string[]; // (구버전 호환) 기존 '좋아요'. 신규 UI 는 reactions 를 쓴다.
+  /** 반응. 'pray' 개수는 기도제목 아래 "N명이 당신을 위해 기도했습니다" 로도 보여준다. */
   reactions?: Reactions;
-  /** 기도제목을 보고 "기도했어요"를 누른 사람들. 날짜별로 쌓지 않고 사람 단위로 관리. */
-  prayedBy?: string[];
   comments: Comment[];
   createdAt: string;
   sokId?: string | null; // Optional ID of the sok (null/undefined if public/all)

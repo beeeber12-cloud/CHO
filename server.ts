@@ -483,11 +483,10 @@ function getVapidPublicKey(): string {
 let activeVapidPublicKey = "";
 
 // 반응 종류와 표기 (서버 알림 문구용)
-const VALID_REACTIONS: string[] = ["pray", "grace", "congrats"];
+const VALID_REACTIONS: string[] = ["like", "pray"];
 const REACTION_LABEL: Record<ReactionType, { emoji: string; text: string }> = {
-  pray: { emoji: "🙏", text: "기도할게요" },
-  grace: { emoji: "🤍", text: "은혜받았어요" },
-  congrats: { emoji: "👏", text: "축하해요" }
+  like: { emoji: "👍", text: "좋아요" },
+  pray: { emoji: "🙏", text: "기도할게요" }
 };
 
 interface PushPayload {
@@ -1292,53 +1291,22 @@ async function startServer() {
     if (added) {
       const label = REACTION_LABEL[type as ReactionType];
       const who = (db.users || []).find((u) => u.id === userId)?.name || "누군가";
+      const total = list.length;
+      // 기도는 특별하게 — 몇 명이 함께 기도했는지 알려준다
+      const body =
+        type === "pray"
+          ? total > 1
+            ? `${who} 님 외 ${total - 1}명이 당신을 위해 기도하고 있어요`
+            : `${who} 님이 당신을 위해 기도하고 있어요`
+          : `${who} 님이 내 묵상에 반응했어요`;
+
       sendPushToUsers(
         [med.userId],
         {
           title: `${label.emoji} ${label.text}`,
-          body: `${who} 님이 내 묵상에 반응했어요`,
+          body,
           url: "/",
           tag: "react-" + med.id
-        },
-        userId
-      ).catch(() => {});
-    }
-  });
-
-  /**
-   * "기도했어요" 토글.
-   * 기도제목을 올린 사람에게 누가 함께 기도했는지 알려주는 것이 이 기능의 핵심이다.
-   */
-  app.post("/api/meditations/:id/pray", (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "로그인이 필요합니다." });
-
-    const med = db.meditations.find((m) => m.id === id);
-    if (!med) return res.status(404).json({ error: "묵상 글을 찾을 수 없습니다." });
-
-    if (!med.prayedBy) med.prayedBy = [];
-    const idx = med.prayedBy.indexOf(userId);
-    const added = idx === -1;
-    if (added) med.prayedBy.push(userId);
-    else med.prayedBy.splice(idx, 1);
-
-    saveDb(db);
-    res.json(med);
-
-    if (added) {
-      const who = (db.users || []).find((u) => u.id === userId)?.name || "한 지체";
-      const total = med.prayedBy.length;
-      sendPushToUsers(
-        [med.userId],
-        {
-          title: "🙏 함께 기도했습니다",
-          body:
-            total > 1
-              ? `${who} 님 외 ${total - 1}명이 당신의 기도제목으로 기도했어요`
-              : `${who} 님이 당신의 기도제목으로 기도했어요`,
-          url: "/",
-          tag: "pray-" + med.id
         },
         userId
       ).catch(() => {});

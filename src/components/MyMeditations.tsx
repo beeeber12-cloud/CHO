@@ -449,7 +449,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }`}
           >
             <HeartHandshake size={13} />
-            <span>오늘의 감사</span>
+            <span>감사&칭찬</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalGratitudes}</span>
           </button>
         </div>
@@ -731,7 +731,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                             {grat.isAnonymous ? "익명 (감사 지체)" : currentUser.name}
                           </span>
                           <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles size={10} className="text-[#4A6B57]" /> 오늘의 감사
+                            <Sparkles size={10} className="text-[#4A6B57]" /> 감사&칭찬
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-2xs text-[#0C3B2E]/70 mt-0.5 font-medium">
@@ -828,7 +828,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           type="text"
                           value={commentInputs[grat.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [grat.id]: e.target.value }))}
-                          placeholder="감사 나눔에 댓글 남기기..."
+                          placeholder="감사·칭찬에 댓글 남기기..."
                           className="flex-1 text-2xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
                         />
                         <button
@@ -849,7 +849,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             <BookOpen className="mx-auto text-[#6F8377] mb-2" size={32} />
             <p className="text-xs font-semibold text-[#4A6B57]">기록된 영성 발자취가 없습니다.</p>
             <p className="text-2xs text-[#6F8377] mt-1">
-              말씀 묵상 또는 오늘의 감사를 나누어 매일의 은혜를 기록해 보세요!
+              말씀 묵상 또는 감사·칭찬을 나누어 매일의 은혜를 기록해 보세요!
             </p>
           </div>
         )}

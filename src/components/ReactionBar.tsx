@@ -6,9 +6,8 @@ import { Reactions, ReactionType } from "../types";
  * 글쓰기는 부담스러워도 버튼은 누른다 — 참여의 문턱을 가장 낮추는 장치다.
  */
 const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
-  { type: "pray", emoji: "🙏", label: "기도할게요" },
-  { type: "grace", emoji: "🤍", label: "은혜받았어요" },
-  { type: "congrats", emoji: "👏", label: "축하해요" }
+  { type: "like", emoji: "👍", label: "좋아요" },
+  { type: "pray", emoji: "🙏", label: "기도할게요" }
 ];
 
 interface ReactionBarProps {
