@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AlarmConfig } from "../types";
-import { Bell, Clock, Calendar, Check, AlertCircle, Volume2, Sparkles, Send, BellOff, X, User, Lock, ShieldAlert, Trash2, Users, Type, ZoomIn, Smartphone, Download, Share, PlusSquare } from "lucide-react";
+import { Bell, Clock, Calendar, Check, AlertCircle, Volume2, Sparkles, Send, BellOff, X, User, Lock, ShieldAlert, Trash2, Users, Type, ZoomIn, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFontSize, FontScale } from "../context/FontSizeContext";
 import { checkPushSupport, enablePush, disablePush, isPushEnabled, sendTestPush, PushSupport } from "../lib/push";
@@ -132,7 +132,7 @@ function PushNotificationCard({ userId }: { userId: string }) {
           <Smartphone size={18} />
         </div>
         <div>
-          <h3 className="font-bold text-[#0C3B2E] text-base">앱을 닫아둬도 오는 알림</h3>
+          <h3 className="font-bold text-[#0C3B2E] text-base">새 글 알림</h3>
           <p className="text-xs text-[#6F8377] font-medium">
             새 말씀·묵상·댓글이 올라오면 휴대폰으로 바로 알려드립니다.
           </p>
@@ -599,41 +599,6 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
 
       {/* Font size settings for adults and seniors */}
       <FontSizeSettingCard />
-
-      {/* PWA App Installation Guide Card */}
-      <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
-            <Smartphone size={18} />
-          </div>
-          <div>
-            <h3 className="font-bold text-[#0C3B2E] text-base">스마트폰 앱(PWA) 설치 안내</h3>
-            <p className="text-2xs text-[#6F8377]">주소 입력 없이 홈 화면 아이콘 한 번으로 바로 들어오세요.</p>
-          </div>
-        </div>
-
-        <div className="bg-[#F5F5F5] rounded-3xl p-4 space-y-3 text-xs text-[#4A6B57]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-white p-3 rounded-3xl space-y-1.5">
-              <span className="font-bold text-[#0C3B2E] flex items-center gap-1">
-                📱 갤럭시 / 안드로이드
-              </span>
-              <p className="text-2xs text-[#6F8377] leading-relaxed">
-                상단 배너의 <strong>'앱 설치'</strong> 버튼을 누르시거나, 크롬/삼성인터넷 브라우저 메뉴(⋮)에서 <strong>'앱 설치'</strong> 또는 <strong>'홈 화면에 추가'</strong>를 누르시면 스마트폰 바탕화면에 은혜교회 앱이 생성됩니다.
-              </p>
-            </div>
-
-            <div className="bg-white p-3 rounded-3xl space-y-1.5">
-              <span className="font-bold text-[#0C3B2E] flex items-center gap-1">
-                🍎 아이폰 / 아이패드 (iOS)
-              </span>
-              <p className="text-2xs text-[#6F8377] leading-relaxed">
-                사파리(Safari) 화면 하단의 <strong>공유 아이콘(<Share size={10} className="inline text-[#0C3B2E]" />)</strong>을 누른 후, 아래로 내려 <strong>'홈 화면에 추가(<PlusSquare size={10} className="inline" />)'</strong>를 선택하시면 홈 화면에 바로 설치됩니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Profile modification section */}
       <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
