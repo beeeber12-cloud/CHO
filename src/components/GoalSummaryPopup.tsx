@@ -4,9 +4,9 @@ import { X } from "lucide-react";
 import { Meditation, GratitudeNote, SharingGoal, UserBibleProgress } from "../types";
 
 /**
- * 앱에 들어올 때 한 번 띄우는 목표 진행률 요약.
+ * 앱에 들어올 때마다 띄우는 목표 진행률 요약.
  * "내가 어디까지 왔는지" 상기시키는 용도라 나눔·통독 두 가지만 담는다.
- * 하루에 한 번만 뜨고, 바깥을 누르거나 X 로 닫을 수 있다.
+ * 바깥을 누르거나 X 로 닫을 수 있다.
  */
 
 const WEEKS_PER_MONTH = 4;
@@ -28,16 +28,6 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
 
   useEffect(() => {
     if (!currentUser?.id) return;
-
-    // 하루 한 번만 노출
-    const key = `goalPopupShown:${currentUser.id}`;
-    const today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Seoul",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(new Date());
-    if (localStorage.getItem(key) === today) return;
 
     let cancelled = false;
 
@@ -82,7 +72,6 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
         if (!cancelled) {
           setRows(next);
           setOpen(true);
-          localStorage.setItem(key, today);
         }
       } catch (err) {
         console.error("목표 요약 조회 실패:", err);

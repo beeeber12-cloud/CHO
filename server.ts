@@ -280,6 +280,11 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
         biblePlan: remoteDb.biblePlan || localDb.biblePlan || { book: "요한복음", currentChapter: 1, active: false },
         // ⚠️ 새 필드를 여기 빠뜨리면 동기화 때마다 조용히 지워진다 (푸시 구독에서 겪었던 문제)
         sharingGoals: { ...(localDb.sharingGoals || {}), ...(remoteDb.sharingGoals || {}) },
+        savedVerses: Array.from(
+          new Map(
+            [...(localDb.savedVerses || []), ...(remoteDb.savedVerses || [])].map((v) => [v.id, v])
+          ).values()
+        ),
         pushSubscriptions: Array.from(subMap.values()),
         updatedAt: new Date().toISOString()
       };
@@ -1759,6 +1764,63 @@ JSON format:
     saveDb(db);
 
     res.json(progress);
+  });
+
+  // --- 체크해 둔 말씀 (성경 읽다 절을 눌러 저장) ---
+  app.get("/api/saved-verses/:userId", (req: Request, res: Response) => {
+    const { userId } = req.params;
+    if (!db.savedVerses) db.savedVerses = [];
+    const mine = db.savedVerses
+      .filter((v) => v.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json(mine);
+  });
+
+  /** 같은 절을 다시 누르면 해제되는 토글 방식 */
+  app.post("/api/saved-verses/toggle", (req: Request, res: Response) => {
+    const { userId, book, chapter, verseNum, text } = req.body;
+    if (!userId || !book || !chapter || !verseNum) {
+      return res.status(400).json({ error: "구절 정보가 올바르지 않습니다." });
+    }
+
+    if (!db.savedVerses) db.savedVerses = [];
+    const idx = db.savedVerses.findIndex(
+      (v) =>
+        v.userId === userId &&
+        v.book === book &&
+        v.chapter === Number(chapter) &&
+        v.verseNum === Number(verseNum)
+    );
+
+    let saved = false;
+    if (idx >= 0) {
+      db.savedVerses.splice(idx, 1);
+    } else {
+      db.savedVerses.push({
+        id: "sv-" + Math.random().toString(36).substring(2, 11),
+        userId,
+        book,
+        chapter: Number(chapter),
+        verseNum: Number(verseNum),
+        text: String(text || "").slice(0, 500),
+        createdAt: new Date().toISOString()
+      });
+      saved = true;
+    }
+
+    saveDb(db);
+    res.json({ saved, total: db.savedVerses.filter((v) => v.userId === userId).length });
+  });
+
+  app.delete("/api/saved-verses/:id", (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { userId } = req.body;
+    if (!db.savedVerses) db.savedVerses = [];
+    const idx = db.savedVerses.findIndex((v) => v.id === id && v.userId === userId);
+    if (idx === -1) return res.status(404).json({ error: "구절을 찾을 수 없습니다." });
+    db.savedVerses.splice(idx, 1);
+    saveDb(db);
+    res.json({ success: true });
   });
 
   // --- 나눔 목표 (주간 묵상/감사 목표) ---

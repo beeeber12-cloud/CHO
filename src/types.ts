@@ -137,6 +137,17 @@ export interface SharingGoal {
   updatedAt: string;
 }
 
+/** 성경을 읽다 눌러서 체크해 둔 구절. 나의기록 > 말씀 체크리스트에서 모아 본다. */
+export interface SavedVerse {
+  id: string;
+  userId: string;
+  book: string;        // "요한복음"
+  chapter: number;     // 3
+  verseNum: number;    // 16
+  text: string;        // 본문
+  createdAt: string;
+}
+
 export interface DatabaseSchema {
   users: User[];
   notices: Notice[];
@@ -149,6 +160,7 @@ export interface DatabaseSchema {
   biblePlan?: BiblePlan;
   userBibleProgress?: Record<string, UserBibleProgress>;
   sharingGoals?: Record<string, SharingGoal>;
+  savedVerses?: SavedVerse[];
   pushSubscriptions?: PushSubscriptionRecord[];
   vapidKeys?: VapidKeys;
   updatedAt?: string;

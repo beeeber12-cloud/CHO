@@ -77,6 +77,21 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       else next.set(num, body);
       return next;
     });
+
+    // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
+    if (currentUser?.id) {
+      fetch("/api/saved-verses/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          book: selectedBook.name,
+          chapter: selectedChapter,
+          verseNum: Number(num),
+          text: body
+        })
+      }).catch((e) => console.error("말씀 체크 저장 실패:", e));
+    }
   };
 
   /** 고른 구절을 "3 본문..." 형태로, 번호 순서대로 이어붙인다. */
@@ -87,8 +102,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       .join("\n");
 
   // Checklist Modal Filter States
-  const [checklistTab, setChecklistTab] = useState<'ALL' | 'OT' | 'NT' | 'IN_PROGRESS'>('ALL');
-  const [checklistSearch, setChecklistSearch] = useState<string>('');
+  const [checklistTab, setChecklistTab] = useState<'OT' | 'NT' | 'IN_PROGRESS'>('OT');
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -1008,10 +1022,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             >
               <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3 mb-3">
                 <div>
-                  <h4 className="font-bold text-[#0C3B2E] text-base flex items-center gap-2">
-                    <ListChecks className="text-[#4A6B57]" size={20} />
-                    {currentUser?.name} 성도님의 성경 66권 통독 체크리스트
-                  </h4>
+                  <h4 className="font-bold text-[#0C3B2E] text-base">나의 통독 체크리스트</h4>
                   <p className="text-xs text-[#6F8377] font-medium">
                     초록색 체크 항목은 내가 이미 완독한 장입니다. 클릭하면 완독 여부를 언제든지 변경할 수 있습니다.
                   </p>
@@ -1025,82 +1036,36 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 </button>
               </div>
 
-              {/* Filter Tabs & Search Bar for Checklist Modal */}
-              <div className="space-y-2.5 pb-3 border-b border-[#E3E9E2] mb-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  {/* Testament Tabs */}
-                  <div className="flex bg-[#F5F5F5] p-1 rounded-3xl text-xs font-bold text-[#4A6B57] overflow-x-auto">
-                    <button
-                      type="button"
-                      onClick={() => setChecklistTab('ALL')}
-                      className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                        checklistTab === 'ALL' ? "bg-[#0C3B2E] text-white" : "hover:text-[#0C3B2E]"
-                      }`}
-                    >
-                      전체 66권
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChecklistTab('OT')}
-                      className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                        checklistTab === 'OT' ? "bg-[#0C3B2E] text-white" : "hover:text-[#0C3B2E]"
-                      }`}
-                    >
-                      구약 (39권)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChecklistTab('NT')}
-                      className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                        checklistTab === 'NT' ? "bg-[#0C3B2E] text-white" : "hover:text-[#0C3B2E]"
-                      }`}
-                    >
-                      신약 (27권)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChecklistTab('IN_PROGRESS')}
-                      className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                        checklistTab === 'IN_PROGRESS' ? "bg-[#0C3B2E] text-white" : "hover:text-[#072A20] text-[#0C3B2E] font-bold"
-                      }`}
-                    >
-                      🔥 통독 진행 중
-                    </button>
-                  </div>
-
-                  {/* Quick Jump to Last Read Location */}
-                  {userProgress?.lastReadBook && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChecklistTab('ALL');
-                        setChecklistSearch(userProgress.lastReadBook);
-                      }}
-                      className="text-xs font-bold px-3 py-1.5 bg-[#F5F5F5] hover:bg-[#C7D8C9] text-[#0C3B2E] rounded-3xl transition cursor-pointer flex items-center gap-1"
-                    >
-                      <span>📍 내가 읽던 '{userProgress.lastReadBook}' 바로찾기</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Quick Search Input */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={checklistSearch}
-                    onChange={(e) => setChecklistSearch(e.target.value)}
-                    placeholder="성경 이름으로 빠르게 검색 (예: 창세기, 마태복음, 시편, 요한)..."
-                    className="w-full pl-3 pr-8 py-2 bg-[#F5F5F5] rounded-3xl text-xs font-medium text-[#14261E] focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
-                  />
-                  {checklistSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setChecklistSearch('')}
-                      className="absolute right-2.5 top-2.5 text-[#6F8377] hover:text-[#4A6B57] cursor-pointer"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
+              {/* 구약 / 신약 / 통독 진행 중 */}
+              <div className="pb-3 border-b border-[#E3E9E2] mb-3">
+                <div className="flex bg-[#F5F5F5] p-1 rounded-3xl text-xs font-bold text-[#4A6B57] overflow-x-auto w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setChecklistTab('OT')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
+                      checklistTab === 'OT' ? "bg-[#0C3B2E] text-white" : "hover:text-[#0C3B2E]"
+                    }`}
+                  >
+                    구약 (39권)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChecklistTab('NT')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
+                      checklistTab === 'NT' ? "bg-[#0C3B2E] text-white" : "hover:text-[#0C3B2E]"
+                    }`}
+                  >
+                    신약 (27권)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChecklistTab('IN_PROGRESS')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer whitespace-nowrap ${
+                      checklistTab === 'IN_PROGRESS' ? "bg-[#0C3B2E] text-white" : "hover:text-[#0C3B2E]"
+                    }`}
+                  >
+                    통독 진행 중
+                  </button>
                 </div>
               </div>
 
@@ -1116,11 +1081,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
                   if (checklistTab === 'IN_PROGRESS' && bookCompletedCount === 0 && !isLastReadBook) {
                     return false;
-                  }
-
-                  if (checklistSearch.trim()) {
-                    const q = checklistSearch.trim().toLowerCase();
-                    return b.name.toLowerCase().includes(q) || b.shortName.toLowerCase().includes(q);
                   }
 
                   return true;
@@ -1141,7 +1101,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                           {b.name} ({b.chapters}장)
                           {isLastReadBook && (
                             <span className="text-xs font-bold bg-[#C7D8C9] text-[#0C3B2E] px-2 py-0.5 rounded-full">
-                              📍 내가 읽는 중
+                              읽는 중
                             </span>
                           )}
                         </span>

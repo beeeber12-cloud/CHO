@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Meditation, GratitudeNote, SharingGoal } from "../types";
+import { Meditation, GratitudeNote, SharingGoal, SavedVerse } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Loader, HeartHandshake, Sparkles, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -13,6 +13,38 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   const [meditations, setMeditations] = useState<Meditation[]>([]);
   const [gratitudes, setGratitudes] = useState<GratitudeNote[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // 성경 읽다 체크해 둔 구절 (말씀 체크리스트)
+  const [savedVerses, setSavedVerses] = useState<SavedVerse[]>([]);
+  const [showSavedModal, setShowSavedModal] = useState<boolean>(false);
+
+  const fetchSavedVerses = async () => {
+    if (!currentUser?.id) return;
+    try {
+      const res = await fetch(`/api/saved-verses/${currentUser.id}`);
+      if (res.ok) setSavedVerses(await res.json());
+    } catch (err) {
+      console.error("체크한 말씀 조회 실패:", err);
+    }
+  };
+
+  const openSavedVerses = async () => {
+    await fetchSavedVerses();
+    setShowSavedModal(true);
+  };
+
+  const removeSavedVerse = async (id: string) => {
+    try {
+      const res = await fetch(`/api/saved-verses/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      if (res.ok) setSavedVerses((prev) => prev.filter((v) => v.id !== id));
+    } catch (err) {
+      console.error("체크한 말씀 삭제 실패:", err);
+    }
+  };
 
   // 나눔 목표 (주간) — 이번 달 진행률 계산에 쓰인다
   const [goal, setGoal] = useState<SharingGoal | null>(null);
@@ -79,6 +111,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
   useEffect(() => {
     fetchMyRecords(true);
+    fetchSavedVerses(); // 버튼의 개수 배지를 위해 진입 시 한 번 불러온다
 
     // 묵상나눔·감사칭찬 탭과 같은 주기로 갱신한다.
     // (다른 탭이나 다른 기기에서 글을 지우면 여기에도 바로 반영되도록)
@@ -520,6 +553,18 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             <span>감사 칭찬</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalGratitudes}</span>
           </button>
+
+          {/* 성경 읽다 체크해 둔 구절 모아보기 */}
+          <button
+            onClick={openSavedVerses}
+            className="px-3 py-1.5 rounded-3xl transition cursor-pointer flex items-center gap-1.5 bg-[#FFF6DC] text-[#0C3B2E] hover:bg-[#FFEFC4]"
+          >
+            <BookOpen size={13} />
+            <span>말씀 체크</span>
+            {savedVerses.length > 0 && (
+              <span className="text-2xs bg-[#FFBA00] px-1.5 py-0.2 rounded-full">{savedVerses.length}</span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -922,6 +967,78 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
           </div>
         )}
       </div>
+
+      {/* 말씀 체크리스트 — 성경 읽다 눌러 체크해 둔 구절 모음 */}
+      <AnimatePresence>
+        {showSavedModal && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={() => setShowSavedModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[32px] max-w-lg w-full max-h-[85vh] p-5 sm:p-6 flex flex-col shadow-2xl"
+            >
+              <div className="flex justify-between items-start gap-2 border-b border-[#E3E9E2] pb-3 mb-3">
+                <div>
+                  <h4 className="font-bold text-[#0C3B2E] text-base">말씀 체크리스트</h4>
+                  <p className="text-xs text-[#6F8377] font-medium mt-0.5">
+                    성경을 읽다 마음에 닿아 눌러 두신 구절입니다. ({savedVerses.length}개)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSavedModal(false)}
+                  className="text-[#85888F] hover:text-[#4A6B57] cursor-pointer shrink-0"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+                {savedVerses.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <BookOpen className="mx-auto text-[#6F8377] mb-2" size={28} />
+                    <p className="text-xs font-bold text-[#4A6B57]">아직 체크한 말씀이 없습니다.</p>
+                    <p className="text-2xs text-[#6F8377] mt-1 leading-relaxed">
+                      오늘말씀이나 성경통독에서 마음에 닿는 구절을 눌러보세요.
+                    </p>
+                  </div>
+                ) : (
+                  savedVerses.map((v) => (
+                    <div key={v.id} className="bg-[#F5F5F5] rounded-3xl p-3.5">
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <span className="text-xs font-bold text-[#0C3B2E] bg-[#FFF6DC] px-2 py-0.5 rounded-lg">
+                          {v.book} {v.chapter}:{v.verseNum}
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-2xs text-[#6F8377] font-medium">
+                            {new Date(v.createdAt).toLocaleDateString()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeSavedVerse(v.id)}
+                            className="text-[#85888F] hover:text-[#B3261E] cursor-pointer"
+                            title="체크 해제"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs sm:text-sm text-[#333333] leading-relaxed scripture-font">
+                        {v.text}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* 나눔 목표 설정 */}
       <AnimatePresence>

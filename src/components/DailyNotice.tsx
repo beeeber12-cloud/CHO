@@ -14,6 +14,8 @@ interface DailyNoticeProps {
 }
 
 export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSelectVerseForMeditation }: DailyNoticeProps) {
+  const [notice, setNotice] = useState<Notice | null>(null);
+
   // 사용자가 눌러서 고른 구절 (번호 -> 본문)
   const [pickedVerses, setPickedVerses] = useState<Map<string, string>>(new Map());
 
@@ -24,6 +26,24 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       else next.set(num, body);
       return next;
     });
+
+    // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
+    // 공지의 구절명("요한1서 5장")에서 책 이름과 장을 뽑아낸다.
+    const ref = notice?.verseTitle || "";
+    const m = ref.match(/^(.+?)\s*(\d+)\s*[장편]?/);
+    if (currentUser?.id && m) {
+      fetch("/api/saved-verses/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          book: m[1].trim(),
+          chapter: Number(m[2]),
+          verseNum: Number(num),
+          text: body
+        })
+      }).catch((e) => console.error("말씀 체크 저장 실패:", e));
+    }
   };
 
   /** 고른 구절을 "3 본문..." 형태로, 번호 순서대로 이어붙인다. */
@@ -33,7 +53,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       .map(([n, t]) => `${n} ${t}`)
       .join("\n");
 
-  const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
