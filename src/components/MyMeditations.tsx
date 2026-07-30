@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Meditation, GratitudeNote } from "../types";
-import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Award, Activity, Loader, HeartHandshake, Sparkles } from "lucide-react";
+import { Meditation, GratitudeNote, SharingGoal } from "../types";
+import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Loader, HeartHandshake, Sparkles, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface MyMeditationsProps {
@@ -13,6 +13,51 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   const [meditations, setMeditations] = useState<Meditation[]>([]);
   const [gratitudes, setGratitudes] = useState<GratitudeNote[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // 나눔 목표 (주간) — 이번 달 진행률 계산에 쓰인다
+  const [goal, setGoal] = useState<SharingGoal | null>(null);
+  const [showGoalModal, setShowGoalModal] = useState<boolean>(false);
+  const [goalMed, setGoalMed] = useState<number>(3);
+  const [goalGrat, setGoalGrat] = useState<number>(3);
+  const [savingGoal, setSavingGoal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    fetch(`/api/sharing-goal/${currentUser.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((g: SharingGoal | null) => {
+        if (g) {
+          setGoal(g);
+          setGoalMed(g.weeklyMeditations);
+          setGoalGrat(g.weeklyGratitudes);
+        }
+      })
+      .catch((e) => console.error("나눔 목표 조회 실패:", e));
+  }, [currentUser?.id]);
+
+  const handleSaveGoal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingGoal(true);
+    try {
+      const res = await fetch("/api/sharing-goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          weeklyMeditations: goalMed,
+          weeklyGratitudes: goalGrat
+        })
+      });
+      if (res.ok) {
+        setGoal(await res.json());
+        setShowGoalModal(false);
+      }
+    } catch (err) {
+      console.error("나눔 목표 저장 실패:", err);
+    } finally {
+      setSavingGoal(false);
+    }
+  };
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -250,6 +295,24 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     return matchesDate && matchesSearch;
   });
 
+  // ── 이번 달 나눔 목표 진행률 ──────────────────────────────
+  // 목표는 "한 주에 몇 회"로 정하고, 화면에서는 이번 달 기준으로 환산해 보여준다.
+  const WEEKS_PER_MONTH = 4;
+  const now = new Date();
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  const inThisMonth = (d?: string) => !!d && d.startsWith(monthPrefix);
+  const monthMeditations = meditations.filter((m) => inThisMonth(m.date)).length;
+  const monthGratitudes = gratitudes.filter((g) => inThisMonth(g.date)).length;
+
+  const medTarget = (goal?.weeklyMeditations ?? 3) * WEEKS_PER_MONTH;
+  const gratTarget = (goal?.weeklyGratitudes ?? 3) * WEEKS_PER_MONTH;
+
+  const pct = (done: number, target: number) =>
+    target <= 0 ? 100 : Math.min(100, Math.round((done / target) * 100));
+  const medPct = pct(monthMeditations, medTarget);
+  const gratPct = pct(monthGratitudes, gratTarget);
+
   // Stats calculations
   const totalWritten = meditations.length;
   const totalGratitudes = gratitudes.length;
@@ -335,45 +398,57 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
       {/* User Stats Card */}
       <div className="bg-gradient-to-br from-[#0C3B2E] to-[#4A6B57] rounded-3xl sm:rounded-[32px] p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
 
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          <div>
-            <h3 className="font-bold text-xl sm:text-2xl">{currentUser.name}님의 영성 기록 발자취</h3>
-            <p className="text-xs text-[#D2DDD3]/80 mt-1 leading-relaxed">
-              주님과 친밀하게 나누어 온 묵상과 감사의 고백들이 은혜로 쌓여 가고 있습니다.
-            </p>
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h3 className="font-bold text-xl sm:text-2xl">{currentUser.name}님의 나눔 발자취</h3>
+            <button
+              type="button"
+              onClick={() => setShowGoalModal(true)}
+              className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 bg-white/15 hover:bg-white/25 rounded-3xl transition cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <Settings size={14} />
+              <span>목표 설정</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 self-stretch md:self-auto border-t border-white/10 pt-3 md:pt-0 md:border-t-0">
-            <div className="text-center bg-white/10 px-3 py-2.5 rounded-3xl min-w-[75px]">
-              <div className="flex justify-center text-[#AFC0B2] mb-0.5">
-                <Activity size={16} />
-              </div>
-              <span className="text-2xs text-[#D2DDD3]/70 font-semibold block">묵상 작성</span>
-              <strong className="text-base sm:text-lg font-black">{totalWritten}회</strong>
+          {/* 이번 달 진행률 — 성경통독과 같은 형태 */}
+          <div className="bg-white/10 p-4 rounded-3xl space-y-3.5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold text-[#D2DDD3]">
+                {now.getMonth() + 1}월 목표 (주 {goal?.weeklyMeditations ?? 3}·{goal?.weeklyGratitudes ?? 3}회 기준)
+              </span>
             </div>
 
-            <div className="text-center bg-[#4A6B57]/20 px-3 py-2.5 rounded-3xl min-w-[75px]">
-              <div className="flex justify-center text-[#FFFFFF] mb-0.5">
-                <HeartHandshake size={16} />
+            {/* 묵상 나눔 */}
+            <div>
+              <div className="flex justify-between items-center text-xs mb-1.5">
+                <span className="font-bold text-[#D2DDD3]">묵상 나눔</span>
+                <span className="font-bold text-white">
+                  {monthMeditations} / {medTarget}회 ({medPct}%)
+                </span>
               </div>
-              <span className="text-2xs text-[#F5F5F5]/90 font-semibold block">감사 작성</span>
-              <strong className="text-base sm:text-lg font-black text-[#FFFFFF]">{totalGratitudes}회</strong>
+              <div className="w-full bg-black/20 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(2, medPct)}%` }}
+                />
+              </div>
             </div>
 
-            <div className="text-center bg-white/10 px-3 py-2.5 rounded-3xl min-w-[75px]">
-              <div className="flex justify-center text-[#AFC0B2] mb-0.5">
-                <Calendar size={16} />
+            {/* 감사·칭찬 */}
+            <div>
+              <div className="flex justify-between items-center text-xs mb-1.5">
+                <span className="font-bold text-[#D2DDD3]">감사·칭찬</span>
+                <span className="font-bold text-white">
+                  {monthGratitudes} / {gratTarget}회 ({gratPct}%)
+                </span>
               </div>
-              <span className="text-2xs text-[#D2DDD3]/70 font-semibold block">기록한 날</span>
-              <strong className="text-base sm:text-lg font-black">{distinctDays}일</strong>
-            </div>
-
-            <div className="text-center bg-white/10 px-3 py-2.5 rounded-3xl min-w-[75px]">
-              <div className="flex justify-center text-[#FFFFFF] mb-0.5">
-                <Award size={16} />
+              <div className="w-full bg-black/20 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(2, gratPct)}%` }}
+                />
               </div>
-              <span className="text-2xs text-[#D2DDD3]/70 font-semibold block">연속 일수</span>
-              <strong className="text-base sm:text-lg font-black text-[#FFFFFF]">{activeStreak}일</strong>
             </div>
           </div>
         </div>
@@ -854,6 +929,84 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
           </div>
         )}
       </div>
+
+      {/* 나눔 목표 설정 */}
+      <AnimatePresence>
+        {showGoalModal && (
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-[32px] max-w-md w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3">
+                <h4 className="font-bold text-[#0C3B2E] text-base">내 나눔 목표</h4>
+                <button
+                  type="button"
+                  onClick={() => setShowGoalModal(false)}
+                  className="text-[#85888F] hover:text-[#4A6B57] cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="text-xs text-[#6F8377] font-medium leading-relaxed">
+                한 주에 몇 번 나눌지 정해 보세요. 이번 달 진행률은 <strong>주간 목표 × 4주</strong> 로 계산됩니다.
+              </p>
+
+              <form onSubmit={handleSaveGoal} className="space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold text-[#0C3B2E] mb-1.5">
+                    묵상 나눔 · 주 {goalMed}회
+                    <span className="text-[#6F8377] font-medium"> (한 달 {goalMed * 4}회)</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={14}
+                    value={goalMed}
+                    onChange={(e) => setGoalMed(Number(e.target.value))}
+                    className="w-full accent-[#0C3B2E] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#0C3B2E] mb-1.5">
+                    감사·칭찬 · 주 {goalGrat}회
+                    <span className="text-[#6F8377] font-medium"> (한 달 {goalGrat * 4}회)</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={14}
+                    value={goalGrat}
+                    onChange={(e) => setGoalGrat(Number(e.target.value))}
+                    className="w-full accent-[#0C3B2E] cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-[#E3E9E2]">
+                  <button
+                    type="button"
+                    onClick={() => setShowGoalModal(false)}
+                    className="px-4 py-2 text-[#6F8377] rounded-3xl font-bold cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingGoal}
+                    className="px-5 py-2 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold rounded-3xl transition cursor-pointer disabled:opacity-60"
+                  >
+                    {savingGoal ? "저장 중..." : "목표 저장"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

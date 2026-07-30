@@ -126,6 +126,17 @@ export interface VapidKeys {
   privateKey: string;
 }
 
+/**
+ * 나눔 목표. 주 단위로 정하고, 화면에서는 이번 달 진행률로 보여준다.
+ * (이번 달 목표 = 주간 목표 x 4주)
+ */
+export interface SharingGoal {
+  userId: string;
+  weeklyMeditations: number;  // 한 주에 묵상 몇 회
+  weeklyGratitudes: number;   // 한 주에 감사·칭찬 몇 회
+  updatedAt: string;
+}
+
 export interface DatabaseSchema {
   users: User[];
   notices: Notice[];
@@ -137,6 +148,7 @@ export interface DatabaseSchema {
   alarmConfigs: AlarmConfig[];
   biblePlan?: BiblePlan;
   userBibleProgress?: Record<string, UserBibleProgress>;
+  sharingGoals?: Record<string, SharingGoal>;
   pushSubscriptions?: PushSubscriptionRecord[];
   vapidKeys?: VapidKeys;
   updatedAt?: string;

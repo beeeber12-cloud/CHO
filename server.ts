@@ -278,6 +278,8 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
         alarmConfigs: remoteDb.alarmConfigs || localDb.alarmConfigs || [],
         userBibleProgress: mergedProgress,
         biblePlan: remoteDb.biblePlan || localDb.biblePlan || { book: "요한복음", currentChapter: 1, active: false },
+        // ⚠️ 새 필드를 여기 빠뜨리면 동기화 때마다 조용히 지워진다 (푸시 구독에서 겪었던 문제)
+        sharingGoals: { ...(localDb.sharingGoals || {}), ...(remoteDb.sharingGoals || {}) },
         pushSubscriptions: Array.from(subMap.values()),
         updatedAt: new Date().toISOString()
       };
@@ -1757,6 +1759,41 @@ JSON format:
     saveDb(db);
 
     res.json(progress);
+  });
+
+  // --- 나눔 목표 (주간 묵상/감사 목표) ---
+  app.get("/api/sharing-goal/:userId", (req: Request, res: Response) => {
+    const { userId } = req.params;
+    if (!db.sharingGoals) db.sharingGoals = {};
+    const goal = db.sharingGoals[userId] || {
+      userId,
+      weeklyMeditations: 3,
+      weeklyGratitudes: 3,
+      updatedAt: new Date().toISOString()
+    };
+    res.json(goal);
+  });
+
+  app.post("/api/sharing-goal", (req: Request, res: Response) => {
+    const { userId, weeklyMeditations, weeklyGratitudes } = req.body;
+    if (!userId) return res.status(400).json({ error: "로그인이 필요합니다." });
+
+    if (!db.sharingGoals) db.sharingGoals = {};
+    const clamp = (n: any, dflt: number) => {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return dflt;
+      return Math.min(21, Math.max(0, Math.round(v)));
+    };
+
+    const goal = {
+      userId,
+      weeklyMeditations: clamp(weeklyMeditations, 3),
+      weeklyGratitudes: clamp(weeklyGratitudes, 3),
+      updatedAt: new Date().toISOString()
+    };
+    db.sharingGoals[userId] = goal;
+    saveDb(db);
+    res.json(goal);
   });
 
   // --- Daily Gratitude Board APIs ---
