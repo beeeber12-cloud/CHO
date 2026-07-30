@@ -57,7 +57,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
   const baseVerses = nivOnly ? nivVerses : krvVerses;
 
   return (
-    <div className={`space-y-5 sm:space-y-6 ${className}`}>
+    <div className={`space-y-[11px] ${className}`}>
       {baseVerses.map((v, idx) => {
         const niv = v.num ? nivMap.get(v.num) : nivVerses[idx]?.body;
         const isHighlighted = highlightVerse != null && v.num != null && Number(v.num) === highlightVerse;
@@ -68,7 +68,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             key={idx}
             data-verse={v.num}
             onClick={canPick ? () => onToggleVerse!(v.num!, v.body) : undefined}
-            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-1.5 ${
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-[7px] ${
               canPick ? "cursor-pointer" : ""
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시

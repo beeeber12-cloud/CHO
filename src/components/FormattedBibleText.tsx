@@ -66,7 +66,7 @@ export default function FormattedBibleText({
   }
 
   return (
-    <div className={`space-y-5 sm:space-y-6 ${className}`}>
+    <div className={`space-y-[11px] ${className}`}>
       {parsedVerses.map((v, idx) => {
         const isNavHighlight =
           highlightVerse != null && v.verseNum != null && Number(v.verseNum) === highlightVerse;
@@ -78,7 +78,7 @@ export default function FormattedBibleText({
             key={idx}
             data-verse={v.verseNum}
             onClick={canPick ? () => onToggleVerse!(v.verseNum!, v.verseBody) : undefined}
-            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-1.5 ${
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-[7px] ${
               canPick ? "cursor-pointer" : ""
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시
