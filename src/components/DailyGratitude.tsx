@@ -437,6 +437,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                       reactions={grat.reactions}
                       currentUserId={currentUser.id}
                       endpointBase={`/api/gratitudes/${grat.id}`}
+                      only={["like"]}
                       onUpdated={(updated) =>
                         setGratitudes((prev) => prev.map((g) => (g.id === updated.id ? updated : g)))
                       }

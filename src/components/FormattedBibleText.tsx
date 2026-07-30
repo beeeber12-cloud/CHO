@@ -4,6 +4,10 @@ interface FormattedBibleTextProps {
   text: string;
   className?: string;
   highlightVerse?: number | null;
+  /** 사용자가 눌러서 고른 절 번호들 */
+  selectedVerses?: Set<string>;
+  /** 절을 누르면 호출 — 번호와 본문을 함께 넘긴다 */
+  onToggleVerse?: (verseNum: string, verseBody: string) => void;
 }
 
 interface ParsedVerse {
@@ -15,6 +19,8 @@ export default function FormattedBibleText({
   text,
   className = "",
   highlightVerse = null,
+  selectedVerses,
+  onToggleVerse,
 }: FormattedBibleTextProps) {
   if (!text) return null;
 
@@ -61,29 +67,48 @@ export default function FormattedBibleText({
 
   return (
     <div className={`space-y-5 sm:space-y-6 ${className}`}>
-      {parsedVerses.map((v, idx) => (
-        <div
-          key={idx}
-          data-verse={v.verseNum}
-          className={`group scroll-mt-4 transition-colors duration-500 ${
-            highlightVerse != null && v.verseNum != null && Number(v.verseNum) === highlightVerse
-              ? "bg-[#F5F5F5] border-l-4 border-[#4A6B57] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
-              : ""
-          }`}
-        >
-          <p
-            className="text-sm sm:text-base md:text-lg leading-[1.5] text-[#333333] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
-            style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
+      {parsedVerses.map((v, idx) => {
+        const isNavHighlight =
+          highlightVerse != null && v.verseNum != null && Number(v.verseNum) === highlightVerse;
+        const isPicked = !!(v.verseNum && selectedVerses?.has(v.verseNum));
+        const canPick = !!(onToggleVerse && v.verseNum);
+
+        return (
+          <div
+            key={idx}
+            data-verse={v.verseNum}
+            onClick={canPick ? () => onToggleVerse!(v.verseNum!, v.verseBody) : undefined}
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-1.5 ${
+              canPick ? "cursor-pointer" : ""
+            } ${
+              // 고른 구절은 은은한 금빛 배경으로 표시
+              isPicked
+                ? "bg-[#FFF6DC]"
+                : isNavHighlight
+                ? "bg-[#F5F5F5]"
+                : canPick
+                ? "hover:bg-[#FAFAFA]"
+                : ""
+            }`}
           >
-            {v.verseNum && (
-              <span className="font-sans font-normal text-[#8B8B8B] text-xs sm:text-sm mr-2 inline-block select-none">
-                {v.verseNum}
-              </span>
-            )}
-            {v.verseBody}
-          </p>
-        </div>
-      ))}
+            <p
+              className="text-sm sm:text-base md:text-lg leading-[1.5] text-[#333333] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
+              style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
+            >
+              {v.verseNum && (
+                <span
+                  className={`font-sans font-normal text-xs sm:text-sm mr-2 inline-block select-none ${
+                    isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
+                  }`}
+                >
+                  {v.verseNum}
+                </span>
+              )}
+              {v.verseBody}
+            </p>
+          </div>
+        );
+      })}
     </div>
   );
 }

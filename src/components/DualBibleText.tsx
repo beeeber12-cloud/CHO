@@ -6,6 +6,10 @@ interface DualBibleTextProps {
   mode: "krv" | "niv" | "both";
   className?: string;
   highlightVerse?: number | null;
+  /** 사용자가 눌러서 고른 절 번호들 */
+  selectedVerses?: Set<string>;
+  /** 절을 누르면 호출 — 번호와 본문(개역개정)을 함께 넘긴다 */
+  onToggleVerse?: (verseNum: string, verseBody: string) => void;
 }
 
 interface Verse {
@@ -36,7 +40,7 @@ function parseVerses(raw: string): Verse[] {
   });
 }
 
-export default function DualBibleText({ krvText, nivText = "", mode, className = "", highlightVerse = null }: DualBibleTextProps) {
+export default function DualBibleText({ krvText, nivText = "", mode, className = "", highlightVerse = null, selectedVerses, onToggleVerse }: DualBibleTextProps) {
   const krvVerses = parseVerses(krvText);
   const nivVerses = parseVerses(nivText);
 
@@ -57,13 +61,23 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
       {baseVerses.map((v, idx) => {
         const niv = v.num ? nivMap.get(v.num) : nivVerses[idx]?.body;
         const isHighlighted = highlightVerse != null && v.num != null && Number(v.num) === highlightVerse;
+        const isPicked = !!(v.num && selectedVerses?.has(v.num));
+        const canPick = !!(onToggleVerse && v.num);
         return (
           <div
             key={idx}
             data-verse={v.num}
-            className={`group scroll-mt-4 transition-colors duration-500 ${
-              isHighlighted
-                ? "bg-[#F5F5F5] border-l-4 border-[#4A6B57] rounded-r-lg -ml-1 pl-3 pr-2 py-2"
+            onClick={canPick ? () => onToggleVerse!(v.num!, v.body) : undefined}
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-1.5 ${
+              canPick ? "cursor-pointer" : ""
+            } ${
+              // 고른 구절은 은은한 금빛 배경으로 표시
+              isPicked
+                ? "bg-[#FFF6DC]"
+                : isHighlighted
+                ? "bg-[#F5F5F5]"
+                : canPick
+                ? "hover:bg-[#FAFAFA]"
                 : ""
             }`}
           >
@@ -74,7 +88,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.num && (
-                  <span className="font-sans font-normal text-[#8B8B8B] text-xs sm:text-sm mr-2 inline-block select-none">
+                  <span className={`font-sans font-normal text-xs sm:text-sm mr-2 inline-block select-none ${isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"}`}>
                     {v.num}
                   </span>
                 )}

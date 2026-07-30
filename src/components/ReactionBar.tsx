@@ -15,6 +15,8 @@ interface ReactionBarProps {
   currentUserId: string;
   /** "/api/meditations/{id}" 또는 "/api/gratitudes/{id}" */
   endpointBase: string;
+  /** 노출할 반응 종류. 생략하면 전부. (예: 감사칭찬 탭은 ["like"] 만) */
+  only?: ReactionType[];
   onUpdated: (updated: any) => void;
 }
 
@@ -22,9 +24,11 @@ export default function ReactionBar({
   reactions,
   currentUserId,
   endpointBase,
+  only,
   onUpdated
 }: ReactionBarProps) {
   const [busy, setBusy] = useState<ReactionType | null>(null);
+  const visible = only ? REACTIONS.filter((r) => only.includes(r.type)) : REACTIONS;
 
   const handleClick = async (type: ReactionType) => {
     if (busy) return;
@@ -45,7 +49,7 @@ export default function ReactionBar({
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      {REACTIONS.map((r) => {
+      {visible.map((r) => {
         const list = reactions?.[r.type] || [];
         const mine = list.includes(currentUserId);
         const count = list.length;

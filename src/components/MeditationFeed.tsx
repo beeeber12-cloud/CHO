@@ -102,8 +102,9 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   useEffect(() => {
     if (prefilledVerse) {
       setVerseTitle(prefilledVerse.title);
-      // Generate automatic title template
       setTitle(`${prefilledVerse.title} 말씀을 묵상하며`);
+      // 고른 구절을 먼저 넣고 한 줄 띄워, 그 아래에 묵상을 이어 쓰게 한다.
+      // (나눔을 볼 때 어느 구절에 대한 묵상인지 함께 보이도록)
       setContent(`${prefilledVerse.text}\n\n`);
       setShowWriteForm(true);
       setEditingId(null);

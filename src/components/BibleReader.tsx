@@ -67,6 +67,25 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [highlightVerse, setHighlightVerse] = useState<number | null>(null);
   const [pendingScroll, setPendingScroll] = useState<boolean>(false);
 
+  // 사용자가 눌러서 고른 구절 (번호 -> 본문). 묵상 쓰기로 넘길 때 이것만 담아 보낸다.
+  const [pickedVerses, setPickedVerses] = useState<Map<string, string>>(new Map());
+
+  const togglePickedVerse = (num: string, body: string) => {
+    setPickedVerses((prev) => {
+      const next = new Map(prev);
+      if (next.has(num)) next.delete(num);
+      else next.set(num, body);
+      return next;
+    });
+  };
+
+  /** 고른 구절을 "3 본문..." 형태로, 번호 순서대로 이어붙인다. */
+  const buildPickedText = (): string =>
+    [...pickedVerses.entries()]
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([n, t]) => `${n} ${t}`)
+      .join("\n");
+
   // Checklist Modal Filter States
   const [checklistTab, setChecklistTab] = useState<'ALL' | 'OT' | 'NT' | 'IN_PROGRESS'>('ALL');
   const [checklistSearch, setChecklistSearch] = useState<string>('');
@@ -140,6 +159,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setLoading(true);
     setError("");
     setResult(null);
+    setPickedVerses(new Map()); // 다른 본문으로 넘어가면 고른 구절도 초기화
 
     try {
       const res = await fetch(`/api/bible/search?query=${encodeURIComponent(searchStr.trim())}`);
@@ -562,7 +582,12 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               >
                 {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
                   <>
-                    <FormattedBibleText text={result.text} highlightVerse={highlightVerse} />
+                    <FormattedBibleText
+                      text={result.text}
+                      highlightVerse={highlightVerse}
+                      selectedVerses={new Set(pickedVerses.keys())}
+                      onToggleVerse={togglePickedVerse}
+                    />
                     <p className="mt-3 text-xs text-[#072A20] bg-[#F5F5F5] rounded-xl p-2">
                       이 본문은 NIV(영어) 데이터가 아직 없어 개역개정으로 표시됩니다.
                     </p>
@@ -573,9 +598,27 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     nivText={result.textNiv}
                     mode={bibleVersion}
                     highlightVerse={highlightVerse}
+                    selectedVerses={new Set(pickedVerses.keys())}
+                    onToggleVerse={togglePickedVerse}
                   />
                 )}
               </div>
+
+              {/* 구절을 고르면 안내 + 해제 */}
+              {pickedVerses.size > 0 && (
+                <div className="flex items-center justify-between gap-2 bg-[#FFF6DC] rounded-3xl px-3.5 py-2.5">
+                  <span className="text-xs font-bold text-[#0C3B2E]">
+                    {pickedVerses.size}개 구절을 골랐어요
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPickedVerses(new Map())}
+                    className="text-xs font-bold text-[#6F8377] hover:text-[#0C3B2E] cursor-pointer"
+                  >
+                    선택 해제
+                  </button>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-[#E3E9E2]">
@@ -627,11 +670,28 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {onSelectVerseForMeditation && (
                     <button
                       type="button"
-                      onClick={() => onSelectVerseForMeditation(result.reference, result.text.slice(0, 200))}
+                      onClick={() => {
+                        // 고른 구절이 있으면 그것만, 없으면 본문 앞부분을 넘긴다
+                        const picked = buildPickedText();
+                        const refs =
+                          pickedVerses.size > 0
+                            ? `${result.reference.replace(/\s*\d+장$/, "")} ${[...pickedVerses.keys()]
+                                .sort((a, b) => Number(a) - Number(b))
+                                .join(",")}절`
+                            : result.reference;
+                        onSelectVerseForMeditation(
+                          pickedVerses.size > 0 ? refs : result.reference,
+                          picked || result.text.slice(0, 200)
+                        );
+                      }}
                       className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] px-3.5 py-1.5 rounded-3xl shadow-md transition cursor-pointer whitespace-nowrap"
                     >
                       <Send size={14} />
-                      <span>이 말씀으로 내 묵상 쓰기</span>
+                      <span>
+                        {pickedVerses.size > 0
+                          ? `고른 ${pickedVerses.size}구절로 묵상 쓰기`
+                          : "이 말씀으로 내 묵상 쓰기"}
+                      </span>
                     </button>
                   )}
                 </div>

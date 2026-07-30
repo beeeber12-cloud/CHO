@@ -1,17 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { Notice, User } from "../types";
-import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles } from "lucide-react";
+import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 
 
 interface DailyNoticeProps {
+  /** 고른 구절을 묵상 쓰기로 넘긴다 */
+  onSelectVerseForMeditation?: (verseTitle: string, verseText: string) => void;
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
   allUsers: { id: string; name: string; role: string }[];
   onVerseSelect?: (verse: string) => void;
 }
 
-export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: DailyNoticeProps) {
+export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSelectVerseForMeditation }: DailyNoticeProps) {
+  // 사용자가 눌러서 고른 구절 (번호 -> 본문)
+  const [pickedVerses, setPickedVerses] = useState<Map<string, string>>(new Map());
+
+  const togglePickedVerse = (num: string, body: string) => {
+    setPickedVerses((prev) => {
+      const next = new Map(prev);
+      if (next.has(num)) next.delete(num);
+      else next.set(num, body);
+      return next;
+    });
+  };
+
+  /** 고른 구절을 "3 본문..." 형태로, 번호 순서대로 이어붙인다. */
+  const buildPickedText = (): string =>
+    [...pickedVerses.entries()]
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([n, t]) => `${n} ${t}`)
+      .join("\n");
+
   const [notice, setNotice] = useState<Notice | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -441,11 +462,54 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect }: Da
               <div className="max-h-72 md:max-h-96 overflow-y-auto pr-1 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
                 <FormattedBibleText
                   text={notice.verseText}
+                  selectedVerses={new Set(pickedVerses.keys())}
+                  onToggleVerse={togglePickedVerse}
                 />
               </div>
               <p className="text-right text-[#4A6B57] font-bold text-xs sm:text-sm md:text-base">
                 {notice.verseTitle}
               </p>
+
+              {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
+              {onSelectVerseForMeditation && (
+                <div className="mt-4 pt-3 border-t border-[#E3E9E2] flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-xs text-[#6F8377] font-medium">
+                    {pickedVerses.size > 0
+                      ? `${pickedVerses.size}개 구절을 골랐어요`
+                      : "마음에 닿은 구절을 눌러보세요"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {pickedVerses.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPickedVerses(new Map())}
+                        className="text-xs font-bold text-[#6F8377] hover:text-[#0C3B2E] cursor-pointer"
+                      >
+                        선택 해제
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const picked = buildPickedText();
+                        const ref =
+                          pickedVerses.size > 0
+                            ? `${notice.verseTitle.replace(/\s*\d+장$/, "")} ${[...pickedVerses.keys()]
+                                .sort((a, b) => Number(a) - Number(b))
+                                .join(",")}절`
+                            : notice.verseTitle;
+                        onSelectVerseForMeditation(ref, picked || notice.verseText.slice(0, 200));
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap"
+                    >
+                      <Send size={13} />
+                      {pickedVerses.size > 0
+                        ? `고른 ${pickedVerses.size}구절로 묵상 쓰기`
+                        : "이 말씀으로 묵상 쓰기"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
 

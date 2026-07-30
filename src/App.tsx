@@ -20,6 +20,13 @@ interface UserProfile {
 
 type TabType = 'notice' | 'feed' | 'gratitude' | 'bible' | 'my' | 'qna' | 'settings';
 
+/**
+ * 성경 Q&A 탭 노출 여부.
+ * 지금은 잠시 숨겨둔 상태 — 다시 열려면 true 로만 바꾸면 된다.
+ * (기능·코드는 그대로 살아 있음)
+ */
+const SHOW_QNA_TAB = false;
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem("bible_med_user");
@@ -37,6 +44,11 @@ export default function App() {
       fetchAllUsers();
     }
   }, [currentUser]);
+
+  // Q&A 를 숨긴 상태에서 이전 세션의 활성 탭이 qna 로 남아 빈 화면이 되는 것 방지
+  useEffect(() => {
+    if (!SHOW_QNA_TAB && activeTab === 'qna') setActiveTab('notice');
+  }, [activeTab]);
 
   const fetchAllUsers = async () => {
     try {
@@ -141,7 +153,7 @@ export default function App() {
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-1 sm:px-4 py-2 sm:py-6">
         {/* PC Desktop Tabs Grid */}
-        <div className="hidden md:grid grid-cols-7 gap-1.5 border-b border-[#E3E9E2] bg-[#F5F5F5] p-1 rounded-3xl">
+        <div className={`hidden md:grid ${SHOW_QNA_TAB ? "grid-cols-7" : "grid-cols-6"} gap-1.5 border-b border-[#E3E9E2] bg-[#F5F5F5] p-1 rounded-3xl`}>
           <button
             onClick={() => setActiveTab('notice')}
             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
@@ -187,15 +199,17 @@ export default function App() {
             <Calendar size={15} />
             나의 기록
           </button>
-          <button
-            onClick={() => setActiveTab('qna')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'qna' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <HelpCircle size={15} />
-            성경 Q&A
-          </button>
+          {SHOW_QNA_TAB && (
+            <button
+              onClick={() => setActiveTab('qna')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
+                activeTab === 'qna' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
+              }`}
+            >
+              <HelpCircle size={15} />
+              성경 Q&A
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('settings')}
             className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
@@ -221,7 +235,8 @@ export default function App() {
                 <DailyNotice 
                   currentUser={currentUser} 
                   allUsers={allUsers} 
-                  onVerseSelect={(verse) => handleSelectVerseForMeditation(verse, "")} 
+                  onVerseSelect={handleVerseFromNotice}
+                  onSelectVerseForMeditation={handleSelectVerseForMeditation} 
                 />
               </motion.div>
             )}
@@ -283,7 +298,7 @@ export default function App() {
               </motion.div>
             )}
 
-            {activeTab === 'qna' && (
+            {SHOW_QNA_TAB && activeTab === 'qna' && (
               <motion.div
                 key="qna-tab"
                 initial={{ opacity: 0, y: 15 }}
@@ -381,18 +396,20 @@ export default function App() {
           <span className="text-2xs font-bold mt-0.5">나의기록</span>
         </button>
 
-        <button
-          onClick={() => {
-            setActiveTab('qna');
-            setPrefilledVerse(null);
-          }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'qna' ? "text-[#0C3B2E] font-extrabold" : "text-[#6F8377]"
-          }`}
-        >
-          <HelpCircle size={17} className={activeTab === 'qna' ? "text-[#4A6B57]" : ""} />
-          <span className="text-2xs font-bold mt-0.5">성경Q&A</span>
-        </button>
+        {SHOW_QNA_TAB && (
+          <button
+            onClick={() => {
+              setActiveTab('qna');
+              setPrefilledVerse(null);
+            }}
+            className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
+              activeTab === 'qna' ? "text-[#0C3B2E] font-extrabold" : "text-[#6F8377]"
+            }`}
+          >
+            <HelpCircle size={17} className={activeTab === 'qna' ? "text-[#4A6B57]" : ""} />
+            <span className="text-2xs font-bold mt-0.5">성경Q&A</span>
+          </button>
+        )}
 
         <button
           onClick={() => {
