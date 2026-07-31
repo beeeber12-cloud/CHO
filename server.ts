@@ -1895,7 +1895,9 @@ JSON format:
       userId,
       userName,
       isAnonymous: !!isAnonymous,
-      date: date || new Date().toISOString().split("T")[0],
+      // 묵상과 마찬가지로 한국 날짜로 기록한다.
+      // (UTC 로 잡으면 새벽 0~9시에 쓴 글이 전날 것이 되어 월 진행률에서 빠진다)
+      date: date || getKSTDateString(),
       content: content.trim(),
       likes: [],
       comments: [],

@@ -349,6 +349,15 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
   const monthMeditations = meditations.filter((m) => inThisMonth(m.date)).length;
   const monthGratitudes = gratitudes.filter((g) => inThisMonth(g.date)).length;
 
+  // 달이 바뀌면 진행률이 0부터 다시 시작한다. 기록이 사라진 걸로 보이지 않도록
+  // 지난달 결과를 한 줄로 같이 보여준다.
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthPrefix = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`;
+  const inPrevMonth = (d?: string) => !!d && d.startsWith(prevMonthPrefix);
+  const prevMonthMeditations = meditations.filter((m) => inPrevMonth(m.date)).length;
+  const prevMonthGratitudes = gratitudes.filter((g) => inPrevMonth(g.date)).length;
+  const hasPrevMonth = prevMonthMeditations + prevMonthGratitudes > 0;
+
   const medTarget = (goal?.weeklyMeditations ?? 3) * WEEKS_PER_MONTH;
   const gratTarget = (goal?.weeklyGratitudes ?? 3) * WEEKS_PER_MONTH;
 
@@ -494,6 +503,13 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                 />
               </div>
             </div>
+
+            {/* 지난달 결과 — 달이 막 바뀌어 0으로 보일 때 기록이 남아 있음을 알려준다 */}
+            {hasPrevMonth && (
+              <p className="text-2xs text-[#D2DDD3] font-semibold pt-0.5">
+                지난달({prevMonthDate.getMonth() + 1}월)에는 묵상 {prevMonthMeditations}회 · 감사·칭찬 {prevMonthGratitudes}회 나누셨어요
+              </p>
+            )}
           </div>
         </div>
       </div>

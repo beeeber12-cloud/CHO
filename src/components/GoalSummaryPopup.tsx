@@ -20,6 +20,8 @@ interface Row {
   done: number;
   target: number;
   unit: string;
+  /** 달이 막 바뀌어 0으로 보일 때 붙이는 지난달 결과 한 줄 */
+  note?: string;
 }
 
 export default function GoalSummaryPopup({ currentUser }: Props) {
@@ -53,13 +55,22 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
         const monthMed = meds.filter((m) => mine(m.userId) && thisMonth(m.date)).length;
         const monthGrat = grats.filter((g) => mine(g.userId) && thisMonth(g.date)).length;
 
+        // 매월 1일에 0부터 다시 시작하므로, 지난달 결과를 함께 알려준다.
+        const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const prevPrefix = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+        const prevMonth = (d?: string) => !!d && d.startsWith(prevPrefix);
+        const prevTotal =
+          meds.filter((m) => mine(m.userId) && prevMonth(m.date)).length +
+          grats.filter((g) => mine(g.userId) && prevMonth(g.date)).length;
+
         const next: Row[] = [
           {
             label: "이번 달 나눔",
             done: monthMed + monthGrat,
             target:
               ((goal?.weeklyMeditations ?? 3) + (goal?.weeklyGratitudes ?? 3)) * WEEKS_PER_MONTH,
-            unit: "회"
+            unit: "회",
+            note: prevTotal > 0 ? `지난달(${prevDate.getMonth() + 1}월)에는 ${prevTotal}회 나누셨어요` : undefined
           },
           {
             label: "성경 통독",
@@ -137,6 +148,9 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
                         style={{ width: `${Math.max(2, p)}%` }}
                       />
                     </div>
+                    {r.note && (
+                      <p className="text-2xs text-[#6F8377] font-semibold mt-1">{r.note}</p>
+                    )}
                   </div>
                 );
               })}
