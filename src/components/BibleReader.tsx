@@ -341,6 +341,21 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
+  // 이전/다음 장 — 책의 처음·끝에서는 앞뒤 권으로 이어진다
+  const bookIndex = BIBLE_BOOKS.findIndex((b) => b.id === selectedBook.id);
+  const prevTarget =
+    selectedChapter > 1
+      ? { book: selectedBook, chapter: selectedChapter - 1, isNewBook: false }
+      : bookIndex > 0
+      ? { book: BIBLE_BOOKS[bookIndex - 1], chapter: BIBLE_BOOKS[bookIndex - 1].chapters, isNewBook: true }
+      : null;
+  const nextTarget =
+    selectedChapter < selectedBook.chapters
+      ? { book: selectedBook, chapter: selectedChapter + 1, isNewBook: false }
+      : bookIndex >= 0 && bookIndex < BIBLE_BOOKS.length - 1
+      ? { book: BIBLE_BOOKS[bookIndex + 1], chapter: 1, isNewBook: true }
+      : null;
+
   // Calculate current chapter key
   const currentChapterKey = `${selectedBook.name} ${selectedChapter}장`;
   const isCurrentChapterCompleted = userProgress?.completedChapters?.includes(currentChapterKey) || false;
@@ -638,28 +653,32 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-[#E3E9E2]">
                 {/* Chapter Navigation Previous / Next */}
                 <div className="flex gap-2">
-                  {selectedChapter > 1 && (
+                  {prevTarget && (
                     <button
                       type="button"
                       onClick={() => {
                         setHighlightVerse(null);
-                        handleSelectBookChapter(selectedBook, selectedChapter - 1);
+                        handleSelectBookChapter(prevTarget.book, prevTarget.chapter);
                       }}
                       className="px-3 py-1.5 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#0C3B2E] font-bold text-xs rounded-3xl transition cursor-pointer whitespace-nowrap"
                     >
-                      ← 이전 장 ({selectedChapter - 1}장)
+                      {prevTarget.isNewBook
+                        ? `← 이전 권 (${prevTarget.book.name} ${prevTarget.chapter}장)`
+                        : `← 이전 장 (${prevTarget.chapter}장)`}
                     </button>
                   )}
-                  {selectedChapter < selectedBook.chapters && (
+                  {nextTarget && (
                     <button
                       type="button"
                       onClick={() => {
                         setHighlightVerse(null);
-                        handleSelectBookChapter(selectedBook, selectedChapter + 1);
+                        handleSelectBookChapter(nextTarget.book, nextTarget.chapter);
                       }}
                       className="px-3 py-1.5 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold text-xs rounded-3xl transition cursor-pointer whitespace-nowrap"
                     >
-                      다음 장 ({selectedChapter + 1}장) →
+                      {nextTarget.isNewBook
+                        ? `다음 권 (${nextTarget.book.name} ${nextTarget.chapter}장) →`
+                        : `다음 장 (${nextTarget.chapter}장) →`}
                     </button>
                   )}
                 </div>

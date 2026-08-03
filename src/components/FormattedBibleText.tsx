@@ -91,21 +91,22 @@ export default function FormattedBibleText({
                 : ""
             }`}
           >
-            <p
-              className="text-sm sm:text-base md:text-lg leading-[1.5] text-[#333333] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
-              style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
-            >
-              {v.verseNum && (
-                <span
-                  className={`font-sans font-normal text-xs sm:text-sm mr-2 inline-block select-none ${
-                    isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
-                  }`}
-                >
-                  {v.verseNum}
-                </span>
-              )}
-              {v.verseBody}
-            </p>
+            {/* 절 번호는 왼쪽 칸에 두고, 줄이 넘어가도 본문이 번호 아래로 내려오지 않게 한다 */}
+            <div className="flex gap-2">
+              <span
+                className={`font-sans font-normal text-xs sm:text-sm w-5 sm:w-6 shrink-0 text-right pt-[3px] select-none ${
+                  isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
+                }`}
+              >
+                {v.verseNum}
+              </span>
+              <p
+                className="flex-1 min-w-0 text-sm sm:text-base md:text-lg leading-[1.5] text-[#333333] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
+                style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
+              >
+                {v.verseBody}
+              </p>
+            </div>
           </div>
         );
       })}

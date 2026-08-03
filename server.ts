@@ -6,7 +6,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import webpush from "web-push";
 import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType } from "./src/types";
-import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText } from "./server/bibleData.js";
+import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, BIBLE_BOOKS } from "./server/bibleData.js";
 import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
 
 dotenv.config();
@@ -622,10 +622,42 @@ async function generateQnaAnswer(question: string): Promise<string> {
   );
 }
 
+/**
+ * 통독 순서에서 그 다음 장을 돌려준다.
+ * 책의 마지막 장이면 다음 권 1장으로 넘어가고, 요한계시록 끝은 창세기로 돌아간다.
+ */
+function getNextChapterInOrder(book: string, chapter: number): { book: string; chapter: number } {
+  const idx = BIBLE_BOOKS.findIndex(b => b.name === book);
+  if (idx === -1) return { book, chapter: chapter + 1 }; // 목록에 없는 책이면 기존 방식 유지
+  if (chapter < BIBLE_BOOKS[idx].totalChapters) return { book, chapter: chapter + 1 };
+  const next = BIBLE_BOOKS[(idx + 1) % BIBLE_BOOKS.length];
+  return { book: next.name, chapter: 1 };
+}
+
+/**
+ * 저장된 진도가 그 책에 없는 장(예: 5장까지뿐인 요한1서의 9장)을 가리키면
+ * 다음 권 1장으로 바로잡는다. 없는 장을 계속 공지하던 문제를 막는다.
+ */
+function normalizePlanPosition(book: string, chapter: number): { book: string; chapter: number } {
+  const idx = BIBLE_BOOKS.findIndex(b => b.name === book);
+  if (idx === -1) return { book, chapter: Math.max(1, chapter) };
+  if (chapter < 1) return { book, chapter: 1 };
+  if (chapter <= BIBLE_BOOKS[idx].totalChapters) return { book, chapter };
+  const next = BIBLE_BOOKS[(idx + 1) % BIBLE_BOOKS.length];
+  return { book: next.name, chapter: 1 };
+}
+
 async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null> {
   if (!db.biblePlan || !db.biblePlan.active) return null;
-  
-  const { book, currentChapter } = db.biblePlan;
+
+  const position = normalizePlanPosition(db.biblePlan.book, db.biblePlan.currentChapter);
+  if (position.book !== db.biblePlan.book || position.chapter !== db.biblePlan.currentChapter) {
+    console.log(
+      `[성경 플래너] 없는 장이라 위치를 바로잡습니다: ${db.biblePlan.book} ${db.biblePlan.currentChapter}장 -> ${position.book} ${position.chapter}장`
+    );
+  }
+  const book = position.book;
+  const currentChapter = position.chapter;
   console.log(`Auto-posting next Bible chapter: ${book} ${currentChapter}장 on ${todayStr}`);
 
   let verseTitle = `${book} ${currentChapter}장`;
@@ -683,9 +715,14 @@ async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null
   // Prepend to notices
   db.notices.unshift(newNotice);
   
-  // Update Bible plan
-  db.biblePlan.currentChapter = currentChapter + 1;
+  // Update Bible plan — 마지막 장이면 다음 권 1장으로 이어진다
+  const next = getNextChapterInOrder(book, currentChapter);
+  db.biblePlan.book = next.book;
+  db.biblePlan.currentChapter = next.chapter;
   db.biblePlan.lastUpdatedDate = todayStr;
+  if (next.book !== book) {
+    console.log(`[성경 플래너] ${book} 통독을 마치고 ${next.book} 로 넘어갑니다.`);
+  }
   
   saveDb(db);
   return newNotice;
@@ -950,9 +987,12 @@ async function startServer() {
       return res.status(400).json({ error: "성경 책 이름을 지정해주세요 (예: 요한복음)." });
     }
 
+    // 그 책에 없는 장을 넣으면 다음 권으로 넘겨 잡아준다 (없는 장이 공지되는 것 방지)
+    const fixed = normalizePlanPosition(book.trim(), Number(currentChapter) || 1);
+
     db.biblePlan = {
-      book: book.trim(),
-      currentChapter: Number(currentChapter) || 1,
+      book: fixed.book,
+      currentChapter: fixed.chapter,
       active: !!active,
       lastUpdatedDate: db.biblePlan?.lastUpdatedDate
     };
