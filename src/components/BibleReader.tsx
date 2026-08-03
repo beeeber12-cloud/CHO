@@ -556,7 +556,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             className="space-y-4"
           >
             {/* Main Chapter Content Card */}
-            <div className="bg-white rounded-3xl sm:rounded-[32px] p-4 sm:p-6 shadow-sm space-y-2.5 sm:space-y-4">
+            <div className="bg-white rounded-3xl sm:rounded-[32px] px-2.5 py-4 sm:p-6 shadow-sm space-y-2.5 sm:space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-[#E3E9E2] pb-3">
                 <div className="w-full sm:w-auto">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">
@@ -607,7 +607,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               {/* Scripture Verse Text Container - Compact padding for maximum mobile reading width */}
               <div
                 ref={verseBoxRef}
-                className="scripture-font bg-white p-3 sm:p-6 rounded-3xl sm:rounded-3xl max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
+                className="scripture-font bg-white py-3 sm:p-6 rounded-3xl sm:rounded-3xl max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
               >
                 {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
                   <>

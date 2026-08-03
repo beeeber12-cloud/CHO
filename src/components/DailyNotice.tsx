@@ -244,7 +244,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     .join(", ") || "";
 
   return (
-    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 overflow-hidden">
+    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm px-2.5 py-3.5 sm:p-6 overflow-hidden">
       <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3 mb-3.5">
         <div className="flex items-center gap-2">
           <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
@@ -463,8 +463,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             animate={{ opacity: 1 }}
             className="space-y-3 sm:space-y-4"
           >
-            {/* 말씀 카드 — 별도 내부 박스 없이 이 카드 안에 본문을 바로 싣는다 */}
-            <div className="scripture-font bg-white rounded-3xl sm:rounded-[32px] p-3.5 sm:p-6 md:p-8 shadow-sm">
+            {/* 말씀 카드 — 바깥 카드와 같은 흰색이라, 모바일에서는 좌우 여백을 없애
+                본문이 화면을 최대한 넓게 쓰도록 한다 (겹쳐 있던 안쪽 여백 제거) */}
+            <div className="scripture-font bg-white rounded-3xl sm:rounded-[32px] py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
               <div className="flex justify-between items-center gap-2 mb-3">
                 <span className="text-2xs sm:text-xs font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
                   {notice.date}
