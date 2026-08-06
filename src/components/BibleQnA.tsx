@@ -3,6 +3,7 @@ import { User, BibleQA } from "../types";
 import { HelpCircle, Sparkles, MessageSquare, Heart, Send, Trash2, Search, BookOpen, Clock, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Markdown from "react-markdown";
+import { subscribeToDataChanges } from "../lib/revision";
 
 interface BibleQnAProps {
   currentUser: Omit<User, 'pin' | 'createdAt'>;
@@ -42,15 +43,13 @@ export default function BibleQnA({ currentUser }: BibleQnAProps) {
   useEffect(() => {
     fetchQnAList(true);
 
-    const intervalId = setInterval(() => {
-      fetchQnAList(false);
-    }, 4000);
+    const unsubscribe = subscribeToDataChanges(() => fetchQnAList(false));
 
     const handleFocus = () => fetchQnAList(false);
     window.addEventListener("focus", handleFocus);
 
     return () => {
-      clearInterval(intervalId);
+      unsubscribe();
       window.removeEventListener("focus", handleFocus);
     };
   }, []);

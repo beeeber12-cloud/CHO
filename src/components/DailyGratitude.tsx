@@ -3,6 +3,7 @@ import { User, GratitudeNote } from "../types";
 import { Heart, MessageSquare, Send, Trash2, Sparkles, UserCheck, EyeOff, Calendar, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactionBar from "./ReactionBar";
+import { subscribeToDataChanges } from "../lib/revision";
 
 interface DailyGratitudeProps {
   currentUser: Omit<User, 'pin' | 'createdAt'>;
@@ -37,16 +38,14 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
   useEffect(() => {
     fetchGratitudes(true);
 
-    // 4-second polling for real-time live sync
-    const intervalId = setInterval(() => {
-      fetchGratitudes(false);
-    }, 4000);
+    // 바뀐 게 있을 때만 다시 받아온다 (전에는 4초마다 목록 전체를 내려받았다)
+    const unsubscribe = subscribeToDataChanges(() => fetchGratitudes(false));
 
     const handleFocus = () => fetchGratitudes(false);
     window.addEventListener("focus", handleFocus);
 
     return () => {
-      clearInterval(intervalId);
+      unsubscribe();
       window.removeEventListener("focus", handleFocus);
     };
   }, []);

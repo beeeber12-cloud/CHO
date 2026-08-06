@@ -298,6 +298,8 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
 
       dbCache = mergedDb;
       db = mergedDb;
+      // 원격에서 받아온 변경도 클라이언트가 알아챌 수 있게 번호를 올린다
+      dataRevision = Date.now();
       try {
         fs.writeFileSync(DB_FILE, JSON.stringify(mergedDb, null, 2), "utf-8");
       } catch (err) {
@@ -387,9 +389,17 @@ process.on("SIGTERM", () => { gracefulFlush("SIGTERM"); });
 process.on("SIGINT", () => { gracefulFlush("SIGINT"); });
 
 // Helper to save database atomically and to Firestore
+/**
+ * 데이터가 바뀔 때마다 올라가는 번호.
+ * 클라이언트는 4초마다 이 번호만 확인하고, 바뀐 경우에만 목록을 다시 받는다.
+ * (전에는 4초마다 전체 목록을 통째로 내려받았다)
+ */
+let dataRevision = Date.now();
+
 function saveDb(dbData: DatabaseSchema) {
   db = dbData;
   dbCache = dbData;
+  dataRevision = Date.now();
   saveQueue = saveQueue.then(() => {
     return new Promise<void>((resolve) => {
       try {
@@ -983,6 +993,12 @@ async function startServer() {
     
     saveDb(db);
     res.json({ success: true, message: "계정이 성공적으로 삭제되었습니다." });
+  });
+
+  // 실시간 갱신용 초경량 확인 엔드포인트 (응답 수십 바이트).
+  // 목록 전체를 4초마다 받는 대신, 이 번호가 바뀌었을 때만 받아 가면 된다.
+  app.get("/api/revision", (req: Request, res: Response) => {
+    res.json({ revision: dataRevision });
   });
 
   // --- Daily Notices / Verses APIs ---

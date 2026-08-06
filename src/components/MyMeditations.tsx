@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Meditation, GratitudeNote, SharingGoal, SavedVerse } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Loader, HeartHandshake, Sparkles, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { subscribeToDataChanges } from "../lib/revision";
 
 interface MyMeditationsProps {
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
@@ -113,14 +114,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     fetchMyRecords(true);
     fetchSavedVerses(); // 버튼의 개수 배지를 위해 진입 시 한 번 불러온다
 
-    // 묵상나눔·감사칭찬 탭과 같은 주기로 갱신한다.
-    // (다른 탭이나 다른 기기에서 글을 지우면 여기에도 바로 반영되도록)
-    const intervalId = setInterval(() => fetchMyRecords(false), 4000);
+    // 묵상나눔·감사칭찬에서 글이 지워지면 여기에도 바로 반영된다.
+    // 바뀐 게 있을 때만 다시 받아온다.
+    const unsubscribe = subscribeToDataChanges(() => fetchMyRecords(false));
     const handleFocus = () => fetchMyRecords(false);
     window.addEventListener("focus", handleFocus);
 
     return () => {
-      clearInterval(intervalId);
+      unsubscribe();
       window.removeEventListener("focus", handleFocus);
     };
   }, []);

@@ -4,6 +4,7 @@ import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Cloc
 import { motion, AnimatePresence } from "motion/react";
 import { enablePush, isPushEnabled } from "../lib/push";
 import ReactionBar from "./ReactionBar";
+import { subscribeToDataChanges } from "../lib/revision";
 
 
 interface MeditationFeedProps {
@@ -67,11 +68,11 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
     fetchMeditations(true);
     fetchSokGroups();
 
-    // 4-second real-time polling interval
-    const intervalId = setInterval(() => {
+    // 바뀐 게 있을 때만 다시 받아온다 (전에는 4초마다 목록 전체를 내려받았다)
+    const unsubscribe = subscribeToDataChanges(() => {
       fetchMeditations(false);
       fetchSokGroups();
-    }, 4000);
+    });
 
     // Window focus instant sync listener
     const handleFocus = () => {
@@ -81,7 +82,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
     window.addEventListener("focus", handleFocus);
 
     return () => {
-      clearInterval(intervalId);
+      unsubscribe();
       window.removeEventListener("focus", handleFocus);
     };
   }, []);
