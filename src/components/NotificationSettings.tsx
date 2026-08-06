@@ -777,6 +777,9 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           </div>
         )}
       </div>
+
+      {/* 앱 버전 — 휴대폰에 옛 화면이 남아 있는지 확인할 때 쓴다 */}
+      <p className="text-2xs text-[#A8B3A9] text-center pt-2">앱 버전 {__BUILD_TIME__}</p>
     </div>
   );
 }
