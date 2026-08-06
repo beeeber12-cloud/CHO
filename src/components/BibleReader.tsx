@@ -609,7 +609,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   본문이 화면을 가장 넓게 쓰도록 한다 (제목·탭 등 다른 요소 여백은 그대로) */}
               <div
                 ref={verseBoxRef}
-                className="scripture-font bg-white shadow-none sm:shadow-sm py-3 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
+                className="scripture-font bg-white shadow-none sm:shadow-sm -mx-1.5 px-1.5 py-3 sm:mx-0 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
                 {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
                   <>

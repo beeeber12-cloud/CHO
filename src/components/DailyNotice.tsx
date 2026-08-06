@@ -481,7 +481,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 )}
               </div>
 
-              <div className="max-h-72 md:max-h-96 overflow-y-auto pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="max-h-72 md:max-h-96 overflow-y-auto overflow-x-hidden -mx-1.5 px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
                 <FormattedBibleText
                   text={notice.verseText}
                   selectedVerses={new Set(pickedVerses.keys())}

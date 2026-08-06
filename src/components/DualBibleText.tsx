@@ -85,7 +85,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
                 NIV 도 같은 칸에 맞춰 한글 본문과 왼쪽 선이 일치한다. */}
             <div className="flex gap-1.5">
               <span
-                className={`font-sans font-normal text-xs sm:text-sm w-[18px] sm:w-6 shrink-0 text-right pt-[3px] select-none ${
+                className={`font-sans font-normal text-xs sm:text-sm w-[22px] sm:w-6 shrink-0 text-left pt-[3px] select-none ${
                   isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
                 }`}
               >
