@@ -1,6 +1,6 @@
 // Service Worker for Bible Meditation Share PWA
 // 아이콘/매니페스트 갱신 시 버전을 올리면 이전 캐시가 자동 삭제됩니다.
-const CACHE_NAME = "bible-meditation-v5";
+const CACHE_NAME = "bible-meditation-v6";
 // 성경 본문 전용 캐시 — 내용이 변하지 않으므로 버전을 올려도 지우지 않는다
 const BIBLE_CACHE = "bible-text-v1";
 const ASSETS = [
@@ -107,6 +107,31 @@ self.addEventListener("fetch", (e) => {
 
   // 그 밖의 API 는 캐시하지 않는다 (묵상·댓글은 항상 최신이어야 한다)
   if (e.request.url.includes("/api/")) {
+    return;
+  }
+
+  // 화면 문서(HTML)는 항상 새로 받아온다.
+  // 예전에는 저장해 둔 HTML 을 먼저 보여줘서, 앱을 새로 배포해도
+  // 옛 화면이 계속 보이고 여러 번 껐다 켜야 반영되는 문제가 있었다.
+  // (HTML 이 옛것이면 그 안에 적힌 옛 파일들을 계속 불러오게 된다)
+  const isDocument =
+    e.request.mode === "navigate" ||
+    (e.request.destination === "document") ||
+    e.request.headers.get("accept")?.includes("text/html");
+
+  if (isDocument) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+          }
+          return res;
+        })
+        // 오프라인이면 저장해 둔 화면으로 대신한다
+        .catch(() => caches.match(e.request).then((hit) => hit || caches.match("/index.html")))
+    );
     return;
   }
 

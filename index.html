@@ -25,8 +25,21 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+            .then(reg => {
+              console.log('Service Worker registered successfully:', reg.scope);
+              // 앱을 열 때마다 새 버전이 있는지 확인한다
+              reg.update().catch(() => {});
+            })
             .catch(err => console.error('Service Worker registration failed:', err));
+        });
+
+        // 새 버전이 적용되면 화면을 한 번 자동으로 새로 고친다.
+        // 어르신들이 '껐다 켜기'를 여러 번 하지 않아도 업데이트가 바로 보이게 한다.
+        var __reloadedForUpdate = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (__reloadedForUpdate) return;   // 새로고침이 반복되지 않도록
+          __reloadedForUpdate = true;
+          window.location.reload();
         });
       }
     </script>
