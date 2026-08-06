@@ -467,7 +467,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 본문이 화면을 최대한 넓게 쓰도록 한다 (겹쳐 있던 안쪽 여백 제거) */}
             <div className="scripture-font bg-white rounded-none sm:rounded-[32px] py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
               <div className="flex justify-between items-center gap-2 mb-3">
-                <span className="text-xs sm:text-sm font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
+                <span className="pl-[10px] sm:pl-[16px] text-xs sm:text-sm font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
                   {notice.date}
                 </span>
                 {onVerseSelect && (
@@ -495,7 +495,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
               {onSelectVerseForMeditation && (
                 <div className="mt-4 pt-3 border-t border-[#E3E9E2] flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs text-[#6F8377] font-medium">
+                  <span className="pl-[10px] sm:pl-[16px] text-xs sm:text-sm text-[#6F8377] font-medium">
                     {pickedVerses.size > 0
                       ? `${pickedVerses.size}개 구절을 골랐어요`
                       : "마음에 닿은 구절을 눌러보세요"}
