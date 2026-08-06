@@ -296,6 +296,7 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
         mergedDb.vapidKeys = keptVapid;
       }
 
+      stripStorableVerseText(mergedDb);
       dbCache = mergedDb;
       db = mergedDb;
       // 원격에서 받아온 변경도 클라이언트가 알아챌 수 있게 번호를 올린다
@@ -396,7 +397,34 @@ process.on("SIGINT", () => { gracefulFlush("SIGINT"); });
  */
 let dataRevision = Date.now();
 
+// 구절명으로 본문을 되살릴 수 있는지 한 번만 확인하고 기억해 둔다
+const rebuildableCache = new Map<string, boolean>();
+function isRebuildable(verseTitle: string): boolean {
+  const key = verseTitle || "";
+  const hit = rebuildableCache.get(key);
+  if (hit !== undefined) return hit;
+  const ok = canRebuildVerseText(key);
+  rebuildableCache.set(key, ok);
+  return ok;
+}
+
+/**
+ * 저장하기 직전에, 되살릴 수 있는 성경 본문은 비워서 내보낸다.
+ * 저장 경로에서 한 번에 처리하므로 어떤 경로로 데이터가 들어왔든
+ * 파일과 Firestore 에는 성경 본문이 쌓이지 않는다.
+ * (읽을 때 withVerseText 가 다시 채우므로 화면에는 영향이 없다)
+ */
+function stripStorableVerseText(dbData: DatabaseSchema) {
+  if (!dbData?.notices) return;
+  for (const n of dbData.notices) {
+    if (n.verseText && n.verseText.trim() && n.createdBy === "성경 플래너(자동)" && isRebuildable(n.verseTitle)) {
+      n.verseText = "";
+    }
+  }
+}
+
 function saveDb(dbData: DatabaseSchema) {
+  stripStorableVerseText(dbData);
   db = dbData;
   dbCache = dbData;
   dataRevision = Date.now();
