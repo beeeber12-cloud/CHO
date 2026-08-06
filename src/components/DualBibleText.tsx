@@ -68,7 +68,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             key={idx}
             data-verse={v.num}
             onClick={canPick ? () => onToggleVerse!(v.num!, v.body) : undefined}
-            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl px-1.5 py-[7px] ${
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-1.5 px-1.5 py-[7px] ${
               canPick ? "cursor-pointer" : ""
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시

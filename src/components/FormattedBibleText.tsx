@@ -78,7 +78,7 @@ export default function FormattedBibleText({
             key={idx}
             data-verse={v.verseNum}
             onClick={canPick ? () => onToggleVerse!(v.verseNum!, v.verseBody) : undefined}
-            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl px-1.5 py-[7px] ${
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-1.5 px-1.5 py-[7px] ${
               canPick ? "cursor-pointer" : ""
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시

@@ -244,7 +244,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     .join(", ") || "";
 
   return (
-    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm px-2.5 py-3.5 sm:p-6 overflow-hidden">
+    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm px-1.5 py-3.5 sm:p-6 overflow-hidden">
       <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3 mb-3.5">
         <div className="flex items-center gap-2">
           <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
@@ -465,15 +465,15 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           >
             {/* 말씀 카드 — 바깥 카드와 같은 흰색이라, 모바일에서는 좌우 여백을 없애
                 본문이 화면을 최대한 넓게 쓰도록 한다 (겹쳐 있던 안쪽 여백 제거) */}
-            <div className="scripture-font bg-white rounded-none sm:rounded-[32px] -mx-2.5 sm:mx-0 py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
+            <div className="scripture-font bg-white rounded-none sm:rounded-[32px] py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
               <div className="flex justify-between items-center gap-2 mb-3">
-                <span className="text-2xs sm:text-xs font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
+                <span className="text-xs sm:text-sm font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
                   {notice.date}
                 </span>
                 {onVerseSelect && (
                   <button
                     onClick={() => onVerseSelect(notice.verseTitle)}
-                    className="flex items-center gap-1 text-2xs sm:text-xs text-[#0C3B2E] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-2.5 py-1 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1 text-xs sm:text-sm text-[#0C3B2E] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-2.5 py-1 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap shrink-0"
                   >
                     <BookOpen size={13} className="text-[#4A6B57]" />
                     <span>성경 읽기방에서 보기</span>
@@ -481,7 +481,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 )}
               </div>
 
-              <div className="max-h-72 md:max-h-96 overflow-y-auto pr-1 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="max-h-72 md:max-h-96 overflow-y-auto pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
                 <FormattedBibleText
                   text={notice.verseText}
                   selectedVerses={new Set(pickedVerses.keys())}
