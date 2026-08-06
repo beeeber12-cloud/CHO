@@ -1,6 +1,8 @@
 // Service Worker for Bible Meditation Share PWA
 // 아이콘/매니페스트 갱신 시 버전을 올리면 이전 캐시가 자동 삭제됩니다.
-const CACHE_NAME = "bible-meditation-v4";
+const CACHE_NAME = "bible-meditation-v5";
+// 성경 본문 전용 캐시 — 내용이 변하지 않으므로 버전을 올려도 지우지 않는다
+const BIBLE_CACHE = "bible-text-v1";
 const ASSETS = [
   "/",
   "/index.html",
@@ -25,7 +27,8 @@ self.addEventListener("activate", (e) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          // 성경 본문 캐시는 앱 버전이 올라가도 그대로 둔다 (다시 받을 이유가 없다)
+          if (key !== CACHE_NAME && key !== BIBLE_CACHE) {
             return caches.delete(key);
           }
         })
@@ -85,7 +88,24 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   
-  // Exclude API routes from SW caching to prevent stale DB reads
+  // 성경 본문은 절대 바뀌지 않으므로 따로 오래 보관한다.
+  // 한 번 읽은 장은 통신 없이 즉시 열리고, 비행기모드·지하철에서도 볼 수 있다.
+  if (e.request.url.includes("/api/bible/search")) {
+    e.respondWith(
+      caches.open(BIBLE_CACHE).then((cache) =>
+        cache.match(e.request).then((hit) => {
+          if (hit) return hit;
+          return fetch(e.request).then((res) => {
+            if (res && res.status === 200) cache.put(e.request, res.clone());
+            return res;
+          });
+        })
+      )
+    );
+    return;
+  }
+
+  // 그 밖의 API 는 캐시하지 않는다 (묵상·댓글은 항상 최신이어야 한다)
   if (e.request.url.includes("/api/")) {
     return;
   }

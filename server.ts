@@ -647,6 +647,63 @@ function normalizePlanPosition(book: string, chapter: number): { book: string; c
   return { book: next.name, chapter: 1 };
 }
 
+/**
+ * 공지는 구절명(예: "요한2서 1장")만 저장하고 성경 본문은 저장하지 않는다.
+ * 본문까지 DB 에 넣으면 공지 한 건마다 3~4KB 씩 쌓여 Firestore 문서(1MiB)가 결국 꽉 찬다.
+ * 성경 본문은 서버가 이미 갖고 있으므로, 내보낼 때 그때그때 채워 넣는다.
+ * → 클라이언트가 받는 모양은 이전과 완전히 같다.
+ */
+function withVerseText(n: Notice): Notice {
+  if (n.verseText && n.verseText.trim()) return n;
+  try {
+    const looked = parseAndGenerateBibleText(n.verseTitle);
+    if (looked?.text && looked.text.trim()) return { ...n, verseText: looked.text };
+  } catch (err) {
+    console.warn("[공지] 성경 본문 복원 실패:", n.verseTitle, err);
+  }
+  return n;
+}
+
+/** 구절명만으로 본문을 되살릴 수 있으면 저장할 필요가 없다 */
+function canRebuildVerseText(verseTitle: string): boolean {
+  try {
+    const looked = parseAndGenerateBibleText(verseTitle);
+    return !!(looked?.text && looked.text.trim().length > 20);
+  } catch {
+    return false;
+  }
+}
+
+/** 하루 뒤 날짜 (YYYY-MM-DD) */
+function nextDayStr(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().split("T")[0];
+}
+
+/**
+ * 내일 공지를 하루 앞서 만들어 둔다.
+ * 아침 6~8시에 사용자가 몰리는데, 그때 처음 연 사람이 공지 생성(AI 호출 포함)을
+ * 기다리게 되므로 전날 낮에 미리 만들어 부하를 분산한다.
+ */
+let preparingTomorrow = false;
+async function prepareTomorrowNotice(todayStr: string): Promise<void> {
+  if (preparingTomorrow) return;
+  if (!db.biblePlan?.active) return;
+
+  const tomorrow = nextDayStr(todayStr);
+  if (db.notices.some(n => n.date === tomorrow)) return; // 이미 준비됨
+  if (db.biblePlan.lastUpdatedDate === tomorrow) return;
+
+  preparingTomorrow = true;
+  try {
+    const made = await autoPostNextBibleChapter(tomorrow);
+    if (made) console.log(`[성경 플래너] 내일(${tomorrow}) 공지를 미리 준비했습니다: ${made.verseTitle}`);
+  } finally {
+    preparingTomorrow = false;
+  }
+}
+
 async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null> {
   if (!db.biblePlan || !db.biblePlan.active) return null;
 
@@ -669,17 +726,17 @@ async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null
 
   if (ai) {
     try {
-      const prompt = `사용자들을 위해 성경 말씀 한 장을 자동으로 공지하려 합니다.
-책: "${book}"
-장: ${currentChapter}장
+      // 성경 본문은 이미 갖고 있는 개역개정 원문을 쓴다.
+      // AI 에게 본문을 받으면 틀린 구절이 섞일 수 있으므로 묵상 가이드만 맡긴다.
+      const prompt = `성도들에게 오늘의 말씀 "${book} ${currentChapter}장"을 공지하려 합니다.
 
-이 책과 장에 대한 한국어 개역개정 성경 본문 전체(절을 하나도 생략하거나 요약하지 말고, 1절부터 그 장의 마지막 절까지 모든 절 번호와 본문)를 수록해 주세요.
-절대 중간에 '...' 또는 요약/축약하지 마시고 1절부터 마지막 절까지 모든 구절을 '1절 ... \n2절 ... \n ... \n마지막절 ...' 형태로 작성해야 합니다.
+이 장 전체에 대한 목회적 묵상 가이드를 한국어로 작성해 주세요.
+역사적 배경, 성도들을 향한 따뜻한 하루 적용 질문, 은혜의 권면을 담아 주세요.
+성경 본문 자체는 이미 준비되어 있으니 본문은 옮겨 적지 마세요.
 
 꼭 아래의 JSON 형식으로 답변해주십시오:
 {
-  "verseText": "1절부터 그 장의 마지막 절까지 절대 생략 없이 한 줄에 한 절씩 모든 구절 본문 작성",
-  "content": "이 장 전체의 깊이 있는 목회적 가이드, 역사적 배경, 그리고 성도들을 향한 따뜻한 하루 적용 질문과 은혜의 권면"
+  "content": "이 장 전체의 깊이 있는 목회적 가이드와 적용 질문"
 }`;
 
       const result = await ai.models.generateContent({
@@ -692,9 +749,6 @@ async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null
 
       if (result && result.text) {
         const parsed = JSON.parse(result.text.trim());
-        if (parsed.verseText && parsed.verseText.trim().length > 20 && !parsed.verseText.includes("불러오는 중")) {
-          verseText = parsed.verseText;
-        }
         if (parsed.content) content = parsed.content;
       }
     } catch (err) {
@@ -706,7 +760,8 @@ async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null
     id: "notice-" + Math.random().toString(36).substring(2, 11),
     date: todayStr,
     verseTitle,
-    verseText,
+    // 구절명만으로 본문을 되살릴 수 있으면 저장하지 않는다 (DB 가 매일 커지는 것을 막는다)
+    verseText: canRebuildVerseText(verseTitle) ? "" : verseText,
     content,
     createdBy: "성경 플래너(자동)",
     readBy: []
@@ -747,22 +802,17 @@ async function startServer() {
   // 원격 DB 를 읽은 뒤에 초기화해야 기존 VAPID 키를 그대로 이어받는다.
   initWebPush();
 
-  // Ensure no notice in database has corrupted or placeholder text
+  // 본문이 비어 있는 것은 이제 정상이다 (읽을 때 withVerseText 가 채운다).
+  // 옛 버전이 남긴 "불러오는 중" 같은 껍데기 본문만 비워서 정상 경로를 타게 한다.
   if (db.notices && db.notices.length > 0) {
     let sanitized = false;
     db.notices.forEach(n => {
-      if (!n.verseText || n.verseText.includes("불러오는 중")) {
-        const lookup = parseAndGenerateBibleText(n.verseTitle || "로마서 1장");
-        n.verseText = lookup.text;
-        if (lookup.explanation && (!n.content || n.content.includes("불러오는 중"))) {
-          n.content = `${n.verseTitle} 말씀입니다. ${lookup.explanation}\n\n💡 오늘의 묵상 가이드:\n${lookup.meditationGuide}`;
-        }
+      if (n.verseText && n.verseText.includes("불러오는 중")) {
+        n.verseText = "";
         sanitized = true;
       }
     });
-    if (sanitized) {
-      saveDb(db);
-    }
+    if (sanitized) saveDb(db);
   }
 
   let lastSyncTime = 0;
@@ -937,7 +987,7 @@ async function startServer() {
 
   // --- Daily Notices / Verses APIs ---
   app.get("/api/notices", (req: Request, res: Response) => {
-    res.json(db.notices);
+    res.json(db.notices.map(withVerseText));
   });
 
   app.get("/api/notices/today", async (req: Request, res: Response) => {
@@ -957,23 +1007,22 @@ async function startServer() {
     }
 
     if (!notice && db.notices.length > 0) {
-      // Fallback to the latest notice
-      notice = db.notices[0];
+      // 미리 만들어 둔 내일 공지가 오늘 먼저 보이지 않도록 오늘 이전 것 중에서 고른다
+      const past = db.notices.filter(n => n.date <= todayStr);
+      notice = (past.length > 0 ? past : db.notices)
+        .slice()
+        .sort((a, b) => b.date.localeCompare(a.date))[0];
     }
 
-    // Auto-upgrade stale or short placeholder verse text to complete chapter text
-    if (notice && (notice.verseText.includes("1 이 모든 일 후에") || notice.verseText.split("\n").length < 10)) {
-      const fullChapter = parseAndGenerateBibleText(notice.verseTitle);
-      if (fullChapter && fullChapter.text && fullChapter.text.length > notice.verseText.length) {
-        notice.verseText = fullChapter.text;
-        if (!notice.content || notice.content.includes("이 모든 일 후에")) {
-          notice.content = `${notice.verseTitle} 전체 말씀입니다. ${fullChapter.explanation}\n\n💡 오늘의 묵상 가이드:\n${fullChapter.meditationGuide}`;
-        }
-        saveDb(db);
-      }
-    }
+    // 성경 본문은 저장하지 않고 내보낼 때 채운다.
+    // (예전에는 짧은 본문을 발견하면 DB 에 덮어써 저장했는데, 그게 문서를 키우던 원인 중 하나였다)
+    res.json(notice ? withVerseText(notice) : null);
 
-    res.json(notice || null);
+    // 응답을 먼저 보낸 뒤, 내일 공지를 미리 만들어 둔다.
+    // 새벽에 제일 먼저 앱을 여신 분이 생성까지 기다리지 않도록 부담을 앞당겨 분산한다.
+    prepareTomorrowNotice(todayStr).catch((err) =>
+      console.warn("[성경 플래너] 내일 공지 미리 준비 실패:", err)
+    );
   });
 
   // --- Bible Plan Settings APIs ---
