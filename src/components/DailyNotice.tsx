@@ -465,7 +465,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           >
             {/* 말씀 카드 — 바깥 카드와 같은 흰색이라, 모바일에서는 좌우 여백을 없애
                 본문이 화면을 최대한 넓게 쓰도록 한다 (겹쳐 있던 안쪽 여백 제거) */}
-            <div className="scripture-font bg-white rounded-3xl sm:rounded-[32px] py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
+            <div className="scripture-font bg-white rounded-none sm:rounded-[32px] -mx-2.5 sm:mx-0 py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
               <div className="flex justify-between items-center gap-2 mb-3">
                 <span className="text-2xs sm:text-xs font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
                   {notice.date}

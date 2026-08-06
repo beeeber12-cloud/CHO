@@ -68,7 +68,7 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
             key={idx}
             data-verse={v.num}
             onClick={canPick ? () => onToggleVerse!(v.num!, v.body) : undefined}
-            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-2 px-2 py-[7px] ${
+            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl px-1.5 py-[7px] ${
               canPick ? "cursor-pointer" : ""
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시
@@ -83,9 +83,9 @@ export default function DualBibleText({ krvText, nivText = "", mode, className =
           >
             {/* 절 번호는 왼쪽 칸에 두고, 줄이 넘어가도 본문이 번호 아래로 내려오지 않게 한다.
                 NIV 도 같은 칸에 맞춰 한글 본문과 왼쪽 선이 일치한다. */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <span
-                className={`font-sans font-normal text-xs sm:text-sm w-5 sm:w-6 shrink-0 text-right pt-[3px] select-none ${
+                className={`font-sans font-normal text-xs sm:text-sm w-[18px] sm:w-6 shrink-0 text-right pt-[3px] select-none ${
                   isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
                 }`}
               >

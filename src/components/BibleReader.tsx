@@ -604,10 +604,12 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 ))}
               </div>
 
-              {/* Scripture Verse Text Container - Compact padding for maximum mobile reading width */}
+              {/* 말씀 본문 — 바깥 카드와 같은 흰색이므로 모바일에서는 그림자·모서리를 지워
+                  박스가 하나 더 있어 보이지 않게 하고, 카드의 좌우 여백만큼 밖으로 빼서
+                  본문이 화면을 가장 넓게 쓰도록 한다 (제목·탭 등 다른 요소 여백은 그대로) */}
               <div
                 ref={verseBoxRef}
-                className="scripture-font bg-white py-3 sm:p-6 rounded-3xl sm:rounded-3xl max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
+                className="scripture-font bg-white shadow-none sm:shadow-sm -mx-2.5 sm:mx-0 py-3 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200"
               >
                 {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
                   <>
