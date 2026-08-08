@@ -40,9 +40,6 @@ export default function BibleVersionPicker({ selected, onChange }: Props) {
           );
         })}
       </div>
-      <span className="text-2xs text-[#6F8377] font-semibold">
-        {comparing ? "두 개를 나란히 보는 중" : "두 개까지 골라 대조할 수 있어요"}
-      </span>
     </div>
   );
 }

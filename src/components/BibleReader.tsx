@@ -12,6 +12,8 @@ interface BibleReaderProps {
   currentUser?: { id: string; name: string; role: 'admin' | 'member' };
   onSelectVerseForMeditation?: (verseTitle: string, verseText: string) => void;
   initialQuery?: string;
+  /** 같은 구절을 다시 눌러도 열리도록 하는 번호 (오늘 말씀에서 넘어올 때 올라간다) */
+  queryNonce?: number;
 }
 
 interface BibleResult {
@@ -23,7 +25,7 @@ interface BibleResult {
   meditationGuide: string;
 }
 
-export default function BibleReader({ currentUser, onSelectVerseForMeditation, initialQuery = "" }: BibleReaderProps) {
+export default function BibleReader({ currentUser, onSelectVerseForMeditation, initialQuery = "", queryNonce = 0 }: BibleReaderProps) {
   // Navigation & Selector states
   const [selectedBook, setSelectedBook] = useState<BibleBookInfo>(BIBLE_BOOKS.find(b => b.name === "요한복음") || BIBLE_BOOKS[0]);
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
@@ -111,10 +113,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     if (initialQuery) {
       setQuery(initialQuery);
       handleSearchQuery(initialQuery);
+      setPendingScroll(true); // 넘어오자마자 본문이 보이도록 화면을 내려준다
     } else if (!userProgress?.lastReadBook) {
       handleSearchQuery("요한복음 1장");
     }
-  }, [initialQuery]);
+  }, [initialQuery, queryNonce]);
 
   // 본문이 로드되면 본문 영역으로 화면을 내리고, 선택한 절이 있으면 그 절 위치까지 맞춰준다.
   useEffect(() => {
@@ -186,6 +189,25 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
+  /**
+   * 불러온 본문에 맞춰 현재 위치(권·장)를 맞춘다.
+   * 이걸 해줘야 '이전 장 / 다음 장'이 지금 보고 있는 본문 기준으로 움직인다.
+   * (전에는 검색으로 본문을 열면 위치가 북마크에 머물러 엉뚱한 장으로 넘어갔다)
+   */
+  const syncSelectionFromReference = (reference?: string) => {
+    if (!reference) return;
+    // '요한1서'처럼 다른 책 이름을 포함할 수 있으니 가장 긴 이름부터 맞춰본다
+    const book = [...BIBLE_BOOKS]
+      .sort((a, b) => b.name.length - a.name.length)
+      .find((b) => reference.startsWith(b.name));
+    if (!book) return;
+    const m = reference.slice(book.name.length).match(/\d+/);
+    if (!m) return;
+    const chapter = Math.min(Math.max(1, Number(m[0])), book.chapters);
+    setSelectedBook(book);
+    setSelectedChapter(chapter);
+  };
+
   const handleSearchQuery = async (searchStr: string) => {
     if (!searchStr.trim()) return;
 
@@ -200,6 +222,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
       if (res.ok) {
         setResult(data);
+        syncSelectionFromReference(data.reference);
       } else {
         setError(data.error || "성경 본문을 불러오는데 실패했습니다.");
       }

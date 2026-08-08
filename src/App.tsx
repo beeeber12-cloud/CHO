@@ -39,6 +39,8 @@ export default function App() {
 
   // Prefilled Bible Verse state for writing meditation
   const [prefilledVerse, setPrefilledVerse] = useState<{ title: string; text: string } | null>(null);
+  // 성경통독에서 열어야 할 구절 (오늘 말씀에서 넘어올 때 사용)
+  const [bibleQuery, setBibleQuery] = useState<{ query: string; nonce: number }>({ query: "", nonce: 0 });
 
   useEffect(() => {
     if (currentUser) {
@@ -97,8 +99,10 @@ export default function App() {
   };
 
   const handleVerseFromNotice = (verseTitle: string) => {
-    // Navigate to Bible search and automatically lookup this verse
-    setPrefilledVerse(null); // Clear prefill
+    // 오늘 말씀의 그 장을 성경통독에서 바로 펼친다 (이어서 다음 장으로 넘길 수 있게).
+    // 같은 구절을 다시 눌러도 열리도록 번호를 함께 올린다.
+    setPrefilledVerse(null);
+    setBibleQuery((prev) => ({ query: verseTitle, nonce: prev.nonce + 1 }));
     setActiveTab('bible');
   };
 
@@ -281,9 +285,11 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
               >
-                <BibleReader 
+                <BibleReader
                   currentUser={currentUser}
                   onSelectVerseForMeditation={handleSelectVerseForMeditation}
+                  initialQuery={bibleQuery.query}
+                  queryNonce={bibleQuery.nonce}
                 />
               </motion.div>
             )}

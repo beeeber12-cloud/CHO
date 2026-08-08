@@ -48,8 +48,6 @@ function parseVerses(raw: string): Verse[] {
 
 const colorOf = (key: BibleVersionKey) =>
   BIBLE_VERSIONS.find((v) => v.key === key)?.color || "#333333";
-const labelOf = (key: BibleVersionKey) =>
-  BIBLE_VERSIONS.find((v) => v.key === key)?.label || "";
 
 export default function DualBibleText({
   panes,
@@ -116,15 +114,13 @@ export default function DualBibleText({
                   {v.body}
                 </p>
 
-                {/* 두 번째 번역본 — 대조할 때만 아래에 붙는다 */}
+                {/* 두 번째 번역본 — 대조할 때만 아래에 붙는다.
+                    어느 번역본인지는 위쪽 선택 칩으로 알 수 있으므로 절마다 이름을 달지 않는다. */}
                 {comparing && second && (
                   <p
                     className="mt-2.5 text-sm sm:text-base md:text-lg leading-[1.5] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
                     style={{ color: colorOf(used[1].key), wordBreak: "keep-all", overflowWrap: "break-word" }}
                   >
-                    <span className="text-2xs font-sans font-bold opacity-60 mr-1.5 select-none">
-                      {labelOf(used[1].key)}
-                    </span>
                     {second}
                   </p>
                 )}

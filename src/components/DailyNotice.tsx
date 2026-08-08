@@ -526,7 +526,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                     className="flex items-center gap-1 text-xs sm:text-sm text-[#0C3B2E] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-2.5 py-1 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap shrink-0"
                   >
                     <BookOpen size={13} className="text-[#4A6B57]" />
-                    <span>성경 읽기방에서 보기</span>
+                    <span>성경통독에서 보기</span>
                   </button>
                 )}
               </div>
