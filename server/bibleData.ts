@@ -245,6 +245,56 @@ export function getNivText(koreanBookName: string, chapter: number, verseNumbers
   return selected.map((v: any) => `${v.verse} ${v.text}`).join("\n");
 }
 
+// ===== 우리말성경 엔진 =====
+// NIV 와 동일한 방식. 파일을 한 번 읽으면 메모리에 두고 다시 읽지 않는다.
+const WM_CACHE = new Map<string, any>();
+
+function getWmBookData(koreanBookName: string) {
+  if (WM_CACHE.has(koreanBookName)) return WM_CACHE.get(koreanBookName);
+  const bookId = BOOK_ID_MAP[koreanBookName];
+  if (!bookId) return null;
+  try {
+    const baseDir = (typeof __dirname !== "undefined") ? __dirname : process.cwd();
+    const pathsToTry = [
+      path.join(process.cwd(), "server", "data", "books_wm", `${bookId}.json`),
+      path.join(baseDir, "data", "books_wm", `${bookId}.json`),
+      path.join(baseDir, "..", "server", "data", "books_wm", `${bookId}.json`)
+    ];
+    for (const p of pathsToTry) {
+      if (fs.existsSync(p)) {
+        const data = JSON.parse(fs.readFileSync(p, "utf-8"));
+        WM_CACHE.set(koreanBookName, data);
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn(`[우리말성경] 데이터를 불러오지 못했습니다 (${koreanBookName}):`, e);
+  }
+  return null;
+}
+
+export function preloadAllWmBooks(): number {
+  for (const book of BIBLE_BOOKS) {
+    if (!WM_CACHE.has(book.name)) getWmBookData(book.name);
+  }
+  return WM_CACHE.size;
+}
+
+/** 한글 책이름 + 장 + (선택)절번호들 -> 우리말성경 본문 ("절 text" 줄바꿈) */
+export function getWmText(koreanBookName: string, chapter: number, verseNumbers?: number[] | null): string {
+  const book = getWmBookData(koreanBookName);
+  if (!book || !book.chapters) return "";
+  const verses = book.chapters[String(chapter)];
+  if (!Array.isArray(verses) || verses.length === 0) return "";
+  let selected = verses;
+  if (verseNumbers && verseNumbers.length > 0) {
+    const set = new Set(verseNumbers);
+    selected = verses.filter((v: any) => set.has(v.verse));
+    if (selected.length === 0) selected = verses;
+  }
+  return selected.map((v: any) => `${v.verse} ${v.text}`).join("\n");
+}
+
 // 66권 별칭 지도 (Alias Mapping)
 const BOOK_ALIAS_MAP: Record<string, string> = {
   // 구약

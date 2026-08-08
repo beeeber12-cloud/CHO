@@ -3,6 +3,9 @@ import { Notice, User } from "../types";
 import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
+import DualBibleText from "./DualBibleText";
+import BibleVersionPicker from "./BibleVersionPicker";
+import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
 
 
 interface DailyNoticeProps {
@@ -48,12 +51,49 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     }
   };
 
+  /**
+   * 고른 번역본 중 아직 안 받아온 것이 있으면 그때 한 번만 받아온다.
+   * 개역개정은 공지에 이미 실려 오므로 추가 요청이 없다.
+   */
+  const ensureAltTexts = async (versions: BibleVersionKey[], ref?: string) => {
+    const title = ref || notice?.verseTitle;
+    if (!title) return;
+    const need = versions.filter((k) => k !== "krv" && !altTexts[k]);
+    if (need.length === 0) return;
+    try {
+      const res = await fetch(
+        `/api/bible/search?query=${encodeURIComponent(title)}&versions=${encodeURIComponent(need.join(","))}`
+      );
+      if (!res.ok) return;
+      const d = await res.json();
+      setAltTexts((prev) => ({
+        ...prev,
+        ...(d.textWm ? { wm: d.textWm } : {}),
+        ...(d.textNiv ? { niv: d.textNiv } : {})
+      }));
+    } catch (err) {
+      console.error("번역본 불러오기 실패:", err);
+    }
+  };
+
+  const handleNoticeVersionsChange = (next: BibleVersionKey[]) => {
+    setNoticeVersions(next);
+    saveSelectedVersions(next);
+    ensureAltTexts(next);
+  };
+
   /** 고른 구절을 "3 본문..." 형태로, 번호 순서대로 이어붙인다. */
   const buildPickedText = (): string =>
     [...pickedVerses.entries()]
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(([n, t]) => `${n} ${t}`)
       .join("\n");
+
+  // 오늘 말씀도 번역본을 골라 볼 수 있다 (최대 두 개 대조).
+  // 성경 읽기방과 같은 설정을 공유해서, 한 곳에서 고르면 양쪽 다 적용된다.
+  const [noticeVersions, setNoticeVersions] = useState<BibleVersionKey[]>(() => loadSelectedVersions());
+  // 개역개정 외 번역본은 필요할 때만 받아온다 (안 보는 본문을 미리 받지 않는다)
+  const [altTexts, setAltTexts] = useState<Record<string, string>>({});
 
   const [loading, setLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -113,6 +153,16 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       fetchBiblePlan();
     }
   }, []);
+
+  // 공지를 받아온 뒤, 개역개정 외 번역본을 고른 상태라면 그것도 채워둔다
+  useEffect(() => {
+    if (notice?.verseTitle) ensureAltTexts(noticeVersions, notice.verseTitle);
+  }, [notice?.verseTitle]);
+
+  // 화면에 실을 번역본 (고른 순서대로, 본문이 있는 것만)
+  const noticePanes = noticeVersions
+    .map((k) => ({ key: k, text: k === "krv" ? notice?.verseText || "" : altTexts[k] || "" }))
+    .filter((p) => p.text.trim());
 
   const fetchTodayNotice = async () => {
     setLoading(true);
@@ -481,9 +531,14 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 )}
               </div>
 
+              {/* 번역본 고르기 — 최대 두 개까지 대조 */}
+              <div className="pl-[10px] sm:pl-[16px] mb-2.5">
+                <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
+              </div>
+
               <div className="max-h-72 md:max-h-96 overflow-y-auto overflow-x-hidden -mx-1.5 px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
-                <FormattedBibleText
-                  text={notice.verseText}
+                <DualBibleText
+                  panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}
                   onToggleVerse={togglePickedVerse}
                 />
@@ -520,7 +575,11 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                                 .sort((a, b) => Number(a) - Number(b))
                                 .join(",")}절`
                             : notice.verseTitle;
-                        onSelectVerseForMeditation(ref, picked || notice.verseText.slice(0, 200));
+                        // 지금 보고 있는 번역본을 그대로 넘긴다
+                        onSelectVerseForMeditation(
+                          ref,
+                          picked || (noticePanes[0]?.text || notice.verseText).slice(0, 200)
+                        );
                       }}
                       className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap"
                     >

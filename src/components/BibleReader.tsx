@@ -3,6 +3,8 @@ import { Search, BookOpen, Sparkles, Send, Loader, CheckCircle2, Target, ListChe
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
+import BibleVersionPicker from "./BibleVersionPicker";
+import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
 
@@ -16,11 +18,10 @@ interface BibleResult {
   reference: string;
   text: string;
   textNiv?: string;
+  textWm?: string;
   explanation: string;
   meditationGuide: string;
 }
-
-type BibleVersion = "krv" | "niv" | "both";
 
 export default function BibleReader({ currentUser, onSelectVerseForMeditation, initialQuery = "" }: BibleReaderProps) {
   // Navigation & Selector states
@@ -30,13 +31,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   // Search & Result states — 검색창은 사용자가 직접 입력할 때만 채워진다(평소엔 안내 문구 노출)
   const [query, setQuery] = useState<string>(initialQuery || "");
   const [result, setResult] = useState<BibleResult | null>(null);
-  const [bibleVersion, setBibleVersion] = useState<BibleVersion>(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem("bibleVersion");
-      if (saved === "krv" || saved === "niv" || saved === "both") return saved;
-    }
-    return "krv";
-  });
+  // 번역본은 최대 두 개까지 (하나면 단독, 두 개면 대조)
+  const [bibleVersions, setBibleVersions] = useState<BibleVersionKey[]>(() => loadSelectedVersions());
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -167,6 +163,29 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
+  /** 고른 번역본만 요청한다 — 안 보는 번역본을 받지 않아 응답이 가볍다 */
+  const bibleSearchUrl = (q: string, versions: BibleVersionKey[]) => {
+    const extra = versionsQueryParam(versions);
+    return `/api/bible/search?query=${encodeURIComponent(q)}&versions=${encodeURIComponent(extra)}`;
+  };
+
+  const handleVersionsChange = (next: BibleVersionKey[]) => {
+    setBibleVersions(next);
+    saveSelectedVersions(next);
+    // 새로 고른 번역본이 지금 받아둔 본문에 없으면 그때만 다시 받아온다
+    const need = next.some(
+      (k) => (k === "niv" && !result?.textNiv) || (k === "wm" && !result?.textWm)
+    );
+    if (need && result?.reference) {
+      fetch(bibleSearchUrl(result.reference, next))
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && d.text) setResult((prev) => (prev ? { ...prev, ...d } : d));
+        })
+        .catch((e) => console.error("번역본 불러오기 실패:", e));
+    }
+  };
+
   const handleSearchQuery = async (searchStr: string) => {
     if (!searchStr.trim()) return;
 
@@ -176,7 +195,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setPickedVerses(new Map()); // 다른 본문으로 넘어가면 고른 구절도 초기화
 
     try {
-      const res = await fetch(`/api/bible/search?query=${encodeURIComponent(searchStr.trim())}`);
+      const res = await fetch(bibleSearchUrl(searchStr.trim(), bibleVersions));
       const data = await res.json();
 
       if (res.ok) {
@@ -196,7 +215,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setNavVerseLoading(true);
     setNavVerseCount(null);
     try {
-      const res = await fetch(`/api/bible/search?query=${encodeURIComponent(`${book.name} ${chapter}장`)}`);
+      const res = await fetch(bibleSearchUrl(`${book.name} ${chapter}장`, ["krv"]));
       const data = await res.json();
       if (res.ok) {
         if (Array.isArray(data.verseNumbers) && data.verseNumbers.length > 0) {
@@ -340,6 +359,18 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       setSavingGoal(false);
     }
   };
+
+  // 고른 번역본의 본문을 순서대로 담는다 (없는 번역본은 빼고 안내한다)
+  const textOf = (k: BibleVersionKey) =>
+    k === "krv" ? result?.text : k === "wm" ? result?.textWm : result?.textNiv;
+
+  const versionPanes = bibleVersions
+    .filter((k) => !!textOf(k)?.trim())
+    .map((k) => ({ key: k, text: textOf(k) as string }));
+
+  const missingVersions = bibleVersions
+    .filter((k) => !textOf(k)?.trim())
+    .map((k) => BIBLE_VERSIONS.find((v) => v.key === k)?.label || k);
 
   // 이전/다음 장 — 책의 처음·끝에서는 앞뒤 권으로 이어진다
   const bookIndex = BIBLE_BOOKS.findIndex((b) => b.id === selectedBook.id);
@@ -579,30 +610,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 </div>
               </div>
 
-              {/* 성경 번역본 선택 토글: 개역개정 / NIV / 같이보기 */}
-              <div className="flex items-center gap-1 bg-[#F5F5F5] p-1 rounded-3xl w-fit">
-                {([
-                  { key: "krv", label: "개역개정" },
-                  { key: "niv", label: "NIV" },
-                  { key: "both", label: "같이 보기" },
-                ] as { key: BibleVersion; label: string }[]).map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => {
-                      setBibleVersion(opt.key);
-                      if (typeof window !== "undefined") window.localStorage.setItem("bibleVersion", opt.key);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                      bibleVersion === opt.key
-                        ? "bg-[#0C3B2E] text-white shadow-sm"
-                        : "text-[#4A6B57] hover:bg-[#D2DDD3]"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              {/* 번역본 고르기 — 최대 두 개까지 대조 */}
+              <BibleVersionPicker selected={bibleVersions} onChange={handleVersionsChange} />
 
               {/* 말씀 본문 — 바깥 카드와 같은 흰색이므로 모바일에서는 그림자·모서리를 지워
                   박스가 하나 더 있어 보이지 않게 하고, 카드의 좌우 여백만큼 밖으로 빼서
@@ -611,27 +620,16 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 ref={verseBoxRef}
                 className="scripture-font bg-white shadow-none sm:shadow-sm -mx-1.5 px-1.5 py-3 sm:mx-0 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
-                {(bibleVersion === "niv" || bibleVersion === "both") && !result.textNiv ? (
-                  <>
-                    <FormattedBibleText
-                      text={result.text}
-                      highlightVerse={highlightVerse}
-                      selectedVerses={new Set(pickedVerses.keys())}
-                      onToggleVerse={togglePickedVerse}
-                    />
-                    <p className="mt-3 text-xs text-[#072A20] bg-[#F5F5F5] rounded-xl p-2">
-                      이 본문은 NIV(영어) 데이터가 아직 없어 개역개정으로 표시됩니다.
-                    </p>
-                  </>
-                ) : (
-                  <DualBibleText
-                    krvText={result.text}
-                    nivText={result.textNiv}
-                    mode={bibleVersion}
-                    highlightVerse={highlightVerse}
-                    selectedVerses={new Set(pickedVerses.keys())}
-                    onToggleVerse={togglePickedVerse}
-                  />
+                <DualBibleText
+                  panes={versionPanes}
+                  highlightVerse={highlightVerse}
+                  selectedVerses={new Set(pickedVerses.keys())}
+                  onToggleVerse={togglePickedVerse}
+                />
+                {missingVersions.length > 0 && (
+                  <p className="mt-3 text-xs text-[#072A20] bg-[#F5F5F5] rounded-xl p-2">
+                    이 본문은 {missingVersions.join(", ")} 데이터가 없어 함께 표시하지 못했습니다.
+                  </p>
                 )}
               </div>
 
@@ -716,7 +714,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                             : result.reference;
                         onSelectVerseForMeditation(
                           pickedVerses.size > 0 ? refs : result.reference,
-                          picked || result.text.slice(0, 200)
+                          // 지금 보고 있는 번역본을 그대로 넘긴다
+                          picked || (versionPanes[0]?.text || result.text).slice(0, 200)
                         );
                       }}
                       className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] px-3.5 py-1.5 rounded-3xl shadow-md transition cursor-pointer whitespace-nowrap"

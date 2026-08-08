@@ -6,7 +6,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import webpush from "web-push";
 import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType } from "./src/types";
-import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, BIBLE_BOOKS } from "./server/bibleData.js";
+import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
 
 dotenv.config();
@@ -829,7 +829,8 @@ async function startServer() {
   try {
     const loaded = preloadAllBooks();
     const nivLoaded = preloadAllNivBooks();
-    console.log(`[Bible Engine] 개역개정 ${loaded}권 + NIV ${nivLoaded}권 프리로드 완료.`);
+    const wmLoaded = preloadAllWmBooks();
+    console.log(`[Bible Engine] 개역개정 ${loaded}권 + 우리말성경 ${wmLoaded}권 + NIV ${nivLoaded}권 프리로드 완료.`);
   } catch (e) {
     console.error("[Bible Engine] 프리로드 실패:", e);
   }
@@ -1605,10 +1606,37 @@ async function startServer() {
       return res.status(400).json({ error: "검색할 성경 책, 장, 또는 구절 키워드를 입력해 주세요. (예: 창세기 1:1, 시편 23편, 요한복음 3:16)" });
     }
 
+    // 어떤 번역본을 함께 보낼지 (예: versions=wm 또는 versions=niv).
+    // 화면에 실제로 보이는 것만 보내 응답 크기를 줄인다.
+    // 지정이 없으면 예전처럼 NIV 를 함께 보내 하위 호환을 지킨다.
+    // versions 가 아예 없으면 옛 클라이언트로 보고 NIV 를 함께 보낸다.
+    // versions= (빈 값) 은 "개역개정만" 이라는 뜻이므로 아무것도 덧붙이지 않는다.
+    const hasVersionsParam = req.query.versions !== undefined;
+    const versionsParam = typeof req.query.versions === "string" ? req.query.versions : "";
+    const wanted = new Set(
+      versionsParam.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)
+    );
+    if (!hasVersionsParam) wanted.add("niv");
+
+    /** 캐시에는 개역개정만 담고, 다른 번역본은 내보낼 때 메모리에서 붙인다 */
+    const withVersions = (base: any) => {
+      const out = { ...base };
+      delete out.textNiv;
+      delete out.textWm;
+      if (!base.matchedBookName || !base.chapter) return out;
+      try {
+        if (wanted.has("niv")) out.textNiv = getNivText(base.matchedBookName, base.chapter, base.verseNumbers);
+        if (wanted.has("wm")) out.textWm = getWmText(base.matchedBookName, base.chapter, base.verseNumbers);
+      } catch {
+        /* 한 번역본을 못 불러와도 나머지는 그대로 보여준다 */
+      }
+      return out;
+    };
+
     const cacheKey = query.trim().toLowerCase();
     if (bibleSearchCache.has(cacheKey)) {
       res.setHeader("Cache-Control", "public, max-age=86400");
-      return res.json(bibleSearchCache.get(cacheKey));
+      return res.json(withVersions(bibleSearchCache.get(cacheKey)));
     }
 
     console.log("Bible Search Request:", query);
@@ -1727,20 +1755,12 @@ JSON 양식:
         }
       }
 
-      // NIV(영어) 본문 동봉 — 개역개정과 같은 책/장/절 범위로
-      if (bibleResult.isExactMatch && bibleResult.matchedBookName && bibleResult.chapter) {
-        try {
-          bibleResult.textNiv = getNivText(bibleResult.matchedBookName, bibleResult.chapter, bibleResult.verseNumbers);
-        } catch (e) {
-          bibleResult.textNiv = "";
-        }
-      }
-
+      // 다른 번역본은 캐시에 담지 않고 내보낼 때 붙인다 (요청한 것만).
       if (bibleResult.isExactMatch && bibleResult.text && !bibleResult.needsAiFetch) {
         bibleSearchCache.set(cacheKey, bibleResult);
       }
       res.setHeader("Cache-Control", "public, max-age=86400");
-      return res.json(bibleResult);
+      return res.json(withVersions(bibleResult));
     } catch (err) {
       console.error("Bible search error:", err);
       return res.status(500).json({ error: "성경 데이터를 불러오는 중 오류가 발생했습니다." });
