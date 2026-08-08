@@ -613,20 +613,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             <div className="bg-white rounded-3xl sm:rounded-[32px] px-1.5 py-4 sm:p-6 shadow-sm space-y-2.5 sm:space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-[#E3E9E2] pb-3">
                 <div className="w-full sm:w-auto pl-[10px] sm:pl-[16px]">
-                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                    <span className="text-xs sm:text-xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                      {userProgress?.lastReadBook && userProgress?.lastReadChapter ? (
-                        `내가 직전 통독 위치: ${userProgress.lastReadBook} ${userProgress.lastReadChapter}장`
-                      ) : (
-                        `성경 통독 본문`
-                      )}
-                    </span>
-                    {userProgress?.lastReadBook === selectedBook.name && userProgress?.lastReadChapter === selectedChapter && (
-                      <span className="text-xs font-bold text-[#0C3B2E] bg-[#F5F5F5] px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                        ✨ 이어서 보는 중
-                      </span>
-                    )}
-                  </div>
                   <h3 className="text-base sm:text-2xl font-bold text-[#0C3B2E] flex items-center gap-2">
                     <span>{result.reference}</span>
                   </h3>
