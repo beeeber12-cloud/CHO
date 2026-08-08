@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import compression from "compression";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
@@ -823,6 +824,11 @@ async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null
 
 async function startServer() {
   const app = express();
+
+  // 응답을 압축해서 보낸다. 한글 본문과 자바스크립트는 70~80% 가 줄어든다.
+  // (Cloud Run 은 자동으로 압축해주지 않아서 그동안 원본 크기 그대로 나가고 있었다)
+  app.use(compression());
+
   app.use(express.json());
 
   // 개역개정 66권 전권을 메모리에 프리로드 (성경 검색 즉시 응답 + 키워드 검색 지원)
