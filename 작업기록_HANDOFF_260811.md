@@ -102,7 +102,11 @@ Cloud Run 은 **아무도 앱을 안 쓰면 컨테이너를 잠재운다.** 잠�
 GCP 콘솔 → Cloud Scheduler → 작업 만들기
 - 빈도: `*/5 * * * *` (5분마다) — 알림 시간대만 원하면 `*/5 5-11 * * *`
 - 시간대: `Asia/Seoul`
-- 대상: HTTP / `https://cho-1006806795339.asia-northeast3.run.app/api/alarms/tick` / POST
+- 대상: HTTP / `https://cho-1006806795339.asia-northeast3.run.app/api/alarms/tick` / **GET**
+
+> ⚠️ POST 로 하려면 본문이 비어 있어도 `Content-Length: 0` 이 붙어야 한다.
+> 구글 프론트엔드가 **본문 없는 POST 를 411 로 되돌려보낸다** (실제로 확인함).
+> GET 은 그런 제약이 없으니 GET 으로 거는 편이 안전하다.
 
 Cloud Scheduler 는 작업 3개까지 무료, 호출량도 Cloud Run 무료 한도 안이다.
 `tick` 은 하루 한 번만 나가도록 막혀 있어 여러 번 불려도 중복 발송되지 않는다.
