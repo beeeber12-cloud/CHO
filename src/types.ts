@@ -68,6 +68,11 @@ export interface AlarmConfig {
   time: string; // "HH:MM"
   enabled: boolean;
   days: number[]; // [0, 1, 2, 3, 4, 5, 6] (0 = Sunday, etc)
+  /**
+   * 이 알림을 마지막으로 보낸 한국 날짜 ("YYYY-MM-DD").
+   * 서버가 다시 켜져도 같은 날 두 번 울리지 않게 하는 표시다.
+   */
+  lastFiredDate?: string;
 }
 
 export interface BiblePlan {

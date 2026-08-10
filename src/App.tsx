@@ -21,6 +21,26 @@ interface UserProfile {
 
 type TabType = 'notice' | 'feed' | 'gratitude' | 'bible' | 'my' | 'qna' | 'settings';
 
+const TAB_KEYS: TabType[] = ['notice', 'feed', 'gratitude', 'bible', 'my', 'qna', 'settings'];
+
+function isTabKey(value: unknown): value is TabType {
+  return typeof value === "string" && (TAB_KEYS as string[]).includes(value);
+}
+
+/**
+ * 휴대폰 알림을 눌러 들어왔을 때 열어야 할 화면.
+ * 서버가 보내는 알림에 `/?tab=gratitude` 같은 주소가 붙어 있어서,
+ * 알림을 누르면 그 글이 있는 탭이 바로 열린다.
+ */
+function tabFromUrl(): TabType | null {
+  try {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    return isTabKey(tab) ? tab : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * 성경 Q&A 탭 노출 여부.
  * 지금은 잠시 숨겨둔 상태 — 다시 열려면 true 로만 바꾸면 된다.
@@ -35,7 +55,7 @@ export default function App() {
   });
 
   const [allUsers, setAllUsers] = useState<{ id: string; name: string; role: string }[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>('notice');
+  const [activeTab, setActiveTab] = useState<TabType>(() => tabFromUrl() || 'notice');
 
   // Prefilled Bible Verse state for writing meditation
   const [prefilledVerse, setPrefilledVerse] = useState<{ title: string; text: string } | null>(null);
@@ -52,6 +72,28 @@ export default function App() {
   useEffect(() => {
     if (!SHOW_QNA_TAB && activeTab === 'qna') setActiveTab('notice');
   }, [activeTab]);
+
+  // 알림을 눌러 들어온 경우
+  useEffect(() => {
+    // ① 주소에 남은 ?tab= 은 한 번 쓰고 지운다.
+    //    (안 지우면 나중에 새로고침할 때마다 그 탭으로 되돌아간다)
+    if (tabFromUrl()) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    // ② 앱이 이미 열려 있던 경우엔 새로고침 대신 서비스워커가 탭만 알려준다.
+    if (!("serviceWorker" in navigator)) return;
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === "open-tab" && isTabKey(e.data.tab)) {
+        setActiveTab(e.data.tab);
+        window.scrollTo({ top: 0 });
+        // 잘 받았다고 알려줘야 서비스워커가 새로고침을 생략한다
+        e.ports?.[0]?.postMessage({ ok: true });
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", handleMessage);
+  }, []);
 
   const fetchAllUsers = async () => {
     try {

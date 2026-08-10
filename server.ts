@@ -596,6 +596,132 @@ async function pushToEveryone(payload: PushPayload, excludeUserId?: string) {
   await sendPushToUsers((db.users || []).map((u) => u.id), payload, excludeUserId);
 }
 
+// ── 아침 묵상 시간 알림 ──────────────────────────────────
+// 알림설정에서 고른 시간·요일에 맞춰 그 사람에게만 보낸다.
+
+/** 한국 시각 기준 { 요일(0=일), 자정부터 지난 분 } */
+function getKSTClock(d: Date = new Date()): { day: number; minutes: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Seoul",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+  const dayIndex = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday"));
+  // 자정은 로케일에 따라 "24" 로 나오는 경우가 있어 24 → 0 으로 맞춘다
+  const hour = Number(get("hour")) % 24;
+  return { day: dayIndex, minutes: hour * 60 + Number(get("minute")) };
+}
+
+/**
+ * 예정 시각이 지난 뒤 이만큼(분) 안에는 아직 보낸다.
+ * 컨테이너가 잠들어 있다 깨어난 경우에도 아침 알림을 놓치지 않기 위한 여유다.
+ * 너무 길면 엉뚱한 시각에 울리므로 짧게 잡는다.
+ */
+const ALARM_GRACE_MINUTES = 30;
+
+const ALARM_MESSAGES = [
+  "오늘의 말씀이 기다리고 있어요. 잠시 멈추고 한 절 묵상해 보세요.",
+  "맑은 아침입니다. 오늘 배달된 말씀으로 하루를 열어 보세요.",
+  "5분이면 충분합니다. 오늘의 말씀을 함께 나눠요.",
+  "지체들이 묵상을 나누고 있어요. 오늘 내 마음도 적어 보세요."
+];
+
+/**
+ * 알림설정 화면이 저장 전에 보여주는 기본값.
+ * 화면에는 "07:30 · 월~금 · 켜짐" 으로 보이므로,
+ * 저장 버튼을 누른 적이 없어도 그대로 동작해야 말과 행동이 맞는다.
+ */
+const DEFAULT_ALARM = { time: "07:30", days: [1, 2, 3, 4, 5] };
+
+let alarmSweepRunning = false;
+
+/** 지금 울릴 차례인 알림을 찾아 보낸다. 1분마다, 그리고 외부 호출로도 돈다. */
+async function runAlarmSweep(): Promise<number> {
+  if (alarmSweepRunning) return 0;
+  if (!pushReady) return 0;
+  if (!db.pushSubscriptions || db.pushSubscriptions.length === 0) return 0;
+
+  alarmSweepRunning = true;
+  try {
+    const today = getKSTDateString();
+    const { day, minutes } = getKSTClock();
+
+    if (!db.alarmConfigs) db.alarmConfigs = [];
+
+    // 알림을 켜 둔 사람만 대상으로 한다.
+    // 켜지 않은 사람에게 설정을 만들어 둘 이유가 없다.
+    const subscribed = new Set(db.pushSubscriptions.map((s) => s.userId));
+
+    const due: AlarmConfig[] = [];
+    const newlyCreated: AlarmConfig[] = [];
+
+    for (const userId of subscribed) {
+      let cfg = db.alarmConfigs.find((a) => a.userId === userId);
+      if (!cfg) {
+        // 저장한 적 없는 사람은 화면에 보이는 기본값으로 본다.
+        // 실제로 울릴 때만 목록에 넣어 둔다 (안 그러면 쓸데없는 설정이 쌓인다)
+        cfg = {
+          id: "alarm-" + Math.random().toString(36).substring(2, 11),
+          userId,
+          time: DEFAULT_ALARM.time,
+          enabled: true,
+          days: [...DEFAULT_ALARM.days]
+        };
+        newlyCreated.push(cfg);
+      }
+
+      if (!cfg.enabled) continue;
+      if (!Array.isArray(cfg.days) || !cfg.days.includes(day)) continue;
+      if (cfg.lastFiredDate === today) continue; // 오늘은 이미 보냈다
+
+      const [h, m] = String(cfg.time || "").split(":").map(Number);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
+
+      const elapsed = minutes - (h * 60 + m);
+      if (elapsed >= 0 && elapsed <= ALARM_GRACE_MINUTES) due.push(cfg);
+    }
+
+    if (due.length === 0) return 0;
+
+    // 오늘 공지가 있으면 어떤 말씀인지 알림에 같이 띄운다
+    const todayNotice = (db.notices || []).find((n) => n.date === today);
+
+    // 보내기 전에 먼저 표시해 둔다.
+    // 발송 중에 다음 스윕이 돌더라도 두 번 가지 않는다.
+    for (const cfg of due) {
+      cfg.lastFiredDate = today;
+      if (newlyCreated.includes(cfg)) db.alarmConfigs.push(cfg);
+    }
+    saveDb(db);
+
+    await Promise.all(
+      due.map((cfg) => {
+        const name = (db.users || []).find((u) => u.id === cfg.userId)?.name;
+        const line = ALARM_MESSAGES[Math.floor(Math.random() * ALARM_MESSAGES.length)];
+        return sendPushToUsers([cfg.userId], {
+          title: todayNotice?.verseTitle
+            ? `📖 오늘의 말씀 · ${todayNotice.verseTitle}`
+            : "📖 아침 묵상 시간이에요",
+          body: name ? `${name} 님, ${line}` : line,
+          url: "/?tab=notice",
+          tag: "alarm-" + today
+        }).catch((e) => console.warn("[알림] 발송 실패:", cfg.userId, e));
+      })
+    );
+
+    console.log(`[알림] 시간 알림 ${due.length}건 발송 (${today})`);
+    return due.length;
+  } catch (err) {
+    console.error("[알림] 스윕 실패:", err);
+    return 0;
+  } finally {
+    alarmSweepRunning = false;
+  }
+}
+
 // Initialize Gemini SDK safely
 let ai: GoogleGenAI | null = null;
 if (process.env.GEMINI_API_KEY) {
@@ -846,6 +972,13 @@ async function startServer() {
 
   // 원격 DB 를 읽은 뒤에 초기화해야 기존 VAPID 키를 그대로 이어받는다.
   initWebPush();
+
+  // 아침 묵상 시간 알림 — 1분마다 울릴 차례인지 확인한다.
+  // 깨어난 직후에도 한 번 확인해서, 자고 있던 사이에 지난 시각을 놓치지 않는다.
+  runAlarmSweep().catch(() => {});
+  setInterval(() => {
+    runAlarmSweep().catch(() => {});
+  }, 60 * 1000);
 
   // 본문이 비어 있는 것은 이제 정상이다 (읽을 때 withVerseText 가 채운다).
   // 옛 버전이 남긴 "불러오는 중" 같은 껍데기 본문만 비워서 정상 경로를 타게 한다.
@@ -1154,7 +1287,7 @@ async function startServer() {
     await sendPushToUsers([userId], {
       title: "🔔 알림 테스트",
       body: "알림이 정상적으로 도착했습니다. 앱을 닫아두셔도 이렇게 받아보실 수 있어요.",
-      url: "/",
+      url: "/?tab=settings",
       tag: "test"
     });
     res.json({ success: true, devices: mine.length });
@@ -1202,7 +1335,7 @@ async function startServer() {
     pushToEveryone({
       title: "📖 오늘의 말씀이 올라왔어요",
       body: verseTitle,
-      url: "/",
+      url: "/?tab=notice",
       tag: "notice"
     }).catch((e) => console.warn("[Push] 공지 알림 실패:", e));
   });
@@ -1364,7 +1497,7 @@ async function startServer() {
       {
         title: "📖 새 묵상이 올라왔어요",
         body: `${userName} 님 · ${title}`,
-        url: "/",
+        url: "/?tab=feed",
         tag: "meditation"
       },
       userId
@@ -1452,7 +1585,7 @@ async function startServer() {
         {
           title: `${label.emoji} ${label.text}`,
           body,
-          url: "/",
+          url: "/?tab=feed",
           tag: "react-" + med.id
         },
         userId
@@ -1492,7 +1625,7 @@ async function startServer() {
       {
         title: "💬 내 묵상에 댓글이 달렸어요",
         body: `${userName} : ${content.slice(0, 60)}`,
-        url: "/",
+        url: "/?tab=feed",
         tag: "comment-" + med.id
       },
       userId
@@ -1824,6 +1957,19 @@ JSON format:
   });
 
   // --- Daily Alarm/Push-sim Configs API ---
+
+  /**
+   * 시간 알림 점검을 밖에서 깨우는 통로.
+   * Cloud Run 은 아무도 안 쓰면 잠들어서 서버 안의 1분 타이머가 멈춘다.
+   * Cloud Scheduler 로 몇 분마다 이 주소를 두드리면 알림이 제때 나간다.
+   * 하루 한 번만 나가도록 막혀 있어 여러 번 불려도 안전하다.
+   * (아래 "/api/alarms/:userId" 보다 반드시 먼저 등록해야 tick 이 사용자 ID 로 잡히지 않는다)
+   */
+  app.all("/api/alarms/tick", async (req: Request, res: Response) => {
+    const sent = await runAlarmSweep();
+    res.json({ ok: true, sent });
+  });
+
   app.get("/api/alarms/:userId", (req: Request, res: Response) => {
     const { userId } = req.params;
     const config = db.alarmConfigs.find(a => a.userId === userId);
@@ -1835,12 +1981,18 @@ JSON format:
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
     let configIdx = db.alarmConfigs.findIndex(a => a.userId === userId);
+    const prev = configIdx !== -1 ? db.alarmConfigs[configIdx] : null;
+    const nextTime = time || "07:30";
+
     const newConfig: AlarmConfig = {
-      id: configIdx !== -1 ? db.alarmConfigs[configIdx].id : "alarm-" + Math.random().toString(36).substring(2, 11),
+      id: prev ? prev.id : "alarm-" + Math.random().toString(36).substring(2, 11),
       userId,
-      time: time || "07:30",
+      time: nextTime,
       enabled: enabled !== undefined ? enabled : true,
-      days: days || [1, 2, 3, 4, 5]
+      days: days || [1, 2, 3, 4, 5],
+      // 시간을 바꿨으면 "오늘 이미 보냈다" 표시를 지운다.
+      // 그래야 오늘 저녁으로 옮겨 놓고 바로 확인해 볼 수 있다.
+      lastFiredDate: prev && prev.time === nextTime ? prev.lastFiredDate : undefined
     };
 
     if (configIdx !== -1) {
@@ -2071,7 +2223,7 @@ JSON format:
       {
         title: "🤍 새로운 감사 나눔",
         body: `${newGratitude.isAnonymous ? "익명" : userName} : ${newGratitude.content.slice(0, 60)}`,
-        url: "/",
+        url: "/?tab=gratitude",
         tag: "gratitude"
       },
       userId
@@ -2154,7 +2306,7 @@ JSON format:
         {
           title: `${label.emoji} ${label.text}`,
           body: `${who} 님이 내 감사 나눔에 반응했어요`,
-          url: "/",
+          url: "/?tab=gratitude",
           tag: "greact-" + grat.id
         },
         userId
@@ -2194,7 +2346,7 @@ JSON format:
       {
         title: "💬 감사 나눔에 댓글이 달렸어요",
         body: `${userName} : ${newComment.content.slice(0, 60)}`,
-        url: "/",
+        url: "/?tab=gratitude",
         tag: "grat-comment-" + grat.id
       },
       userId

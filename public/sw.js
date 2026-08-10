@@ -62,25 +62,70 @@ self.addEventListener("push", (e) => {
   e.waitUntil(self.registration.showNotification(title, options));
 });
 
-// 알림을 누르면 이미 열린 탭이 있으면 그 탭으로, 없으면 새로 연다.
+// 알림을 누르면 그 글이 있는 화면으로 바로 들어간다.
+// 알림에 담긴 주소(예: "/?tab=gratitude")의 tab 값이 열어야 할 화면이다.
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const target = (e.notification.data && e.notification.data.url) || "/";
 
+  let tab = null;
+  try {
+    tab = new URL(target, self.location.origin).searchParams.get("tab");
+  } catch (err) {
+    tab = null;
+  }
+
   e.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+    (async () => {
+      const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+
       for (const client of list) {
-        if (client.url.startsWith(self.location.origin) && "focus" in client) {
-          client.navigate(target);
-          return client.focus();
+        if (!client.url.startsWith(self.location.origin)) continue;
+
+        let win = client;
+        try {
+          if ("focus" in client) win = (await client.focus()) || client;
+        } catch (err) {}
+
+        // 이미 열려 있던 앱이 응답하면 새로고침 없이 탭만 바꾼다 (훨씬 빠르다).
+        // 응답이 없으면(옛 버전이 열려 있는 경우) 주소를 바꿔 다시 띄운다.
+        const handled = tab ? await askToOpenTab(win, tab) : false;
+        if (!handled) {
+          try {
+            await win.navigate(target);
+          } catch (err) {}
         }
+        return;
       }
+
       if (self.clients.openWindow) {
         return self.clients.openWindow(target);
       }
-    })
+    })()
   );
 });
+
+/** 열려 있는 화면에게 "이 탭 열어줘" 하고 0.5초 안에 대답이 오는지 본다. */
+function askToOpenTab(client, tab) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => {
+      if (!settled) {
+        settled = true;
+        resolve(ok);
+      }
+    };
+    try {
+      const channel = new MessageChannel();
+      channel.port1.onmessage = () => finish(true);
+      client.postMessage({ type: "open-tab", tab: tab }, [channel.port2]);
+    } catch (err) {
+      finish(false);
+      return;
+    }
+    setTimeout(() => finish(false), 500);
+  });
+}
 
 self.addEventListener("fetch", (e) => {
   // Only handle GET requests and local assets

@@ -757,7 +757,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                     {/* 글쓴이에게만: 몇 명이 함께 기도했는지 */}
                     {isMyMed && (med.reactions?.pray?.length || 0) > 0 && (
-                      <p className="text-xs font-bold text-[#0C3B2E] bg-[#FFBA00] rounded-3xl px-3 py-2">
+                      <p className="text-xs font-bold text-[#0C3B2E] bg-[#E8F0E9] ring-1 ring-[#C3D6C6] rounded-3xl px-3 py-2">
                         {med.reactions!.pray!.length}명이 당신을 위해 기도했습니다 🙏
                       </p>
                     )}

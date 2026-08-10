@@ -491,6 +491,10 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
             onChange={(e) => setTime(e.target.value)}
             className="px-3.5 py-2.5 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold shadow-sm"
           />
+          <p className="text-2xs text-[#6F8377] mt-1.5 leading-relaxed">
+            설정한 시간이 되면 휴대폰으로 오늘의 말씀 알림이 갑니다.
+            받으려면 아래 <strong className="text-[#0C3B2E]">새 글 알림</strong>을 먼저 켜주세요.
+          </p>
         </div>
 
         {/* Days Selection */}

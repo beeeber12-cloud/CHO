@@ -63,7 +63,9 @@ export default function ReactionBar({
             title={r.label}
             className={`flex items-center gap-1 px-2 py-1.5 rounded-3xl text-2xs font-bold transition cursor-pointer disabled:opacity-60 whitespace-nowrap ${
               mine
-                ? "bg-[#FFBA00] text-[#0C3B2E]"
+                ? // 눌렀을 때는 은은한 연녹색 한 가지로 통일한다.
+                  // (예전 노란색은 글 사이에서 너무 튀어서 눈이 그쪽으로만 갔다)
+                  "bg-[#E8F0E9] text-[#0C3B2E] ring-1 ring-[#C3D6C6]"
                 : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#E8E8E8]"
             }`}
           >
