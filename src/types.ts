@@ -80,6 +80,12 @@ export interface BiblePlan {
   currentChapter: number;
   active: boolean;
   lastUpdatedDate?: string; // YYYY-MM-DD
+  /**
+   * 이 진도를 마지막으로 고친 시각(ISO).
+   * 원격과 합칠 때 어느 쪽이 최신인지 가리는 기준이다.
+   * 이게 없으면 원격의 옛 진도가 방금 넘긴 장을 덮어써서 같은 장이 반복된다.
+   */
+  updatedAt?: string;
 }
 
 export interface UserBibleProgress {

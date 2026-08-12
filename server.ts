@@ -6,7 +6,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import webpush from "web-push";
-import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType } from "./src/types";
+import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
 
@@ -106,6 +106,17 @@ function getKSTDateString(d: Date = new Date()): string {
  *   Firestore 무료 쓰기 한도(하루 20,000단위)가 20분 만에 소진됐다.
  *   → 평상시 새로고침은 읽기만 하고, 되쓰기는 기동 시와 실제 데이터 변경 시에만 한다.
  */
+const DEFAULT_BIBLE_PLAN = { book: "요한복음", currentChapter: 1, active: false };
+
+/** 통독 진도 둘 중 더 최근에 고친 것을 고른다 (없으면 기본값) */
+function pickNewerPlan(a?: BiblePlan, b?: BiblePlan): BiblePlan {
+  if (!a) return b || { ...DEFAULT_BIBLE_PLAN };
+  if (!b) return a;
+  // updatedAt 이 없는 옛 데이터는 lastUpdatedDate 로 비교한다
+  const stamp = (p: BiblePlan) => p.updatedAt || p.lastUpdatedDate || "";
+  return stamp(a) >= stamp(b) ? a : b;
+}
+
 async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<DatabaseSchema> {
   try {
     const localDb = loadDb();
@@ -278,7 +289,10 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
         summaries: mergedSummaries,
         alarmConfigs: remoteDb.alarmConfigs || localDb.alarmConfigs || [],
         userBibleProgress: mergedProgress,
-        biblePlan: remoteDb.biblePlan || localDb.biblePlan || { book: "요한복음", currentChapter: 1, active: false },
+        // 통독 진도는 "더 최근에 고친 쪽"을 남긴다.
+        // 예전처럼 원격을 무조건 쓰면, 방금 다음 장으로 넘긴 진도가 옛 값으로 되돌아가
+        // 같은 장이 다시 공지되거나 어제 장으로 되돌아갔다. (실제로 발생했던 문제)
+        biblePlan: pickNewerPlan(remoteDb.biblePlan, localDb.biblePlan),
         // ⚠️ 새 필드를 여기 빠뜨리면 동기화 때마다 조용히 지워진다 (푸시 구독에서 겪었던 문제)
         sharingGoals: { ...(localDb.sharingGoals || {}), ...(remoteDb.sharingGoals || {}) },
         savedVerses: Array.from(
@@ -839,43 +853,94 @@ function canRebuildVerseText(verseTitle: string): boolean {
   }
 }
 
-/** 하루 뒤 날짜 (YYYY-MM-DD) */
-function nextDayStr(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().split("T")[0];
+/** 공지 제목("마가복음 3장", "시편 23편")에서 책 이름과 장을 뽑는다 */
+function parseChapterTitle(title: string): { book: string; chapter: number } | null {
+  // 책 이름 안에도 숫자가 있으므로("요한1서") 끝의 장/편을 기준으로 끊는다
+  const m = (title || "").match(/^(.+?)\s*(\d+)\s*[장편]\s*$/);
+  if (!m) return null;
+  const book = m[1].trim();
+  if (!BIBLE_BOOKS.some((b) => b.name === book)) return null;
+  return { book, chapter: Number(m[2]) };
+}
+
+/** 그날 이전에 자동으로 나간 공지 중 가장 최근의 위치 */
+function lastAutoNoticePosition(beforeDate: string): { book: string; chapter: number } | null {
+  const past = (db.notices || [])
+    .filter((n) => n.createdBy === "성경 플래너(자동)" && n.date < beforeDate)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  for (const n of past) {
+    const parsed = parseChapterTitle(n.verseTitle);
+    if (parsed) return parsed;
+  }
+  return null;
 }
 
 /**
- * 내일 공지를 하루 앞서 만들어 둔다.
- * 아침 6~8시에 사용자가 몰리는데, 그때 처음 연 사람이 공지 생성(AI 호출 포함)을
- * 기다리게 되므로 전날 낮에 미리 만들어 부하를 분산한다.
+ * 그날 공지할 위치를 정한다.
+ *
+ * 원칙은 "저장된 진도를 따른다" 이지만, 진도가 **이미 지나온 자리를 가리키면**
+ * 실제로 나간 공지 이력을 기준으로 바로잡는다.
+ * (원격 동기화가 진도를 되돌려 같은 장이 3일 연속 나가거나 어제 장으로 돌아간 적이 있다)
+ *
+ * 관리자가 방금 진도를 지정한 경우에는 `lastUpdatedDate` 가 비어 있으므로 그대로 따른다.
  */
-let preparingTomorrow = false;
-async function prepareTomorrowNotice(todayStr: string): Promise<void> {
-  if (preparingTomorrow) return;
-  if (!db.biblePlan?.active) return;
+function positionForNotice(dateStr: string): { book: string; chapter: number } {
+  const plan = db.biblePlan!;
+  const planned = normalizePlanPosition(plan.book, plan.currentChapter);
 
-  const tomorrow = nextDayStr(todayStr);
-  if (db.notices.some(n => n.date === tomorrow)) return; // 이미 준비됨
-  if (db.biblePlan.lastUpdatedDate === tomorrow) return;
+  // 관리자가 직접 지정한 직후 → 손대지 않는다
+  if (!plan.lastUpdatedDate) return planned;
 
-  preparingTomorrow = true;
+  const last = lastAutoNoticePosition(dateStr);
+  if (!last) return planned;
+
+  // 같은 책에서 뒤로 가거나 제자리인 경우만 바로잡는다.
+  // 다른 책으로 옮긴 것은 관리자의 뜻이므로 건드리지 않는다.
+  if (planned.book === last.book && planned.chapter <= last.chapter) {
+    const next = getNextChapterInOrder(last.book, last.chapter);
+    console.log(
+      `[성경 플래너] 진도가 되돌아가 있어 이력으로 바로잡습니다: ${planned.book} ${planned.chapter}장 -> ${next.book} ${next.chapter}장`
+    );
+    return normalizePlanPosition(next.book, next.chapter);
+  }
+
+  return planned;
+}
+
+/**
+ * 오늘 공지가 없으면 만든다. 자정이 지나면 1분 타이머가 이걸 호출해서
+ * 아무도 앱을 열지 않아도 다음 장으로 넘어간다.
+ * 동시에 두 번 들어와 같은 날 공지가 두 개 생기던 문제를 잠금으로 막는다.
+ */
+let noticeRollRunning = false;
+async function ensureTodayNotice(): Promise<Notice | null> {
+  if (noticeRollRunning) return null;
+  if (!db.biblePlan?.active) return null;
+
+  const today = getKSTDateString();
+  const existing = db.notices.find((n) => n.date === today);
+  if (existing) return existing;
+
+  noticeRollRunning = true;
   try {
-    const made = await autoPostNextBibleChapter(tomorrow);
-    if (made) console.log(`[성경 플래너] 내일(${tomorrow}) 공지를 미리 준비했습니다: ${made.verseTitle}`);
+    const made = await autoPostNextBibleChapter(today);
+    if (made) console.log(`[성경 플래너] ${today} 공지를 만들었습니다: ${made.verseTitle}`);
+    return made;
+  } catch (err) {
+    console.error("[성경 플래너] 오늘 공지 생성 실패:", err);
+    return null;
   } finally {
-    preparingTomorrow = false;
+    noticeRollRunning = false;
   }
 }
 
 async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null> {
   if (!db.biblePlan || !db.biblePlan.active) return null;
 
-  const position = normalizePlanPosition(db.biblePlan.book, db.biblePlan.currentChapter);
+  const position = positionForNotice(todayStr);
   if (position.book !== db.biblePlan.book || position.chapter !== db.biblePlan.currentChapter) {
     console.log(
-      `[성경 플래너] 없는 장이라 위치를 바로잡습니다: ${db.biblePlan.book} ${db.biblePlan.currentChapter}장 -> ${position.book} ${position.chapter}장`
+      `[성경 플래너] 위치를 바로잡습니다: ${db.biblePlan.book} ${db.biblePlan.currentChapter}장 -> ${position.book} ${position.chapter}장`
     );
   }
   const book = position.book;
@@ -940,6 +1005,8 @@ async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null
   db.biblePlan.book = next.book;
   db.biblePlan.currentChapter = next.chapter;
   db.biblePlan.lastUpdatedDate = todayStr;
+  // 원격과 합칠 때 이쪽이 최신임을 알리는 도장 (없으면 옛 진도가 덮어쓴다)
+  db.biblePlan.updatedAt = new Date().toISOString();
   if (next.book !== book) {
     console.log(`[성경 플래너] ${book} 통독을 마치고 ${next.book} 로 넘어갑니다.`);
   }
@@ -973,12 +1040,16 @@ async function startServer() {
   // 원격 DB 를 읽은 뒤에 초기화해야 기존 VAPID 키를 그대로 이어받는다.
   initWebPush();
 
-  // 아침 묵상 시간 알림 — 1분마다 울릴 차례인지 확인한다.
-  // 깨어난 직후에도 한 번 확인해서, 자고 있던 사이에 지난 시각을 놓치지 않는다.
-  runAlarmSweep().catch(() => {});
-  setInterval(() => {
-    runAlarmSweep().catch(() => {});
-  }, 60 * 1000);
+  // 1분마다 두 가지를 확인한다.
+  //  ① 오늘 말씀 공지 — 자정이 지났으면 다음 장으로 넘겨 새로 만든다
+  //  ② 아침 묵상 시간 알림 — 울릴 차례인 사람에게 보낸다
+  // 깨어난 직후에도 한 번 돌려서, 자고 있던 사이에 지난 것을 놓치지 않는다.
+  const runMinuteJobs = async () => {
+    await ensureTodayNotice().catch(() => {});
+    await runAlarmSweep().catch(() => {});
+  };
+  runMinuteJobs();
+  setInterval(runMinuteJobs, 60 * 1000);
 
   // 본문이 비어 있는 것은 이제 정상이다 (읽을 때 withVerseText 가 채운다).
   // 옛 버전이 남긴 "불러오는 중" 같은 껍데기 본문만 비워서 정상 경로를 타게 한다.
@@ -1177,21 +1248,13 @@ async function startServer() {
   app.get("/api/notices/today", async (req: Request, res: Response) => {
     // Find notice for today, or get the latest notice in KST (Korea Standard Time)
     const todayStr = getKSTDateString();
-    let notice = db.notices.find(n => n.date === todayStr);
-    
-    if (!notice && db.biblePlan?.active && db.biblePlan.lastUpdatedDate !== todayStr) {
-      try {
-        const autoNotice = await autoPostNextBibleChapter(todayStr);
-        if (autoNotice) {
-          notice = autoNotice;
-        }
-      } catch (err) {
-        console.error("Auto post error in today API:", err);
-      }
-    }
+
+    // 보통은 자정에 1분 타이머가 이미 만들어 둔다.
+    // 서버가 자고 있었으면 여기서 만든다 (같은 날 두 번 만들지 않도록 안에서 잠근다).
+    let notice = db.notices.find(n => n.date === todayStr) || (await ensureTodayNotice()) || undefined;
 
     if (!notice && db.notices.length > 0) {
-      // 미리 만들어 둔 내일 공지가 오늘 먼저 보이지 않도록 오늘 이전 것 중에서 고른다
+      // 앞날 날짜가 섞여 있어도 오늘 것보다 앞선 공지가 보이지 않게 한다
       const past = db.notices.filter(n => n.date <= todayStr);
       notice = (past.length > 0 ? past : db.notices)
         .slice()
@@ -1201,12 +1264,6 @@ async function startServer() {
     // 성경 본문은 저장하지 않고 내보낼 때 채운다.
     // (예전에는 짧은 본문을 발견하면 DB 에 덮어써 저장했는데, 그게 문서를 키우던 원인 중 하나였다)
     res.json(notice ? withVerseText(notice) : null);
-
-    // 응답을 먼저 보낸 뒤, 내일 공지를 미리 만들어 둔다.
-    // 새벽에 제일 먼저 앱을 여신 분이 생성까지 기다리지 않도록 부담을 앞당겨 분산한다.
-    prepareTomorrowNotice(todayStr).catch((err) =>
-      console.warn("[성경 플래너] 내일 공지 미리 준비 실패:", err)
-    );
   });
 
   // --- Bible Plan Settings APIs ---
@@ -1222,12 +1279,17 @@ async function startServer() {
 
     // 그 책에 없는 장을 넣으면 다음 권으로 넘겨 잡아준다 (없는 장이 공지되는 것 방지)
     const fixed = normalizePlanPosition(book.trim(), Number(currentChapter) || 1);
+    const prev = db.biblePlan;
+    const moved = !prev || prev.book !== fixed.book || prev.currentChapter !== fixed.chapter;
 
     db.biblePlan = {
       book: fixed.book,
       currentChapter: fixed.chapter,
       active: !!active,
-      lastUpdatedDate: db.biblePlan?.lastUpdatedDate
+      // 관리자가 위치를 옮겼으면 '아직 이 자리에서 공지한 적 없음' 상태로 되돌린다.
+      // 그래야 공지 이력에 따른 자동 보정이 관리자의 지정을 덮어쓰지 않는다.
+      lastUpdatedDate: moved ? undefined : prev?.lastUpdatedDate,
+      updatedAt: new Date().toISOString()
     };
 
     saveDb(db);
@@ -1959,15 +2021,16 @@ JSON format:
   // --- Daily Alarm/Push-sim Configs API ---
 
   /**
-   * 시간 알림 점검을 밖에서 깨우는 통로.
+   * 밖에서 서버를 깨우는 통로. 시간 알림과 오늘 말씀 공지를 함께 점검한다.
    * Cloud Run 은 아무도 안 쓰면 잠들어서 서버 안의 1분 타이머가 멈춘다.
-   * Cloud Scheduler 로 몇 분마다 이 주소를 두드리면 알림이 제때 나간다.
-   * 하루 한 번만 나가도록 막혀 있어 여러 번 불려도 안전하다.
+   * Cloud Scheduler 로 몇 분마다 이 주소를 두드리면 자정 넘김과 알림이 제때 이뤄진다.
+   * 둘 다 하루 한 번만 하도록 막혀 있어 여러 번 불려도 안전하다.
    * (아래 "/api/alarms/:userId" 보다 반드시 먼저 등록해야 tick 이 사용자 ID 로 잡히지 않는다)
    */
   app.all("/api/alarms/tick", async (req: Request, res: Response) => {
+    const notice = await ensureTodayNotice();
     const sent = await runAlarmSweep();
-    res.json({ ok: true, sent });
+    res.json({ ok: true, sent, notice: notice ? notice.verseTitle : null });
   });
 
   app.get("/api/alarms/:userId", (req: Request, res: Response) => {

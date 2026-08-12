@@ -5,6 +5,7 @@ import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
+import { buildVerseReference } from "../lib/verseRef";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
 
@@ -715,14 +716,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       onClick={() => {
                         // 고른 구절이 있으면 그것만, 없으면 본문 앞부분을 넘긴다
                         const picked = buildPickedText();
-                        const refs =
-                          pickedVerses.size > 0
-                            ? `${result.reference.replace(/\s*\d+장$/, "")} ${[...pickedVerses.keys()]
-                                .sort((a, b) => Number(a) - Number(b))
-                                .join(",")}절`
-                            : result.reference;
+                        // 장까지 함께 남긴다 ("마가복음 1장 3,5절")
+                        const refs = buildVerseReference(result.reference, pickedVerses.keys());
                         onSelectVerseForMeditation(
-                          pickedVerses.size > 0 ? refs : result.reference,
+                          refs,
                           // 지금 보고 있는 번역본을 그대로 넘긴다
                           picked || (versionPanes[0]?.text || result.text).slice(0, 200)
                         );

@@ -6,6 +6,7 @@ import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
+import { buildVerseReference } from "../lib/verseRef";
 
 
 interface DailyNoticeProps {
@@ -569,12 +570,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                       type="button"
                       onClick={() => {
                         const picked = buildPickedText();
-                        const ref =
-                          pickedVerses.size > 0
-                            ? `${notice.verseTitle.replace(/\s*\d+장$/, "")} ${[...pickedVerses.keys()]
-                                .sort((a, b) => Number(a) - Number(b))
-                                .join(",")}절`
-                            : notice.verseTitle;
+                        // 장까지 함께 남긴다 ("마가복음 1장 3,5절")
+                        const ref = buildVerseReference(notice.verseTitle, pickedVerses.keys());
                         // 지금 보고 있는 번역본을 그대로 넘긴다
                         onSelectVerseForMeditation(
                           ref,
