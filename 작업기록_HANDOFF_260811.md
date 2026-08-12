@@ -150,11 +150,50 @@ Cloud Scheduler 는 작업 3개까지 무료, 호출량도 Cloud Run 무료 한�
 
 ---
 
+## 5-2. 추가 작업 (2026-08-12)
+
+### ⑤ 구절명에 장이 빠지던 문제
+고른 절로 묵상을 쓰면 `마가복음 3,5절` 처럼 **장이 사라졌다.**
+어느 장인지 모를 뿐 아니라 다시 읽을 때 **3장으로 잘못 해석**된다.
+→ `src/lib/verseRef.ts` 신규. 이제 `마가복음 1장 3,5절`.
+`요한복음 3:16` 같은 형태도 `요한복음 3장` 으로 정규화한다. 시편은 `편` 유지.
+
+### ⑥ 오늘 말씀 공지가 제대로 안 넘어가던 문제 🔥
+실제 이력: 요한복음 2장이 **3일 연속**(08-07·08-07·08-08), 08-13 공지가 **08-11과 같은 2장**.
+
+**원인 세 가지**
+1. 동기화가 통독 진도를 **원격 값으로 무조건 덮어썼다** → 방금 넘긴 진도가 되돌아감
+2. 공지 생성에 잠금이 없어 **같은 날 공지가 두 개** 생김 (동시 요청)
+3. **내일 공지를 미리 만드는 구조** → 되돌아간 진도로 만든 앞날 공지가 그대로 남음
+
+**수정**
+- `biblePlan.updatedAt` 추가 + `pickNewerPlan()` — 합칠 때 더 최근 것을 남긴다
+- `positionForNotice()` — 진도가 이미 지나온 자리를 가리키면 **공지 이력 기준으로 자가 교정**.
+  단, 관리자가 방금 지정했으면(`lastUpdatedDate` 없음) 그대로 따른다
+- `ensureTodayNotice()` — 하루 한 건 잠금 + **앞날 자동 공지 정리**
+- `prepareTomorrowNotice` / `nextDayStr` 제거 — 앞날 공지를 더는 만들지 않는다
+- 1분 타이머와 `/api/alarms/tick` 에서 오늘 공지를 확인 → **자정에 자동으로 다음 장**
+
+⚠️ **관리자가 진도를 옮기면 `lastUpdatedDate` 를 지운다.** 이 값이 "이 자리에서 이미 공지했다"는
+표시라서, 안 지우면 자가 교정이 관리자의 지정을 덮어쓴다.
+
+**격리 사본 검증 5가지 전부 통과**
+평소 진행 / 진도 되돌아감 자가교정 / 책 끝 → 다음 권 1장 / 관리자 지정 존중 / 통독 꺼짐.
+두 번 두드려도 공지는 하나만 생긴다.
+
+**정리한 프로덕션 데이터**
+- `2026-08-13 마가복음 2장` 공지 삭제 (코드가 자동으로 걷어냄)
+- 진도를 `마가복음 4장` 으로 지정 → 08-13 자정에 4장이 나간다
+
+> 참고: **공지 삭제 API 가 없다.** 그래서 이번엔 코드가 스스로 걷어내게 했다.
+> 앞으로 공지를 지워야 할 일이 생기면 관리자용 DELETE 라우트를 만들어야 한다.
+
 ## 6. 만진 파일
 
 | 파일 | 내용 |
 |---|---|
-| `server.ts` | `getKSTClock`, `DEFAULT_ALARM`, `runAlarmSweep`, `/api/alarms/tick`, 푸시 주소에 `?tab=` |
+| `server.ts` | `getKSTClock`, `DEFAULT_ALARM`, `runAlarmSweep`, `/api/alarms/tick`, 푸시 주소에 `?tab=`,<br>`pickNewerPlan`, `positionForNotice`, `ensureTodayNotice`, `parseChapterTitle`, `lastAutoNoticePosition` |
+| `src/lib/verseRef.ts` | **신규** — 장을 포함한 구절명 만들기 |
 | `public/sw.js` | `notificationclick` 재작성 (`askToOpenTab`) |
 | `src/App.tsx` | `tabFromUrl`, 서비스워커 메시지 수신 |
 | `src/types.ts` | `AlarmConfig.lastFiredDate` |
