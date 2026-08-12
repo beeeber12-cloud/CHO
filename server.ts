@@ -918,6 +918,20 @@ async function ensureTodayNotice(): Promise<Notice | null> {
   if (!db.biblePlan?.active) return null;
 
   const today = getKSTDateString();
+
+  // 예전에는 내일 공지를 하루 앞서 만들어 뒀는데, 그때 진도가 되돌아가 있으면
+  // 어제 장으로 돌아간 앞날 공지가 남았다. 이제 앞날 공지는 만들지 않으므로
+  // 그 시절에 잘못 만들어진 것은 여기서 걷어낸다.
+  // (관리자가 직접 예약해 둔 공지는 createdBy 가 달라 건드리지 않는다)
+  const stale = db.notices.filter((n) => n.date > today && n.createdBy === "성경 플래너(자동)");
+  if (stale.length > 0) {
+    const ids = new Set(stale.map((n) => n.id));
+    db.notices = db.notices.filter((n) => !ids.has(n.id));
+    console.log(`[성경 플래너] 앞날로 잘못 만들어진 공지 ${stale.length}건 정리: ` +
+      stale.map((n) => `${n.date} ${n.verseTitle}`).join(", "));
+    saveDb(db);
+  }
+
   const existing = db.notices.find((n) => n.date === today);
   if (existing) return existing;
 
