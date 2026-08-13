@@ -3,13 +3,20 @@ import { User, GratitudeNote } from "../types";
 import { Heart, MessageSquare, Send, Trash2, Sparkles, UserCheck, EyeOff, Calendar, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactionBar from "./ReactionBar";
+import MentionText from "./MentionText";
+import MentionPicker from "./MentionPicker";
+import { appendMention } from "../lib/mentions";
 import { subscribeToDataChanges } from "../lib/revision";
 
 interface DailyGratitudeProps {
   currentUser: Omit<User, 'pin' | 'createdAt'>;
+  /** "@이름" 으로 부를 수 있는 지체 목록 */
+  allUsers?: { id: string; name: string; role: string }[];
 }
 
-export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
+export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGratitudeProps) {
+  const memberNames = allUsers.map((u) => u.name);
+  const otherMemberNames = allUsers.filter((u) => u.id !== currentUser.id).map((u) => u.name);
   const [gratitudes, setGratitudes] = useState<GratitudeNote[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showForm, setShowForm] = useState<boolean>(false);
@@ -426,7 +433,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
 
                 {/* Content */}
                 <div className="bg-[#F5F5F5] rounded-3xl p-3.5 mb-3 text-xs sm:text-sm text-[#0C3B2E] font-medium leading-relaxed shadow-inner">
-                  &ldquo;{grat.content}&rdquo;
+                  <MentionText text={`“${grat.content}”`} names={memberNames} className="whitespace-pre-line" />
                 </div>
 
                 {/* Footer Actions */}
@@ -486,7 +493,7 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                                       {new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </div>
-                                  <p className="text-[#4A6B57] leading-relaxed">{comment.content}</p>
+                                  <MentionText text={comment.content} names={memberNames} className="text-[#4A6B57] leading-relaxed whitespace-pre-line" />
                                 </div>
 
                                 {canDeleteComment && (
@@ -508,24 +515,31 @@ export default function DailyGratitude({ currentUser }: DailyGratitudeProps) {
                       )}
 
                       {/* Comment Input */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <input
-                          type="text"
-                          value={commentInput}
-                          onChange={(e) => setCommentInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleAddComment(grat.id);
-                          }}
-                          placeholder="따뜻한 축하와 위로의 댓글을 남겨보세요..."
-                          className="flex-1 px-3 py-2 text-xs bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={commentInput}
+                            onChange={(e) => setCommentInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleAddComment(grat.id);
+                            }}
+                            placeholder="따뜻한 축하와 위로의 댓글을 남겨보세요..."
+                            className="flex-1 px-3 py-2 text-xs bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] bg-white text-[#14261E]"
+                          />
+                          <button
+                            onClick={() => handleAddComment(grat.id)}
+                            disabled={submittingComment || !commentInput.trim()}
+                            className="p-2 bg-[#4A6B57] hover:bg-[#072A20] text-white rounded-3xl disabled:opacity-50 transition cursor-pointer"
+                          >
+                            <Send size={14} />
+                          </button>
+                        </div>
+                        <MentionPicker
+                          names={otherMemberNames}
+                          onPick={(name) => setCommentInput((prev) => appendMention(prev, name))}
+                          compact
                         />
-                        <button
-                          onClick={() => handleAddComment(grat.id)}
-                          disabled={submittingComment || !commentInput.trim()}
-                          className="p-2 bg-[#4A6B57] hover:bg-[#072A20] text-white rounded-3xl disabled:opacity-50 transition cursor-pointer"
-                        >
-                          <Send size={14} />
-                        </button>
                       </div>
                     </motion.div>
                   )}

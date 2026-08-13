@@ -4,6 +4,10 @@ import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Cloc
 import { motion, AnimatePresence } from "motion/react";
 import { enablePush, isPushEnabled } from "../lib/push";
 import ReactionBar from "./ReactionBar";
+import CollapsibleText from "./CollapsibleText";
+import MentionText from "./MentionText";
+import MentionPicker from "./MentionPicker";
+import { appendMention } from "../lib/mentions";
 import { subscribeToDataChanges } from "../lib/revision";
 
 
@@ -59,6 +63,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   // Comments state - maps meditationId to its current comment input string
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+
+  // "@이름" 으로 부를 수 있는 지체들
+  const memberNames = allUsers.map((u) => u.name);
+  const otherMemberNames = allUsers.filter((u) => u.id !== currentUser.id).map((u) => u.name);
 
   // Filter state
   const [selectedUserFilter, setSelectedUserFilter] = useState<string>("");
@@ -605,7 +613,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
               </div>
 
-              <div>
+              <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-[#6F8377] mb-1">묵상 고백 및 나누고 싶은 내용</label>
                 <textarea
                   required
@@ -614,6 +622,11 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="말씀을 묵상하며 깨달은 생각, 삶의 적용, 소그룹 식구들과 나누고픈 은혜를 정성스럽게 적어보세요..."
                   className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                />
+                <MentionPicker
+                  names={otherMemberNames}
+                  onPick={(name) => setContent((prev) => appendMention(prev, name))}
+                  compact
                 />
               </div>
 
@@ -741,19 +754,30 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   )}
                 </div>
 
-                {/* Content body (제목 없이 본문만) */}
-                <p className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
-                  {med.content}
-                </p>
+                {/* Content body (제목 없이 본문만).
+                    긴 글은 접어 둔다 — 안 그러면 다음 지체 묵상까지 한참 내려가야 한다. */}
+                <div className="bg-[#F0F0F0] p-4 rounded-3xl">
+                  <CollapsibleText fadeColor="#F0F0F0">
+                    <MentionText
+                      text={med.content}
+                      names={memberNames}
+                      className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line"
+                    />
+                  </CollapsibleText>
+                </div>
 
 
                 {/* 기도제목 */}
                 {med.prayer && (
                   <div className="bg-[#F5F5F5] rounded-3xl p-4 text-xs space-y-2">
                     <span className="font-bold text-[#0C3B2E] block">🙏 이번 주 동역자 기도제목</span>
-                    <p className="text-[#4A6B57] leading-relaxed font-medium italic">
-                      &quot;{med.prayer}&quot;
-                    </p>
+                    <CollapsibleText collapsedHeight={110} fadeColor="#F5F5F5">
+                      <MentionText
+                        text={`"${med.prayer}"`}
+                        names={memberNames}
+                        className="text-[#4A6B57] leading-relaxed font-medium italic whitespace-pre-line"
+                      />
+                    </CollapsibleText>
 
                     {/* 글쓴이에게만: 몇 명이 함께 기도했는지 */}
                     {isMyMed && (med.reactions?.pray?.length || 0) > 0 && (
@@ -808,9 +832,11 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                                     {new Date(comment.createdAt).toLocaleDateString()}
                                   </span>
                                 </div>
-                                <p className="text-[#4A6B57] leading-relaxed font-medium">
-                                  {comment.content}
-                                </p>
+                                <MentionText
+                                  text={comment.content}
+                                  names={memberNames}
+                                  className="text-[#4A6B57] leading-relaxed font-medium whitespace-pre-line"
+                                />
                               </div>
 
                               {isMyComment && (
@@ -833,20 +859,32 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     )}
 
                     {/* New comment input */}
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={commentInputs[med.id] || ""}
-                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
-                        placeholder="은혜로운 지지와 나눔의 말을 기입하세요..."
-                        className="flex-1 text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={commentInputs[med.id] || ""}
+                          onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
+                          placeholder="은혜로운 지지와 나눔의 말을 기입하세요..."
+                          className="flex-1 text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                        />
+                        <button
+                          onClick={() => handleAddComment(med.id)}
+                          className="px-3 bg-[#4A6B57] hover:bg-[#072A20] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
+                        >
+                          <Send size={12} />
+                        </button>
+                      </div>
+                      <MentionPicker
+                        names={otherMemberNames}
+                        onPick={(name) =>
+                          setCommentInputs((prev) => ({
+                            ...prev,
+                            [med.id]: appendMention(prev[med.id] || "", name)
+                          }))
+                        }
+                        compact
                       />
-                      <button
-                        onClick={() => handleAddComment(med.id)}
-                        className="px-3 bg-[#4A6B57] hover:bg-[#072A20] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
-                      >
-                        <Send size={12} />
-                      </button>
                     </div>
                   </div>
                 )}

@@ -557,34 +557,47 @@ interface PushPayload {
 }
 
 /**
+ * 한 건이 오래 걸려도 화면이 멈추지 않도록 두는 상한.
+ * 여기서 끊겨도 이미 보낸 것은 그대로 도착한다.
+ */
+const PUSH_SEND_TIMEOUT_MS = 4000;
+
+/**
  * 지정한 사용자들에게 푸시를 보낸다.
  * - 발신 본인은 제외(excludeUserId)
  * - 만료된 구독(404/410)은 조용히 정리한다. 안 그러면 죽은 구독이 계속 쌓인다.
+ *
+ * ⚠️ 이 함수는 **응답을 내보내기 전에 await 해야 한다.**
+ * Cloud Run 은 응답이 끝나면 그 인스턴스의 CPU 를 거의 0 으로 줄인다.
+ * 예전처럼 `res.json()` 뒤에 던져두면 전송이 시작만 되고 끝나지 않아
+ * 알림이 조용히 사라진다. (테스트 알림만 되던 이유가 이것이다 — 그것만 await 했다)
  */
 async function sendPushToUsers(
   userIds: string[],
   payload: PushPayload,
   excludeUserId?: string
-): Promise<void> {
-  if (!pushReady) return;
-  if (!db.pushSubscriptions || db.pushSubscriptions.length === 0) return;
+): Promise<number> {
+  if (!pushReady) return 0;
+  if (!db.pushSubscriptions || db.pushSubscriptions.length === 0) return 0;
 
   const targets = new Set(userIds.filter((id) => id && id !== excludeUserId));
-  if (targets.size === 0) return;
+  if (targets.size === 0) return 0;
 
   const subs = db.pushSubscriptions.filter((s) => targets.has(s.userId));
-  if (subs.length === 0) return;
+  if (subs.length === 0) return 0;
 
   const body = JSON.stringify(payload);
   const dead: string[] = [];
+  let sent = 0;
 
-  await Promise.all(
+  const work = Promise.all(
     subs.map(async (s) => {
       try {
         await webpush.sendNotification(
           { endpoint: s.endpoint, keys: s.keys } as any,
           body
         );
+        sent++;
       } catch (err: any) {
         const code = err?.statusCode;
         if (code === 404 || code === 410) {
@@ -596,6 +609,11 @@ async function sendPushToUsers(
     })
   );
 
+  await Promise.race([
+    work,
+    new Promise((resolve) => setTimeout(resolve, PUSH_SEND_TIMEOUT_MS))
+  ]);
+
   if (dead.length > 0) {
     db.pushSubscriptions = (db.pushSubscriptions || []).filter(
       (s) => !dead.includes(s.endpoint)
@@ -603,11 +621,54 @@ async function sendPushToUsers(
     saveDb(db);
     console.log(`[Push] 만료된 구독 ${dead.length}건 정리`);
   }
+
+  console.log(`[Push] "${payload.title}" 대상 ${subs.length}대 / 성공 ${sent}대`);
+  return sent;
 }
 
 /** 전체 교인에게 (발신자 제외) */
-async function pushToEveryone(payload: PushPayload, excludeUserId?: string) {
-  await sendPushToUsers((db.users || []).map((u) => u.id), payload, excludeUserId);
+async function pushToEveryone(payload: PushPayload, excludeUserId?: string): Promise<number> {
+  return sendPushToUsers((db.users || []).map((u) => u.id), payload, excludeUserId);
+}
+
+/**
+ * 글 안에서 "@이름" 으로 부른 사람을 찾는다.
+ * 이름에 괄호가 붙은 경우("관리자(목사님)")는 괄호 앞부분만 써도 찾아준다.
+ */
+function findMentionedUserIds(text: string, excludeUserId?: string): string[] {
+  if (!text || !text.includes("@")) return [];
+  const found = new Set<string>();
+  for (const u of db.users || []) {
+    if (!u.name || u.id === excludeUserId) continue;
+    const short = u.name.replace(/\s*\(.*\)\s*$/, "").trim();
+    if (text.includes("@" + u.name) || (short.length >= 2 && text.includes("@" + short))) {
+      found.add(u.id);
+    }
+  }
+  return [...found];
+}
+
+/**
+ * "@이름" 으로 불린 사람에게 알린다.
+ * 같은 글에서 다른 알림(댓글·새 묵상)도 받는 사람은 여기서 빼서 두 번 울리지 않게 한다.
+ */
+async function pushMentions(
+  text: string,
+  fromUserName: string,
+  where: string,
+  url: string,
+  tag: string,
+  excludeUserIds: string[] = []
+): Promise<number> {
+  const skip = new Set(excludeUserIds);
+  const targets = findMentionedUserIds(text).filter((id) => !skip.has(id));
+  if (targets.length === 0) return 0;
+  return sendPushToUsers(targets, {
+    title: `📣 ${fromUserName} 님이 나를 불렀어요`,
+    body: `${where} · ${text.replace(/\s+/g, " ").slice(0, 60)}`,
+    url,
+    tag
+  });
 }
 
 // ── 아침 묵상 시간 알림 ──────────────────────────────────
@@ -1311,6 +1372,27 @@ async function startServer() {
   });
 
   // ── 웹 푸시 구독 관리 ──────────────────────────────────────
+
+  /**
+   * 누가 알림을 켜 뒀는지 한눈에 보는 진단용.
+   * "알림이 안 와요" 의 대부분은 그 사람이 아직 안 켠 경우라서, 눈으로 확인할 길이 필요하다.
+   * 구독 키는 절대 내보내지 않는다.
+   */
+  app.get("/api/push/status", (req: Request, res: Response) => {
+    const subs = db.pushSubscriptions || [];
+    const byUser = new Map<string, number>();
+    for (const s of subs) byUser.set(s.userId, (byUser.get(s.userId) || 0) + 1);
+
+    res.json({
+      pushReady,
+      totalDevices: subs.length,
+      users: (db.users || []).map((u) => ({
+        name: u.name,
+        devices: byUser.get(u.id) || 0
+      }))
+    });
+  });
+
   app.get("/api/push/public-key", (req: Request, res: Response) => {
     const key = getVapidPublicKey();
     if (!key) return res.status(503).json({ error: "푸시 설정이 아직 준비되지 않았습니다." });
@@ -1369,7 +1451,7 @@ async function startServer() {
     res.json({ success: true, devices: mine.length });
   });
 
-  app.post("/api/notices/create", (req: Request, res: Response) => {
+  app.post("/api/notices/create", async (req: Request, res: Response) => {
     const { verseTitle, verseText, content, createdBy, noticeId } = req.body;
     if (!verseTitle || !verseText) {
       return res.status(400).json({ error: "성경 구절 제목과 본문을 입력해주세요." });
@@ -1406,14 +1488,16 @@ async function startServer() {
     // Prepend to show latest first
     db.notices.unshift(newNotice);
     saveDb(db);
-    res.json(newNotice);
 
-    pushToEveryone({
+    // ⚠️ 알림은 응답을 보내기 전에 끝내야 한다 (§ sendPushToUsers 주석 참고)
+    await pushToEveryone({
       title: "📖 오늘의 말씀이 올라왔어요",
       body: verseTitle,
       url: "/?tab=notice",
       tag: "notice"
-    }).catch((e) => console.warn("[Push] 공지 알림 실패:", e));
+    }).catch((e) => { console.warn("[Push] 공지 알림 실패:", e); return 0; });
+
+    res.json(newNotice);
   });
 
   app.post("/api/notices/:id/read", (req: Request, res: Response) => {
@@ -1519,7 +1603,7 @@ async function startServer() {
   });
 
 
-  app.post("/api/meditations/create", (req: Request, res: Response) => {
+  app.post("/api/meditations/create", async (req: Request, res: Response) => {
     const { userId, userName, verseTitle, title, content, prayer, meditationId, sokId } = req.body;
     if (!userId || !userName || !verseTitle || !title || !content) {
       return res.status(400).json({ error: "필수 정보(구절, 제목, 본문)를 누락하였습니다." });
@@ -1561,23 +1645,37 @@ async function startServer() {
 
     db.meditations.unshift(newMed);
     saveDb(db);
-    res.json(newMed);
 
     // 속 나눔이면 그 속 식구에게만, 전체 공유면 모두에게
     const audience = newMed.sokId
       ? (db.sokGroups || []).find((s) => s.id === newMed.sokId)?.memberUserIds || []
       : (db.users || []).map((u) => u.id);
 
-    sendPushToUsers(
-      audience,
-      {
-        title: "📖 새 묵상이 올라왔어요",
-        body: `${userName} 님 · ${title}`,
-        url: "/?tab=feed",
-        tag: "meditation"
-      },
-      userId
-    ).catch((e) => console.warn("[Push] 묵상 알림 실패:", e));
+    try {
+      await sendPushToUsers(
+        audience,
+        {
+          title: "📖 새 묵상이 올라왔어요",
+          body: `${userName} 님 · ${title}`,
+          url: "/?tab=feed",
+          tag: "meditation"
+        },
+        userId
+      );
+      // "@이름" 으로 부른 사람에게 따로 한 번 더 (위 알림을 이미 받은 사람은 뺀다)
+      await pushMentions(
+        `${title}\n${content}\n${prayer || ""}`,
+        userName,
+        "묵상 나눔",
+        "/?tab=feed",
+        "mention-" + newMed.id,
+        [userId, ...audience]
+      );
+    } catch (e) {
+      console.warn("[Push] 묵상 알림 실패:", e);
+    }
+
+    res.json(newMed);
   });
 
   app.delete("/api/meditations/:id", (req: Request, res: Response) => {
@@ -1623,7 +1721,7 @@ async function startServer() {
   });
 
   /** 반응 토글 (🙏 기도할게요 / 🤍 은혜받았어요 / 👏 축하해요) */
-  app.post("/api/meditations/:id/react", (req: Request, res: Response) => {
+  app.post("/api/meditations/:id/react", async (req: Request, res: Response) => {
     const { id } = req.params;
     const { userId, type } = req.body;
     if (!userId || !VALID_REACTIONS.includes(type)) {
@@ -1642,7 +1740,6 @@ async function startServer() {
     med.reactions[type as ReactionType] = list;
 
     saveDb(db);
-    res.json(med);
 
     if (added) {
       const label = REACTION_LABEL[type as ReactionType];
@@ -1656,7 +1753,7 @@ async function startServer() {
             : `${who} 님이 당신을 위해 기도하고 있어요`
           : `${who} 님이 내 묵상에 반응했어요`;
 
-      sendPushToUsers(
+      await sendPushToUsers(
         [med.userId],
         {
           title: `${label.emoji} ${label.text}`,
@@ -1665,11 +1762,13 @@ async function startServer() {
           tag: "react-" + med.id
         },
         userId
-      ).catch(() => {});
+      ).catch(() => 0);
     }
+
+    res.json(med);
   });
 
-  app.post("/api/meditations/:id/comment", (req: Request, res: Response) => {
+  app.post("/api/meditations/:id/comment", async (req: Request, res: Response) => {
     const { id } = req.params;
     const { userId, userName, content } = req.body;
 
@@ -1692,20 +1791,30 @@ async function startServer() {
 
     med.comments.push(newComment);
     saveDb(db);
-    res.json(med);
 
     // 글쓴이 + 먼저 댓글 단 사람들에게 (본인 제외)
     const participants = new Set<string>([med.userId, ...med.comments.map((c) => c.userId)]);
-    sendPushToUsers(
-      [...participants],
-      {
-        title: "💬 내 묵상에 댓글이 달렸어요",
-        body: `${userName} : ${content.slice(0, 60)}`,
-        url: "/?tab=feed",
-        tag: "comment-" + med.id
-      },
-      userId
-    ).catch((e) => console.warn("[Push] 댓글 알림 실패:", e));
+    try {
+      await sendPushToUsers(
+        [...participants],
+        {
+          // 글쓴이 본인과 그 밖의 참여자가 같은 문구를 받으므로 두루 맞는 표현으로 둔다
+          title: med.userId === userId ? "💬 묵상에 댓글이 달렸어요" : "💬 내 묵상에 댓글이 달렸어요",
+          body: `${userName} : ${content.slice(0, 60)}`,
+          url: "/?tab=feed",
+          tag: "comment-" + med.id
+        },
+        userId
+      );
+      await pushMentions(content, userName, "묵상 댓글", "/?tab=feed", "mention-" + newComment.id, [
+        userId,
+        ...participants
+      ]);
+    } catch (e) {
+      console.warn("[Push] 댓글 알림 실패:", e);
+    }
+
+    res.json(med);
   });
 
   app.delete("/api/meditations/:id/comment/:commentId", (req: Request, res: Response) => {
@@ -2253,7 +2362,7 @@ JSON format:
     res.json(sorted);
   });
 
-  app.post("/api/gratitudes/create", (req: Request, res: Response) => {
+  app.post("/api/gratitudes/create", async (req: Request, res: Response) => {
     const { userId, userName, isAnonymous, content, date, gratitudeId } = req.body;
     if (!userId || !userName || !content || !content.trim()) {
       return res.status(400).json({ error: "감사 나눔 내용을 입력해주세요." });
@@ -2294,9 +2403,8 @@ JSON format:
 
     db.gratitudes.unshift(newGratitude);
     saveDb(db);
-    res.json(newGratitude);
 
-    pushToEveryone(
+    await pushToEveryone(
       {
         title: "🤍 새로운 감사 나눔",
         body: `${newGratitude.isAnonymous ? "익명" : userName} : ${newGratitude.content.slice(0, 60)}`,
@@ -2304,7 +2412,9 @@ JSON format:
         tag: "gratitude"
       },
       userId
-    ).catch((e) => console.warn("[Push] 감사 알림 실패:", e));
+    ).catch((e) => { console.warn("[Push] 감사 알림 실패:", e); return 0; });
+
+    res.json(newGratitude);
   });
 
   app.delete("/api/gratitudes/:id", (req: Request, res: Response) => {
@@ -2353,7 +2463,7 @@ JSON format:
   });
 
   /** 감사 글 반응 토글 */
-  app.post("/api/gratitudes/:id/react", (req: Request, res: Response) => {
+  app.post("/api/gratitudes/:id/react", async (req: Request, res: Response) => {
     const { id } = req.params;
     const { userId, type } = req.body;
     if (!userId || !VALID_REACTIONS.includes(type)) {
@@ -2373,12 +2483,11 @@ JSON format:
     grat.reactions[type as ReactionType] = list;
 
     saveDb(db);
-    res.json(grat);
 
     if (added) {
       const label = REACTION_LABEL[type as ReactionType];
       const who = (db.users || []).find((u) => u.id === userId)?.name || "누군가";
-      sendPushToUsers(
+      await sendPushToUsers(
         [grat.userId],
         {
           title: `${label.emoji} ${label.text}`,
@@ -2387,11 +2496,13 @@ JSON format:
           tag: "greact-" + grat.id
         },
         userId
-      ).catch(() => {});
+      ).catch(() => 0);
     }
+
+    res.json(grat);
   });
 
-  app.post("/api/gratitudes/:id/comment", (req: Request, res: Response) => {
+  app.post("/api/gratitudes/:id/comment", async (req: Request, res: Response) => {
     const { id } = req.params;
     const { userId, userName, content } = req.body;
 
@@ -2415,19 +2526,32 @@ JSON format:
 
     grat.comments.push(newComment);
     saveDb(db);
-    res.json(grat);
 
     const participants = new Set<string>([grat.userId, ...grat.comments.map((c) => c.userId)]);
-    sendPushToUsers(
-      [...participants],
-      {
-        title: "💬 감사 나눔에 댓글이 달렸어요",
-        body: `${userName} : ${newComment.content.slice(0, 60)}`,
-        url: "/?tab=gratitude",
-        tag: "grat-comment-" + grat.id
-      },
-      userId
-    ).catch((e) => console.warn("[Push] 감사 댓글 알림 실패:", e));
+    try {
+      await sendPushToUsers(
+        [...participants],
+        {
+          title: "💬 감사 나눔에 댓글이 달렸어요",
+          body: `${userName} : ${newComment.content.slice(0, 60)}`,
+          url: "/?tab=gratitude",
+          tag: "grat-comment-" + grat.id
+        },
+        userId
+      );
+      await pushMentions(
+        newComment.content,
+        userName,
+        "감사 나눔 댓글",
+        "/?tab=gratitude",
+        "mention-" + newComment.id,
+        [userId, ...participants]
+      );
+    } catch (e) {
+      console.warn("[Push] 감사 댓글 알림 실패:", e);
+    }
+
+    res.json(grat);
   });
 
   app.delete("/api/gratitudes/:id/comment/:commentId", (req: Request, res: Response) => {

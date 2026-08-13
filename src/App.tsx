@@ -315,7 +315,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
               >
-                <DailyGratitude currentUser={currentUser} />
+                <DailyGratitude currentUser={currentUser} allUsers={allUsers} />
               </motion.div>
             )}
 
