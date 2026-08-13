@@ -200,3 +200,47 @@ Cloud Scheduler 는 작업 3개까지 무료, 호출량도 Cloud Run 무료 한�
 | `src/components/ReactionBar.tsx` | 누른 상태 색 |
 | `src/components/MeditationFeed.tsx` | 기도 인원 상자 색 |
 | `src/components/NotificationSettings.tsx` | 시간 아래 안내 문구 |
+
+---
+
+## 7. 추가 작업 (2026-08-13)
+
+### 🔥 알림이 거의 안 가던 진짜 원인 — Cloud Run 의 CPU 조이기
+푸시를 `res.json()` **뒤에** 던져두고 기다리지 않았다.
+Cloud Run 은 응답이 끝나면 그 인스턴스의 CPU 를 거의 0 으로 줄인다.
+그래서 전송이 **시작만 되고 끝나지 않아** 알림이 조용히 사라졌다.
+
+> 테스트 알림만 되던 이유가 이것이다 — 그것 하나만 `await` 하고 있었다.
+
+**수정:** 새 공지 / 새 묵상 / 묵상 댓글·반응 / 감사 나눔·댓글·반응 **전부 응답 전에 await**.
+한 건이 오래 걸려도 화면이 멈추지 않게 `PUSH_SEND_TIMEOUT_MS = 4000` 상한.
+
+⚠️ **앞으로 절대 `res.json()` 뒤에 비동기 작업을 던져두지 말 것.** 안 끝난다.
+(자정 공지·시간 알림을 1분 타이머 + Cloud Scheduler 로 돌리는 이유도 같다)
+
+### 등록된 기기가 0대였다
+`GET /api/push/status` 를 새로 만들어 확인해 보니 **전 교인 통틀어 구독 0건.**
+코드를 고쳐도 켠 사람이 없으면 아무 알림도 안 간다.
+→ 알림설정에 **지체별 알림 켜짐 현황**(관리자만) 추가. 누가 껐는지 눈으로 확인 가능.
+
+### @이름 부르기
+- 서버 `findMentionedUserIds` / `pushMentions` — 글·댓글에서 `@이름` 을 찾아 알림
+- `관리자(목사님)` 처럼 괄호가 붙은 이름은 `@관리자` 로도 불린다
+- 같은 글에서 다른 알림을 이미 받는 사람은 빼서 **두 번 울리지 않게** 함
+- 화면: `MentionText` 로 강조, `MentionPicker`("지체 부르기")로 이름을 눌러 입력
+  → 어르신께는 자동완성 드롭다운보다 이 방식이 쉽다
+
+### 긴 묵상 접기
+`CollapsibleText` — 윗부분만 보이고 '더 보기'로 편다.
+높이를 **ResizeObserver 로 실제 측정**한다. 글씨 크기 설정을 바꿔도 맞게 동작하고,
+짧은 글에는 버튼이 아예 안 나온다.
+
+### 만진 파일 (추가)
+| 파일 | 내용 |
+|---|---|
+| `server.ts` | `sendPushToUsers` 반환값·타임아웃·로그, `findMentionedUserIds`, `pushMentions`, `/api/push/status`, 모든 푸시 await |
+| `src/components/CollapsibleText.tsx` | **신규** — 긴 글 접기 |
+| `src/components/MentionText.tsx` | **신규** — `@이름` 강조 |
+| `src/components/MentionPicker.tsx` | **신규** — 이름 눌러 넣기 |
+| `src/lib/mentions.ts` | **신규** — 멘션 규칙 (서버와 동일하게 유지할 것) |
+| `src/components/NotificationSettings.tsx` | 알림 켜짐 현황 카드 |
