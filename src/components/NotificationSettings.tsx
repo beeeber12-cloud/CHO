@@ -192,6 +192,112 @@ function PushNotificationCard({ userId }: { userId: string }) {
   );
 }
 
+/**
+ * 누가 알림을 켜 뒀는지 보여주는 표 (관리자만).
+ * "알림이 안 와요" 의 대부분은 그 지체가 아직 안 켠 경우다.
+ * 서버 로그를 볼 수 없으니 화면에서 바로 확인할 수 있어야 한다.
+ */
+function PushStatusCard() {
+  const [status, setStatus] = useState<{
+    pushReady: boolean;
+    totalDevices: number;
+    users: { name: string; devices: number }[];
+  } | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/push/status");
+      if (res.ok) setStatus(await res.json());
+    } catch (err) {
+      console.error("알림 현황을 불러오지 못했습니다:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const on = status?.users.filter((u) => u.devices > 0) || [];
+  const off = status?.users.filter((u) => u.devices === 0) || [];
+
+  return (
+    <div className="border-t border-[#E3E9E2] pt-5 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
+            <Users size={18} />
+          </div>
+          <div>
+            <h3 className="font-bold text-[#0C3B2E] text-base">지체별 알림 켜짐 현황</h3>
+            <p className="text-2xs text-[#6F8377]">
+              알림은 각자 자기 휴대폰에서 켜야 갑니다. 안 켠 지체에게는 어떤 알림도 가지 않습니다.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] px-2 py-1 rounded-xl hover:bg-[#F5F5F5] transition cursor-pointer shrink-0"
+        >
+          새로고침
+        </button>
+      </div>
+
+      {loading && !status ? (
+        <p className="text-2xs text-[#6F8377]">불러오는 중...</p>
+      ) : status ? (
+        <div className="space-y-2.5">
+          <p className="text-xs font-bold text-[#0C3B2E]">
+            {status.totalDevices === 0 ? (
+              <span className="text-[#8F1E17]">
+                아직 아무도 알림을 켜지 않았습니다. 지금은 어떤 알림도 나가지 않습니다.
+              </span>
+            ) : (
+              <>
+                {on.length}명 / {status.users.length}명 켜짐 · 기기 {status.totalDevices}대
+              </>
+            )}
+          </p>
+
+          <div className="flex flex-wrap gap-1.5">
+            {on.map((u) => (
+              <span
+                key={u.name}
+                className="text-2xs font-bold px-2 py-1 rounded-3xl bg-[#E8F0E9] text-[#0C3B2E] ring-1 ring-[#C3D6C6]"
+              >
+                {u.name}
+                {u.devices > 1 && ` (${u.devices}대)`}
+              </span>
+            ))}
+            {off.map((u) => (
+              <span
+                key={u.name}
+                className="text-2xs font-medium px-2 py-1 rounded-3xl bg-[#F5F5F5] text-[#6F8377]"
+              >
+                {u.name} 꺼짐
+              </span>
+            ))}
+          </div>
+
+          {off.length > 0 && (
+            <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F5F5F5] rounded-3xl p-3">
+              꺼진 지체에게는 이렇게 안내해 주세요 —
+              <strong className="text-[#0C3B2E]"> 알림 설정 → 새 글 알림 → 휴대폰 알림 켜기</strong>.
+              아이폰은 사파리 공유 버튼 → 홈 화면에 추가로 <strong className="text-[#0C3B2E]">앱을 설치한 뒤</strong> 켜야 합니다.
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-2xs text-[#6F8377]">현황을 불러오지 못했습니다.</p>
+      )}
+    </div>
+  );
+}
+
 export default function NotificationSettings({ currentUser, onUserUpdate, onAccountDeleted }: NotificationSettingsProps) {
 
   const [config, setConfig] = useState<AlarmConfig | null>(null);
@@ -548,6 +654,9 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
 
       {/* 진짜 푸시 알림 (앱을 닫아둬도 도착) */}
       <PushNotificationCard userId={currentUser.id} />
+
+      {/* 누가 켰고 누가 안 켰는지 — 관리자만 */}
+      {currentUser.role === "admin" && <PushStatusCard />}
 
       {/* Interactive push simulator */}
       <div className="border-t border-[#E3E9E2] pt-5 space-y-3">
