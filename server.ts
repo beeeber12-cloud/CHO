@@ -1604,7 +1604,7 @@ async function startServer() {
 
 
   app.post("/api/meditations/create", async (req: Request, res: Response) => {
-    const { userId, userName, verseTitle, title, verseQuote, content, prayer, meditationId, sokId } = req.body;
+    const { userId, userName, verseTitle, title, content, prayer, meditationId, sokId } = req.body;
     if (!userId || !userName || !verseTitle || !title || !content) {
       return res.status(400).json({ error: "필수 정보(구절, 제목, 본문)를 누락하였습니다." });
     }
@@ -1619,8 +1619,6 @@ async function startServer() {
         db.meditations[idx] = {
           ...db.meditations[idx],
           title,
-          // 골라 온 말씀은 묵상 글과 따로 보관한다 (화면에서 구별해 보여주기 위함)
-          verseQuote: typeof verseQuote === "string" ? verseQuote : db.meditations[idx].verseQuote,
           content,
           prayer: prayer || "",
           sokId: sokId !== undefined ? sokId : db.meditations[idx].sokId
@@ -1637,7 +1635,6 @@ async function startServer() {
       date: getKSTDateString(),
       verseTitle,
       title,
-      verseQuote: typeof verseQuote === "string" ? verseQuote : "",
       content,
       prayer: prayer || "",
       likes: [],

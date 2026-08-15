@@ -721,24 +721,25 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-[#0C3B2E]">{med.title}</h4>
                     {(() => {
-                      // 골라 온 말씀과 내가 쓴 글을 갈라 서로 다르게 보여준다
-                      const { quote, body } =
-                        med.verseQuote !== undefined
-                          ? { quote: med.verseQuote, body: med.content }
-                          : splitLeadingVerses(med.content);
+                      // 상자는 하나 그대로 두고, 앞머리의 골라 온 성경 구절만 굵게
+                      const { quote, body } = splitLeadingVerses(med.content);
                       return (
-                        <>
+                        <div className="bg-[#F0F0F0] p-4 rounded-3xl">
                           {quote && (
-                            <p className="scripture-font whitespace-pre-line text-xs font-bold text-[#0C3B2E] bg-[#EEF3ED] border-l-[3px] border-[#4A6B57] rounded-r-3xl rounded-l-sm px-4 py-3 leading-relaxed">
+                            <p className="text-xs font-bold text-[#0C3B2E] leading-relaxed whitespace-pre-line">
                               {quote}
                             </p>
                           )}
                           {body && (
-                            <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
+                            <p
+                              className={`text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line ${
+                                quote ? "mt-2.5" : ""
+                              }`}
+                            >
                               {body}
                             </p>
                           )}
-                        </>
+                        </div>
                       );
                     })()}
                   </div>
