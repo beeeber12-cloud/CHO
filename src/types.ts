@@ -45,6 +45,12 @@ export interface Meditation {
   date: string; // YYYY-MM-DD
   verseTitle: string; // Which verse this meditation is about
   title: string;
+  /**
+   * 골라 온 성경 구절 본문.
+   * 묵상 글과 따로 두어야 화면에서 다른 색·굵기로 구별해 보여줄 수 있다.
+   * (예전 글은 content 안에 섞여 있어, 보여줄 때 splitLeadingVerses 로 갈라낸다)
+   */
+  verseQuote?: string;
   content: string;
   prayer: string; // Prayer topic/response
   likes: string[]; // (구버전 호환) 기존 '좋아요'. 신규 UI 는 reactions 를 쓴다.

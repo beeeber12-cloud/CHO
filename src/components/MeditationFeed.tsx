@@ -8,7 +8,20 @@ import CollapsibleText from "./CollapsibleText";
 import MentionText from "./MentionText";
 import MentionPicker from "./MentionPicker";
 import { appendMention } from "../lib/mentions";
+import { splitLeadingVerses } from "../lib/verseRef";
 import { subscribeToDataChanges } from "../lib/revision";
+
+/**
+ * 저장된 묵상에서 "성경 구절"과 "내가 쓴 글"을 갈라낸다.
+ * 새 글은 따로 저장돼 있고, 옛 글은 한 덩어리라 앞머리를 갈라내야 한다.
+ */
+function splitStoredMeditation(med: { verseQuote?: string; content: string }): {
+  quote: string;
+  body: string;
+} {
+  if (med.verseQuote !== undefined) return { quote: med.verseQuote, body: med.content };
+  return splitLeadingVerses(med.content);
+}
 
 
 interface MeditationFeedProps {
@@ -55,6 +68,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   const [verseTitle, setVerseTitle] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
+  // 골라 온 성경 구절. 묵상 글과 따로 담아야 화면에서 다른 색·굵기로 구별해 보여줄 수 있다.
+  const [verseQuote, setVerseQuote] = useState<string>("");
   const [prayer, setPrayer] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string>("");
@@ -112,9 +127,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
     if (prefilledVerse) {
       setVerseTitle(prefilledVerse.title);
       setTitle(`${prefilledVerse.title} 말씀을 묵상하며`);
-      // 고른 구절을 먼저 넣고 한 줄 띄워, 그 아래에 묵상을 이어 쓰게 한다.
-      // (나눔을 볼 때 어느 구절에 대한 묵상인지 함께 보이도록)
-      setContent(`${prefilledVerse.text}\n\n`);
+      // 고른 구절은 따로 담는다. 묵상 칸에는 내가 쓴 글만 남아,
+      // 나중에 볼 때 말씀과 묵상이 한눈에 구별된다.
+      setVerseQuote(prefilledVerse.text);
+      setContent("");
       setShowWriteForm(true);
       setEditingId(null);
       if (onClearPrefilledVerse) {
@@ -324,6 +340,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           userName: currentUser.name,
           verseTitle: verseTitle.trim(),
           title: autoTitle,
+          verseQuote: verseQuote.trim(),
           content: content.trim(),
           prayer: prayer.trim(),
           sokId: sokIdForForm,
@@ -335,6 +352,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         // Clear form
         setVerseTitle("");
         setTitle("");
+        setVerseQuote("");
         setContent("");
         setPrayer("");
         setSokIdForForm(null);
@@ -356,7 +374,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   const handleEditClick = (med: Meditation) => {
     setVerseTitle(med.verseTitle);
     setTitle(med.title);
-    setContent(med.content);
+    // 옛 글은 말씀과 묵상이 한 덩어리라 갈라내서 각 칸에 넣는다
+    const split = splitStoredMeditation(med);
+    setVerseQuote(split.quote);
+    setContent(split.body);
     setPrayer(med.prayer);
     setSokIdForForm(med.sokId || null);
     setEditingId(med.id);
@@ -613,6 +634,25 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
               </div>
 
+              {/* 골라 온 말씀 — 내가 쓰는 글과 눈에 띄게 구별되도록 따로 둔다 */}
+              {verseQuote.trim() && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-xs font-semibold text-[#6F8377]">골라 온 말씀</label>
+                    <button
+                      type="button"
+                      onClick={() => setVerseQuote("")}
+                      className="text-2xs font-bold text-[#6F8377] hover:text-[#B3261E] cursor-pointer"
+                    >
+                      말씀 빼기
+                    </button>
+                  </div>
+                  <p className="scripture-font whitespace-pre-line text-xs sm:text-sm font-bold text-[#0C3B2E] bg-[#EEF3ED] border-l-[3px] border-[#4A6B57] rounded-r-2xl rounded-l-sm px-3.5 py-3 leading-relaxed">
+                    {verseQuote.trim()}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-[#6F8377] mb-1">묵상 고백 및 나누고 싶은 내용</label>
                 <textarea
@@ -696,6 +736,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             const hasLiked = med.likes.includes(currentUser.id);
             const isMyMed = med.userId === currentUser.id;
             const commentsOpen = expandedComments[med.id] || false;
+            const { quote: medQuote, body: medBody } = splitStoredMeditation(med);
 
             return (
               <motion.div
@@ -754,17 +795,27 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   )}
                 </div>
 
+                {/* 골라 온 말씀 — 진한 초록 굵은 글씨에 왼쪽 띠를 둘러
+                    아래의 내 묵상 글과 한눈에 구별되게 한다 */}
+                {medQuote && (
+                  <p className="scripture-font whitespace-pre-line text-sm font-bold text-[#0C3B2E] bg-[#EEF3ED] border-l-[3px] border-[#4A6B57] rounded-r-3xl rounded-l-sm px-4 py-3.5 leading-relaxed">
+                    {medQuote}
+                  </p>
+                )}
+
                 {/* Content body (제목 없이 본문만).
                     긴 글은 접어 둔다 — 안 그러면 다음 지체 묵상까지 한참 내려가야 한다. */}
-                <div className="bg-[#F0F0F0] p-4 rounded-3xl">
-                  <CollapsibleText fadeColor="#F0F0F0">
-                    <MentionText
-                      text={med.content}
-                      names={memberNames}
-                      className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line"
-                    />
-                  </CollapsibleText>
-                </div>
+                {medBody && (
+                  <div className="bg-[#F0F0F0] p-4 rounded-3xl">
+                    <CollapsibleText fadeColor="#F0F0F0">
+                      <MentionText
+                        text={medBody}
+                        names={memberNames}
+                        className="text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line"
+                      />
+                    </CollapsibleText>
+                  </div>
+                )}
 
 
                 {/* 기도제목 */}

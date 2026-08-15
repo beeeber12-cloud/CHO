@@ -532,21 +532,26 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 )}
               </div>
 
-              {/* 번역본 고르기 — 최대 두 개까지 대조 */}
-              <div className="pl-[10px] sm:pl-[16px] mb-2.5">
-                <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
+              {/* 번역본 고르기(왼쪽)와 구절명(오른쪽)을 한 줄에 둔다.
+                  구절명이 본문 아래에 있으면 스크롤을 끝까지 내려야 어느 장인지 보였다. */}
+              <div className="flex items-end justify-between gap-2 mb-2.5">
+                <div className="pl-[10px] sm:pl-[16px]">
+                  <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
+                </div>
+                <p className="text-[#4A6B57] font-bold text-xs sm:text-sm md:text-base shrink-0">
+                  {notice.verseTitle}
+                </p>
               </div>
 
-              <div className="max-h-72 md:max-h-96 overflow-y-auto overflow-x-hidden -mx-1.5 px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
+              {/* 화면 높이에 맞춰 본문을 길게 보여준다. 예전에는 288px 로 고정이라
+                  몇 줄 못 보고 계속 스크롤해야 했다. */}
+              <div className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden -mx-1.5 px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}
                   onToggleVerse={togglePickedVerse}
                 />
               </div>
-              <p className="text-right text-[#4A6B57] font-bold text-xs sm:text-sm md:text-base">
-                {notice.verseTitle}
-              </p>
 
               {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
               {onSelectVerseForMeditation && (

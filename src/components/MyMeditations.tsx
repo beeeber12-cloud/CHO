@@ -3,6 +3,7 @@ import { Meditation, GratitudeNote, SharingGoal, SavedVerse } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Loader, HeartHandshake, Sparkles, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { subscribeToDataChanges } from "../lib/revision";
+import { splitLeadingVerses } from "../lib/verseRef";
 
 interface MyMeditationsProps {
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
@@ -719,9 +720,27 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-[#0C3B2E]">{med.title}</h4>
-                    <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
-                      {med.content}
-                    </p>
+                    {(() => {
+                      // 골라 온 말씀과 내가 쓴 글을 갈라 서로 다르게 보여준다
+                      const { quote, body } =
+                        med.verseQuote !== undefined
+                          ? { quote: med.verseQuote, body: med.content }
+                          : splitLeadingVerses(med.content);
+                      return (
+                        <>
+                          {quote && (
+                            <p className="scripture-font whitespace-pre-line text-xs font-bold text-[#0C3B2E] bg-[#EEF3ED] border-l-[3px] border-[#4A6B57] rounded-r-3xl rounded-l-sm px-4 py-3 leading-relaxed">
+                              {quote}
+                            </p>
+                          )}
+                          {body && (
+                            <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line bg-[#F0F0F0] p-4 rounded-3xl">
+                              {body}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {med.prayer && (
