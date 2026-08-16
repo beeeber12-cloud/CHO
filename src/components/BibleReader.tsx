@@ -66,6 +66,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const verseBoxRef = useRef<HTMLDivElement>(null);
   const [highlightVerse, setHighlightVerse] = useState<number | null>(null);
   const [pendingScroll, setPendingScroll] = useState<boolean>(false);
+  // 장이 바뀔 때 본문이 어느 쪽에서 미끄러져 들어올지 (1 = 오른쪽에서, -1 = 왼쪽에서, 0 = 그냥 나타남)
+  const [slideDir, setSlideDir] = useState<1 | -1 | 0>(0);
 
   // 사용자가 눌러서 고른 구절 (번호 -> 본문). 묵상 쓰기로 넘길 때 이것만 담아 보낸다.
   const [pickedVerses, setPickedVerses] = useState<Map<string, string>>(new Map());
@@ -216,12 +218,16 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setSelectedChapter(chapter);
   };
 
-  const handleSearchQuery = async (searchStr: string) => {
+  /**
+   * @param keepPrevious 새 본문이 도착할 때까지 지금 보던 본문을 그대로 둘지.
+   *   장을 넘길 때 화면을 비우면 카드가 사라졌다 나타나면서 깜빡인다.
+   */
+  const handleSearchQuery = async (searchStr: string, keepPrevious = false) => {
     if (!searchStr.trim()) return;
 
     setLoading(true);
     setError("");
-    setResult(null);
+    if (!keepPrevious) setResult(null);
     setPickedVerses(new Map()); // 다른 본문으로 넘어가면 고른 구절도 초기화
 
     try {
@@ -232,9 +238,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setResult(data);
         syncSelectionFromReference(data.reference);
       } else {
+        setResult(null);
         setError(data.error || "성경 본문을 불러오는데 실패했습니다.");
       }
     } catch (err) {
+      setResult(null);
       setError("서버와의 연결이 원활하지 않습니다.");
     } finally {
       setLoading(false);
@@ -308,11 +316,16 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
-  const handleSelectBookChapter = (book: BibleBookInfo, chapter: number, verseNum: string = "") => {
+  const handleSelectBookChapter = (
+    book: BibleBookInfo,
+    chapter: number,
+    verseNum: string = "",
+    keepPrevious = false
+  ) => {
     setSelectedBook(book);
     setSelectedChapter(chapter);
     const searchTarget = verseNum ? `${book.name} ${chapter}:${verseNum}` : `${book.name} ${chapter}장`;
-    handleSearchQuery(searchTarget);
+    handleSearchQuery(searchTarget, keepPrevious);
 
     // Save as last read location for current user
     if (currentUser?.id) {
@@ -418,17 +431,25 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       ? { book: BIBLE_BOOKS[bookIndex + 1], chapter: 1, isNewBook: true }
       : null;
 
-  // 옆으로 밀어서 장 넘기기 — 버튼을 누르지 않아도 된다
-  const goToChapter = (target: { book: BibleBookInfo; chapter: number } | null) => {
+  // 옆으로 밀어서 장 넘기기 — 버튼을 누르지 않아도 된다.
+  // dir: 1 = 다음 장(새 본문이 오른쪽에서 들어옴), -1 = 이전 장
+  const goToChapter = (
+    target: { book: BibleBookInfo; chapter: number } | null,
+    dir: 1 | -1 | 0 = 0
+  ) => {
     if (!target) return;
     setHighlightVerse(null);
     setPickedVerses(new Map());
-    handleSelectBookChapter(target.book, target.chapter);
+    setSlideDir(dir);
+    // 새 본문이 도착할 때까지 지금 본문을 그대로 둔다 (화면이 깜빡이지 않게)
+    handleSelectBookChapter(target.book, target.chapter, "", true);
   };
 
-  const { swipeHandlers, justSwiped } = useSwipe({
-    onSwipeLeft: () => goToChapter(nextTarget),
-    onSwipeRight: () => goToChapter(prevTarget)
+  const { swipeHandlers, justSwiped, dragRef } = useSwipe({
+    onSwipeLeft: () => goToChapter(nextTarget, 1),
+    onSwipeRight: () => goToChapter(prevTarget, -1),
+    canSwipeLeft: !!nextTarget,
+    canSwipeRight: !!prevTarget
   });
 
   /** 민 동작이었다면 절이 선택되지 않게 한 번 걸러낸다 */
@@ -607,7 +628,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       {/* 3. Main Bible Chapter Reader Display */}
       <div ref={readerRef} className="scroll-mt-4" />
       <AnimatePresence mode="wait">
-        {loading && (
+        {/* 처음 불러올 때만 보여준다. 장을 넘길 때는 보던 본문을 그대로 두어야 깜빡이지 않는다 */}
+        {loading && !result && (
           <div className="bg-white rounded-[32px] p-4 sm:p-6 py-12 text-center shadow-sm">
             <Loader className="animate-spin text-[#4A6B57] mx-auto mb-3" size={32} />
             <p className="text-sm font-bold text-[#0C3B2E]">성경 본문을 불러오고 있습니다...</p>
@@ -629,7 +651,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         )}
 
-        {!loading && result && (
+        {/* 불러오는 중에도 카드를 그대로 둔다. 카드가 사라졌다 나타나면 화면이 껐다 켜진 것처럼 보인다 */}
+        {result && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -660,17 +683,29 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 style={{ touchAction: "pan-y" }}
                 className="scripture-font bg-white shadow-none sm:shadow-sm -mx-1.5 px-1.5 py-3 sm:mx-0 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
-                <DualBibleText
-                  panes={versionPanes}
-                  highlightVerse={highlightVerse}
-                  selectedVerses={new Set(pickedVerses.keys())}
-                  onToggleVerse={handleVerseTap}
-                />
-                {missingVersions.length > 0 && (
-                  <p className="mt-3 text-xs text-[#072A20] bg-[#F5F5F5] rounded-xl p-2">
-                    이 본문은 {missingVersions.join(", ")} 데이터가 없어 함께 표시하지 못했습니다.
-                  </p>
-                )}
+                {/* 바깥층: 손가락을 따라 밀린다 (놓으면 제자리로 튕겨 돌아온다) */}
+                <div ref={dragRef} style={{ willChange: "transform" }}>
+                  {/* 안층: 장이 바뀌면 밀어낸 쪽 반대편에서 미끄러져 들어온다.
+                      key 가 바뀌면 새로 그려지므로 사라졌다 나타나는 빈 시간이 없다 */}
+                  <motion.div
+                    key={result.reference}
+                    initial={{ opacity: 0, x: slideDir * 56 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.6 }}
+                  >
+                    <DualBibleText
+                      panes={versionPanes}
+                      highlightVerse={highlightVerse}
+                      selectedVerses={new Set(pickedVerses.keys())}
+                      onToggleVerse={handleVerseTap}
+                    />
+                    {missingVersions.length > 0 && (
+                      <p className="mt-3 text-xs text-[#072A20] bg-[#F5F5F5] rounded-xl p-2">
+                        이 본문은 {missingVersions.join(", ")} 데이터가 없어 함께 표시하지 못했습니다.
+                      </p>
+                    )}
+                  </motion.div>
+                </div>
               </div>
 
               {/* 구절을 고르면 안내 + 해제 */}
@@ -696,10 +731,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {prevTarget && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setHighlightVerse(null);
-                        handleSelectBookChapter(prevTarget.book, prevTarget.chapter);
-                      }}
+                      onClick={() => goToChapter(prevTarget, -1)}
                       className="px-3 py-1.5 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#0C3B2E] font-bold text-xs rounded-3xl transition cursor-pointer whitespace-nowrap"
                     >
                       {prevTarget.isNewBook
@@ -710,10 +742,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {nextTarget && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setHighlightVerse(null);
-                        handleSelectBookChapter(nextTarget.book, nextTarget.chapter);
-                      }}
+                      onClick={() => goToChapter(nextTarget, 1)}
                       className="px-3 py-1.5 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold text-xs rounded-3xl transition cursor-pointer whitespace-nowrap"
                     >
                       {nextTarget.isNewBook
