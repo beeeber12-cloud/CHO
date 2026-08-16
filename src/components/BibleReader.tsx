@@ -6,6 +6,7 @@ import DualBibleText from "./DualBibleText";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
+import { useSwipe } from "../lib/useSwipe";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
 
@@ -119,6 +120,12 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       handleSearchQuery("요한복음 1장");
     }
   }, [initialQuery, queryNonce]);
+
+  // 장이 바뀌면 본문을 맨 위부터 보여준다.
+  // (안 그러면 옆으로 밀어 다음 장으로 넘어갔을 때 읽던 위치 그대로라 중간부터 보인다)
+  useEffect(() => {
+    if (verseBoxRef.current) verseBoxRef.current.scrollTop = 0;
+  }, [result?.reference]);
 
   // 본문이 로드되면 본문 영역으로 화면을 내리고, 선택한 절이 있으면 그 절 위치까지 맞춰준다.
   useEffect(() => {
@@ -411,6 +418,25 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       ? { book: BIBLE_BOOKS[bookIndex + 1], chapter: 1, isNewBook: true }
       : null;
 
+  // 옆으로 밀어서 장 넘기기 — 버튼을 누르지 않아도 된다
+  const goToChapter = (target: { book: BibleBookInfo; chapter: number } | null) => {
+    if (!target) return;
+    setHighlightVerse(null);
+    setPickedVerses(new Map());
+    handleSelectBookChapter(target.book, target.chapter);
+  };
+
+  const { swipeHandlers, justSwiped } = useSwipe({
+    onSwipeLeft: () => goToChapter(nextTarget),
+    onSwipeRight: () => goToChapter(prevTarget)
+  });
+
+  /** 민 동작이었다면 절이 선택되지 않게 한 번 걸러낸다 */
+  const handleVerseTap = (num: string, body: string) => {
+    if (justSwiped()) return;
+    togglePickedVerse(num, body);
+  };
+
   // Calculate current chapter key
   const currentChapterKey = `${selectedBook.name} ${selectedChapter}장`;
   const isCurrentChapterCompleted = userProgress?.completedChapters?.includes(currentChapterKey) || false;
@@ -628,13 +654,17 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   본문이 화면을 가장 넓게 쓰도록 한다 (제목·탭 등 다른 요소 여백은 그대로) */}
               <div
                 ref={verseBoxRef}
+                {...swipeHandlers}
+                // pan-y 로 두면 세로 훑기는 브라우저가 그대로 처리하고,
+                // 가로로 미는 동작만 우리가 받아 장을 넘길 수 있다
+                style={{ touchAction: "pan-y" }}
                 className="scripture-font bg-white shadow-none sm:shadow-sm -mx-1.5 px-1.5 py-3 sm:mx-0 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
                 <DualBibleText
                   panes={versionPanes}
                   highlightVerse={highlightVerse}
                   selectedVerses={new Set(pickedVerses.keys())}
-                  onToggleVerse={togglePickedVerse}
+                  onToggleVerse={handleVerseTap}
                 />
                 {missingVersions.length > 0 && (
                   <p className="mt-3 text-xs text-[#072A20] bg-[#F5F5F5] rounded-xl p-2">
