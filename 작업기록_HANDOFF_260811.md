@@ -244,3 +244,53 @@ Cloud Run 은 응답이 끝나면 그 인스턴스의 CPU 를 거의 0 으로 �
 | `src/components/MentionPicker.tsx` | **신규** — 이름 눌러 넣기 |
 | `src/lib/mentions.ts` | **신규** — 멘션 규칙 (서버와 동일하게 유지할 것) |
 | `src/components/NotificationSettings.tsx` | 알림 켜짐 현황 카드 |
+
+---
+
+## 8. 0단계 보안 조치 (2026-08-19~20)
+
+### 🚨 발견한 것
+| 항목 | 상태 |
+|---|---|
+| GitHub 저장소 | **공개** — API 로 확인 (200) |
+| `firebase-applet-config.json` | 그 저장소에 **커밋돼 있음** |
+| `firestore.rules` | `allow read, write: if true` |
+| 비밀번호 | 4자리 PIN **평문 저장**, 시도 제한 없음 |
+| 권한 확인 | 몸통(body)의 `adminId`·`requestorId` 를 **그대로 신뢰** |
+
+마지막 항목이 특히 나빴다. 회원 목록은 로그인 없이 볼 수 있으므로
+**아무나 남의 계정을 지우거나 비밀번호를 바꿀 수 있었다.**
+
+### ✅ 완료 (커밋 `b73b5d6`, 배포 확인)
+- **비밀번호 암호화** — scrypt. Node 기본 기능이라 설치할 것 없음 (`server/auth.ts`)
+  - 기동 시 남아 있는 평문을 일괄 변환
+  - 등록·본인수정·관리자변경·로그인시 승급, **네 곳 모두** 해시
+  - ⚠️ `admin-update-pin` 을 처음에 빠뜨렸다가 테스트로 잡았다. 비밀번호를 쓰는 곳은 반드시 전수 확인할 것
+- **로그인 증표(토큰)** — HMAC 서명, 180일. `src/lib/session.ts` 의 `authFetch` 로 전송
+  - 증표의 역할을 그대로 믿지 않고 **매번 DB 로 재확인**
+  - 탈퇴자의 증표는 즉시 무효
+- **시도 제한** — 10분 10회. 실서비스에서 11번째 차단 확인
+- 보호한 라우트: `admin-update-pin`, 계정 삭제, 내 정보 수정, `/api/push/status`
+
+**실서비스 확인:** 예전 구멍 401·403 / 로그인 화면 목록 200(정상) / 오늘말씀·묵상 34건 그대로
+
+### ⏸ 남은 것 — Firestore 규칙 잠금
+코드는 준비됐으나 **아직 커밋하지 않았다** (`server/firebaseDb.ts`, `firestore.rules`).
+
+**이유: 프로젝트가 둘로 갈려 있다.**
+| | |
+|---|---|
+| Firestore 가 있는 곳 | `elemental-diode-2w1xt` (Firebase) |
+| Cloud Run 이 도는 곳 | `dulcet-medley-471901-m4` (GCP) |
+
+지금은 브라우저용 SDK 로 접속해서 규칙만 열려 있으면 통했다.
+관리자 SDK 로 바꾸면 **Cloud Run 서비스 계정에 Firestore 프로젝트 권한을 따로 줘야 한다.**
+안 주고 배포하면 데이터를 못 읽어 앱이 빈 화면이 된다.
+(`[SAFETY]` 가드가 있어 데이터가 지워지지는 않는다)
+
+⚠️ **두 개의 함정**
+1. `GOOGLE_CLOUD_PROJECT` 환경변수는 Cloud Run 프로젝트를 가리킨다. Firebase 프로젝트가 아니다.
+   → `readSettings()` 는 **설정 파일을 먼저** 본다. 순서를 뒤집으면 엉뚱한 DB 를 본다
+2. 규칙을 먼저 잠그고 SDK 를 나중에 바꾸면 **그 사이에 앱이 멈춘다**. 반드시 SDK 먼저
+
+**순서:** ① 저장소 비공개 → ② IAM 권한 부여 → ③ 관리자 SDK 배포·확인 → ④ 규칙 잠금
