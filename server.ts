@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import compression from "compression";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
@@ -9,6 +10,17 @@ import webpush from "web-push";
 import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
+import {
+  hashPin,
+  isHashed,
+  verifyPin,
+  checkLoginAllowed,
+  recordLoginFailure,
+  clearLoginFailures,
+  issueToken,
+  verifyToken,
+  TokenPayload
+} from "./server/auth.js";
 
 dotenv.config();
 
@@ -306,6 +318,10 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
 
       // ⚠️ VAPID 키가 바뀌면 교인들이 등록해 둔 구독이 전부 무효가 된다. 기존 것을 최우선 보존.
       // (Firestore 는 undefined 필드를 거부하므로 값이 있을 때만 넣는다)
+      // 증표 비밀키도 지켜야 한다. 사라지면 로그인한 분들이 전부 튕긴다.
+      const keptSecret = remoteDb.sessionSecret || localDb.sessionSecret;
+      if (keptSecret) mergedDb.sessionSecret = keptSecret;
+
       const keptVapid = remoteDb.vapidKeys || localDb.vapidKeys;
       if (keptVapid?.publicKey && keptVapid?.privateKey) {
         mergedDb.vapidKeys = keptVapid;
@@ -669,6 +685,58 @@ async function pushMentions(
     url,
     tag
   });
+}
+
+// ── 로그인 증표와 권한 확인 ───────────────────────────
+
+/**
+ * 증표에 서명할 때 쓰는 비밀키.
+ * 환경변수가 있으면 그걸 쓰고, 없으면 한 번 만들어 DB 에 넣어 둔다 (VAPID 키와 같은 방식).
+ * 서버가 다시 떠도 이미 로그인한 분들이 튕기지 않는다.
+ */
+function getSessionSecret(): string {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  if (!db.sessionSecret) {
+    db.sessionSecret = crypto.randomBytes(32).toString("hex");
+    saveDb(db);
+    console.log("[인증] 로그인 증표용 비밀키를 새로 만들어 저장했습니다.");
+  }
+  return db.sessionSecret;
+}
+
+/** 요청에 실려 온 증표에서 "누구인지"를 읽는다. 없거나 위조면 null. */
+function whoIs(req: Request): TokenPayload | null {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  if (!token) return null;
+  const payload = verifyToken(getSessionSecret(), token);
+  if (!payload) return null;
+  // 탈퇴한 사람의 증표는 더 이상 통하지 않아야 한다
+  if (!(db.users || []).some((u) => u.id === payload.uid)) return null;
+  return payload;
+}
+
+/** 로그인한 사람만. 아니면 401 을 보내고 false 를 돌려준다. */
+function requireLogin(req: Request, res: Response): TokenPayload | null {
+  const me = whoIs(req);
+  if (!me) {
+    res.status(401).json({ error: "다시 로그인해 주세요." });
+    return null;
+  }
+  return me;
+}
+
+/** 관리자만. */
+function requireAdmin(req: Request, res: Response): TokenPayload | null {
+  const me = requireLogin(req, res);
+  if (!me) return null;
+  // 증표에 적힌 역할을 그대로 믿지 않고 지금 DB 로 다시 확인한다
+  const fresh = (db.users || []).find((u) => u.id === me.uid);
+  if (fresh?.role !== "admin") {
+    res.status(403).json({ error: "관리자만 할 수 있는 일입니다." });
+    return null;
+  }
+  return me;
 }
 
 // ── 아침 묵상 시간 알림 ──────────────────────────────────
@@ -1112,6 +1180,17 @@ async function startServer() {
   // Synchronize with persistent Firebase Firestore on server startup
   await syncFirestoreOnStartup();
 
+  // 아직 평문으로 남아 있는 비밀번호를 되돌릴 수 없는 형태로 바꿔 둔다.
+  // 교인들은 쓰던 4자리를 그대로 쓰면 된다 — 바뀌는 건 저장 방식뿐이다.
+  {
+    const plain = (db.users || []).filter((u) => u.pin && !isHashed(u.pin));
+    if (plain.length > 0) {
+      for (const u of plain) u.pin = hashPin(String(u.pin).trim());
+      saveDb(db);
+      console.log(`[인증] 평문으로 남아 있던 비밀번호 ${plain.length}건을 암호화했습니다.`);
+    }
+  }
+
   // 원격 DB 를 읽은 뒤에 초기화해야 기존 VAPID 키를 그대로 이어받는다.
   initWebPush();
 
@@ -1184,7 +1263,7 @@ async function startServer() {
       id: "u-" + Math.random().toString(36).substring(2, 11),
       name,
       role: role || "member",
-      pin,
+      pin: hashPin(String(pin).trim()),
       createdAt: new Date().toISOString()
     };
 
@@ -1202,20 +1281,49 @@ async function startServer() {
       return res.status(400).json({ error: "성함(또는 계정)과 비밀번호(PIN)를 입력해주세요." });
     }
 
+    // 만 번을 기계로 두드리면 네 자리는 다 열린다. 사람 손 속도는 넉넉히 허용하되 기계는 막는다.
+    const gate = checkLoginAllowed(searchIdentifier);
+    if (!gate.allowed) {
+      return res.status(429).json({
+        error: `비밀번호를 여러 번 잘못 입력했습니다. ${gate.retryAfterMin}분 뒤에 다시 시도해주세요.`
+      });
+    }
+
     const user = db.users.find(u => u.id === searchIdentifier || u.name.trim() === searchIdentifier);
     if (!user) {
+      recordLoginFailure(searchIdentifier);
       return res.status(404).json({ error: `'${searchIdentifier}' 성함의 사용자를 찾을 수 없습니다. 이름을 정확히 입력하셨는지 확인하시거나 '새 식구 등록'을 해주세요.` });
     }
 
-    if (user.pin !== pin.toString().trim()) {
+    if (!verifyPin(pin, user.pin)) {
+      recordLoginFailure(searchIdentifier);
       return res.status(401).json({ error: "비밀번호(PIN)가 일치하지 않습니다. 4자리 비밀번호를 다시 확인해주세요." });
     }
 
-    res.json({ id: user.id, name: user.name, role: user.role });
+    clearLoginFailures(searchIdentifier);
+
+    // 아직 평문으로 남아 있던 비밀번호는 이 기회에 해시로 바꿔 둔다
+    if (!isHashed(user.pin)) {
+      user.pin = hashPin(String(pin).trim());
+      saveDb(db);
+    }
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      // 이 증표가 있어야 계정 삭제·비밀번호 변경 같은 일을 할 수 있다
+      token: issueToken(getSessionSecret(), user.id, user.role)
+    });
   });
 
   app.post("/api/auth/users/update", (req: Request, res: Response) => {
     const { userId, name, pin } = req.body;
+    const actor = requireLogin(req, res);
+    if (!actor) return;
+    if (actor.uid !== userId) {
+      return res.status(403).json({ error: "본인 정보만 수정할 수 있습니다." });
+    }
     if (!userId || !name || !pin) {
       return res.status(400).json({ error: "사용자 ID, 이름, 비밀번호(PIN)가 모두 필요합니다." });
     }
@@ -1236,7 +1344,7 @@ async function startServer() {
     }
     
     db.users[userIndex].name = name.trim();
-    db.users[userIndex].pin = String(pin);
+    db.users[userIndex].pin = hashPin(String(pin).trim());
     
     // Update userName in meditations & comments to match the new name
     db.meditations.forEach(m => {
@@ -1256,6 +1364,9 @@ async function startServer() {
 
   app.post("/api/auth/users/admin-update-pin", (req: Request, res: Response) => {
     const { adminId, targetUserId, newPin } = req.body;
+    // 몸통에 적힌 adminId 가 아니라 로그인 증표로 확인한다
+    const actor = requireAdmin(req, res);
+    if (!actor) return;
     if (!adminId || !targetUserId || !newPin) {
       return res.status(400).json({ error: "필수 정보(관리자 ID, 대상자 ID, 새 PIN)가 누락되었습니다." });
     }
@@ -1274,7 +1385,7 @@ async function startServer() {
       return res.status(404).json({ error: "대상 사용자를 찾을 수 없습니다." });
     }
 
-    db.users[targetUserIndex].pin = String(newPin);
+    db.users[targetUserIndex].pin = hashPin(String(newPin).trim());
     saveDb(db);
 
     res.json({ success: true, message: `'${db.users[targetUserIndex].name}' 지체의 비밀번호(PIN)가 성공적으로 변경되었습니다.` });
@@ -1283,6 +1394,13 @@ async function startServer() {
   app.delete("/api/auth/users/:id", (req: Request, res: Response) => {
     const { id } = req.params;
     const { requestorId } = req.body;
+    const actor = requireLogin(req, res);
+    if (!actor) return;
+    // 본인이거나 관리자여야 한다. 몸통에 적힌 값은 믿지 않는다.
+    const actorUser = (db.users || []).find((u) => u.id === actor.uid);
+    if (actor.uid !== id && actorUser?.role !== "admin") {
+      return res.status(403).json({ error: "본인 또는 관리자만 삭제할 수 있습니다." });
+    }
     
     if (!requestorId) {
       return res.status(400).json({ error: "요청자 ID가 필요합니다." });
@@ -1379,6 +1497,7 @@ async function startServer() {
    * 구독 키는 절대 내보내지 않는다.
    */
   app.get("/api/push/status", (req: Request, res: Response) => {
+    if (!requireAdmin(req, res)) return;
     const subs = db.pushSubscriptions || [];
     const byUser = new Map<string, number>();
     for (const s of subs) byUser.set(s.userId, (byUser.get(s.userId) || 0) + 1);

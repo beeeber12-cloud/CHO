@@ -175,6 +175,8 @@ export interface DatabaseSchema {
   savedVerses?: SavedVerse[];
   pushSubscriptions?: PushSubscriptionRecord[];
   vapidKeys?: VapidKeys;
+  /** 로그인 증표에 서명하는 비밀키. 이게 바뀌면 모두 다시 로그인해야 한다 */
+  sessionSecret?: string;
   updatedAt?: string;
 }
 

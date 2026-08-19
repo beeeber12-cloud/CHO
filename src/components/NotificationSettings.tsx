@@ -4,6 +4,7 @@ import { Bell, Clock, Calendar, Check, AlertCircle, Volume2, Sparkles, Send, Bel
 import { motion, AnimatePresence } from "motion/react";
 import { useFontSize, FontScale } from "../context/FontSizeContext";
 import { checkPushSupport, enablePush, disablePush, isPushEnabled, sendTestPush, PushSupport } from "../lib/push";
+import { authFetch, clearToken } from "../lib/session";
 
 
 interface NotificationSettingsProps {
@@ -208,7 +209,7 @@ function PushStatusCard() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/push/status");
+      const res = await authFetch("/api/push/status");
       if (res.ok) setStatus(await res.json());
     } catch (err) {
       console.error("알림 현황을 불러오지 못했습니다:", err);
@@ -362,7 +363,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
     setProfileSuccess("");
 
     try {
-      const res = await fetch("/api/auth/users/update", {
+      const res = await authFetch("/api/auth/users/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -402,7 +403,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
     }
 
     try {
-      const res = await fetch(`/api/auth/users/${userIdToDelete}`, {
+      const res = await authFetch(`/api/auth/users/${userIdToDelete}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestorId: currentUser.id })
@@ -433,7 +434,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
     }
 
     try {
-      const res = await fetch("/api/auth/users/admin-update-pin", {
+      const res = await authFetch("/api/auth/users/admin-update-pin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

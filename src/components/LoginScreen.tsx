@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { User } from "../types";
 import { Users, Lock, UserPlus, ShieldAlert, CheckCircle2, UserCheck } from "lucide-react";
 import { motion } from "motion/react";
+import { saveToken } from "../lib/session";
 
 interface LoginScreenProps {
   onLoginSuccess: (user: { id: string; name: string; role: 'admin' | 'member' }) => void;
@@ -80,6 +81,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       if (!res.ok) {
         setError(data.error || "로그인에 실패했습니다.");
       } else {
+        // 계정 관련 요청에 함께 보낼 증표를 저장해 둔다
+        if (data.token) saveToken(data.token);
         onLoginSuccess(data);
       }
     } catch (err) {

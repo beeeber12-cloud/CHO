@@ -12,6 +12,7 @@ import MyMeditations from "./components/MyMeditations";
 import FontSizeControl from "./components/FontSizeControl";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
+import { clearToken } from "./lib/session";
 
 interface UserProfile {
   id: string;
@@ -130,6 +131,7 @@ export default function App() {
 
   const handleLogout = () => {
     if (confirm("로그아웃 하시겠습니까?")) {
+      clearToken();
       setCurrentUser(null);
       localStorage.removeItem("bible_med_user");
     }
