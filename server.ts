@@ -321,6 +321,8 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
       // 증표 비밀키도 지켜야 한다. 사라지면 로그인한 분들이 전부 튕긴다.
       const keptSecret = remoteDb.sessionSecret || localDb.sessionSecret;
       if (keptSecret) mergedDb.sessionSecret = keptSecret;
+      const keptResetMark = remoteDb.pinResetMark || localDb.pinResetMark;
+      if (keptResetMark) mergedDb.pinResetMark = keptResetMark;
 
       const keptVapid = remoteDb.vapidKeys || localDb.vapidKeys;
       if (keptVapid?.publicKey && keptVapid?.privateKey) {
@@ -737,6 +739,66 @@ function requireAdmin(req: Request, res: Response): TokenPayload | null {
     return null;
   }
   return me;
+}
+
+/**
+ * 비밀번호를 잊었을 때 되찾는 유일한 통로.
+ *
+ * 이제 비밀번호는 되돌릴 수 없게 저장되므로, 잊으면 아무도 알아낼 수 없다.
+ * 그래서 **Cloud Run 콘솔에 들어갈 수 있는 사람만** 쓸 수 있는 길을 하나 둔다.
+ * 인터넷에 열린 주소가 아니라 환경변수라서 밖에서는 건드릴 수 없다.
+ *
+ *   RESET_PIN_USER  = 이름 또는 계정 ID (예: "관리자(목사님)")
+ *   RESET_ADMIN_PIN = 새 4자리
+ *
+ * 같은 값으로는 한 번만 적용된다. 변수를 지우지 않고 두더라도
+ * 나중에 바꾼 비밀번호가 서버 재시작 때 옛 값으로 되돌아가지 않는다.
+ */
+function applyPinResetFromEnv(): void {
+  const newPin = (process.env.RESET_ADMIN_PIN || "").trim();
+  if (!newPin) return;
+
+  if (newPin.length !== 4 || !/^[0-9]+$/.test(newPin)) {
+    console.error("[비밀번호 재설정] RESET_ADMIN_PIN 은 숫자 4자리여야 합니다. 건너뜁니다.");
+    return;
+  }
+
+  const who = (process.env.RESET_PIN_USER || "").trim();
+  const users = db.users || [];
+  let target = who
+    ? users.find((u) => u.id === who || u.name.trim() === who)
+    : users.filter((u) => u.role === "admin").length === 1
+      ? users.find((u) => u.role === "admin")
+      : undefined;
+
+  if (!target) {
+    if (who) {
+      console.error(`[비밀번호 재설정] '${who}' 계정을 찾지 못했습니다.`);
+    } else {
+      console.error(
+        "[비밀번호 재설정] 관리자가 여럿이라 대상을 정할 수 없습니다. RESET_PIN_USER 로 지정해주세요: " +
+          users.filter((u) => u.role === "admin").map((u) => u.name).join(", ")
+      );
+    }
+    return;
+  }
+
+  // 같은 지시를 이미 처리했는지 확인 (환경변수를 지우지 않아도 안전하도록)
+  const mark = crypto.createHash("sha256").update(`${target.id}:${newPin}`).digest("hex");
+  if (db.pinResetMark === mark) {
+    console.log("[비밀번호 재설정] 이미 적용된 지시입니다. 건너뜁니다. (환경변수를 지워도 됩니다)");
+    return;
+  }
+
+  target.pin = hashPin(newPin);
+  db.pinResetMark = mark;
+  clearLoginFailures(target.id);
+  clearLoginFailures(target.name.trim());
+  saveDb(db);
+  console.log(
+    `[비밀번호 재설정] '${target.name}' 님의 비밀번호를 새로 설정했습니다. ` +
+      "로그인이 확인되면 콘솔에서 RESET_ADMIN_PIN 을 지워주세요."
+  );
 }
 
 // ── 아침 묵상 시간 알림 ──────────────────────────────────
@@ -1179,6 +1241,8 @@ async function startServer() {
 
   // Synchronize with persistent Firebase Firestore on server startup
   await syncFirestoreOnStartup();
+
+  applyPinResetFromEnv();
 
   // 아직 평문으로 남아 있는 비밀번호를 되돌릴 수 없는 형태로 바꿔 둔다.
   // 교인들은 쓰던 4자리를 그대로 쓰면 된다 — 바뀌는 건 저장 방식뿐이다.
