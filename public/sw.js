@@ -1,12 +1,13 @@
 // Service Worker for Bible Meditation Share PWA
 // 아이콘/매니페스트 갱신 시 버전을 올리면 이전 캐시가 자동 삭제됩니다.
-const CACHE_NAME = "bible-meditation-v6";
+const CACHE_NAME = "bible-meditation-v7";
 // 성경 본문 전용 캐시 — 내용이 변하지 않으므로 버전을 올려도 지우지 않는다
 const BIBLE_CACHE = "bible-text-v1";
 const ASSETS = [
   "/",
   "/index.html",
   "/manifest.json",
+  "/badge-96.png",
   "/icon-192.png",
   "/icon-512.png",
   "/icon-maskable-512.png",
@@ -52,7 +53,10 @@ self.addEventListener("push", (e) => {
   const options = {
     body: data.body || "",
     icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    // 상태표시줄에 뜨는 작은 아이콘.
+    // 안드로이드는 이 그림의 투명도만 읽고 색은 버리기 때문에,
+    // 앱 아이콘(꽉 찬 사각형)을 쓰면 그냥 네모로 보인다. 흰 글자 모양 전용 그림을 쓴다.
+    badge: "/badge-96.png",
     // 같은 tag 면 알림이 쌓이지 않고 최신 것으로 대체된다
     tag: data.tag || "default",
     renotify: true,
