@@ -31,7 +31,7 @@ import { initializeApp, getApps, getApp, applicationDefault, App } from "firebas
 import { getFirestore, Firestore, DocumentReference } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
-import { DatabaseSchema } from "../src/types";
+import { DatabaseSchema, Community } from "../src/types";
 
 /** 계속 쌓이는 목록 — 낱장으로 보관한다 */
 const SPLIT_KEYS = ["meditations", "notices", "gratitudes", "bibleQAs", "savedVerses"] as const;
@@ -322,6 +322,44 @@ export async function saveToFirestore(
     console.log(`Firestore 에 저장했습니다${report.length ? ` — ${report.join(", ")}` : " (목록 변경 없음)"}.`);
   } catch (err) {
     console.error("Firestore 저장 실패:", err);
+    throw err;
+  }
+}
+
+// ── 공동체 명단 ──────────────────────────────────────────────
+// 어떤 공동체들이 있는지는 앱 전체가 공유한다 (app_config/communities).
+// 공동체 하나하나의 내용물은 communities/{id} 아래에 따로 들어 있다.
+
+
+export async function fetchCommunities(): Promise<Community[] | null> {
+  const firestore = getFirebaseFirestore();
+  if (!firestore) return null;
+  try {
+    const snap = await firestore.collection(APP_CONFIG).doc("communities").get();
+    if (!snap.exists) return [];
+    const list = (snap.data() as any)?.list;
+    return Array.isArray(list) ? (list as Community[]) : [];
+  } catch (err) {
+    console.error("공동체 명단 읽기 실패:", err);
+    return null;
+  }
+}
+
+export async function saveCommunities(list: Community[]): Promise<void> {
+  const firestore = getFirebaseFirestore();
+  if (!firestore) return;
+  // ⚠️ 명단이 통째로 비면 모든 공동체가 사라진 것처럼 보인다. 실수로 지우지 않게 막는다.
+  if (!Array.isArray(list) || list.length === 0) {
+    console.error("[SAFETY] 공동체 명단이 비어 있어 저장을 건너뜁니다.");
+    return;
+  }
+  try {
+    await firestore
+      .collection(APP_CONFIG)
+      .doc("communities")
+      .set({ list, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error("공동체 명단 저장 실패:", err);
     throw err;
   }
 }

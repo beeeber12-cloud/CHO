@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { User } from "../types";
 import { Users, Lock, UserPlus, ShieldAlert, CheckCircle2, UserCheck } from "lucide-react";
 import { motion } from "motion/react";
-import { saveToken } from "../lib/session";
+import { saveToken, getCommunity, saveCommunity, clearToken, StoredCommunity } from "../lib/session";
+import CommunityGate from "./CommunityGate";
 
 interface LoginScreenProps {
   onLoginSuccess: (user: { id: string; name: string; role: 'admin' | 'member' }) => void;
@@ -21,10 +22,18 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
   const [regName, setRegName] = useState<string>("");
   const [regPin, setRegPin] = useState<string>("");
-  const [regRole, setRegRole] = useState<'admin' | 'member'>("member");
+  const [regCode, setRegCode] = useState<string>("");
+  // 지금 보고 있는 공동체. 기기에 기억된 것이 없으면 서버가 기본 공동체를 알려준다.
+  const [community, setCommunity] = useState<{ id: string; name: string; requiresJoinCode?: boolean } | null>(null);
+  const [showGate, setShowGate] = useState<boolean>(false);
   const [regSuccess, setRegSuccess] = useState<string>("");
 
   useEffect(() => {
+    // 기억해 둔 공동체가 있으면 그 이름을, 없으면 서버가 알려주는 기본 공동체 이름을 띄운다
+    fetch("/api/communities/current")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => c && setCommunity(c))
+      .catch(() => {});
     fetchUsers();
 
     const interval = setInterval(fetchUsers, 3000);
@@ -110,7 +119,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: regName.trim(), pin: regPin, role: regRole })
+        body: JSON.stringify({ name: regName.trim(), pin: regPin, joinCode: regCode.trim() })
       });
 
       const data = await res.json();
@@ -120,7 +129,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         setRegSuccess(`${data.name}님이 성공적으로 등록되었습니다!`);
         setRegName("");
         setRegPin("");
-        setRegRole("member");
+        setRegCode("");
         await fetchUsers();
         setSelectedUser(data.id);
         setTimeout(() => {
@@ -135,6 +144,29 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
   };
 
+  // 공동체를 고르러 들어간 경우
+  if (showGate) {
+    return (
+      <CommunityGate
+        onCancel={() => setShowGate(false)}
+        onReady={(picked, loggedIn) => {
+          setCommunity({ id: picked.id, name: picked.name, requiresJoinCode: true });
+          setShowGate(false);
+          setError("");
+          setSelectedUser("");
+          setDirectName("");
+          setPin("");
+          if (loggedIn) {
+            // 새로 만든 분은 이미 관리자로 로그인된 상태다
+            onLoginSuccess(loggedIn);
+          } else {
+            fetchUsers();
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <div id="login-container" className="min-h-screen bg-[#F0F0F0] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -146,7 +178,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         >
           <UserCheck size={36} />
         </motion.div>
-        <h2 className="text-3xl font-bold text-[#0C3B2E] tracking-tight">은혜교회</h2>
+        <h2 className="text-3xl font-bold text-[#0C3B2E] tracking-tight">{community?.name || "은혜교회"}</h2>
         <p className="mt-2 text-sm text-[#6F8377]">
           우리 성도님들과 소그룹을 위한 매일 말씀 묵상과 따뜻한 은혜 나눔터
         </p>
@@ -334,33 +366,27 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-[#4A6B57] mb-1">
-                  역할 구분
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-                  <label className="flex items-center text-sm font-medium text-[#4A6B57] cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      checked={regRole === "member"}
-                      onChange={() => setRegRole("member")}
-                      className="h-4 w-4 text-[#4A6B57] focus:ring-[#4A6B57] border-[#AFC0B2] mr-2"
-                    />
-                    일반 지체 (읽기, 쓰기, 소통)
+              {/*
+                예전에는 여기서 '관리자'를 스스로 고를 수 있었다.
+                주소만 알면 누구나 관리자가 되어 공지를 올리고 남의 계정을 지울 수 있었다.
+                이제 가입은 언제나 일반 지체이고, 관리자는 기존 관리자가 세운다.
+              */}
+              {community?.requiresJoinCode && (
+                <div>
+                  <label className="block text-sm font-semibold text-[#4A6B57] mb-1">
+                    가입코드 6자리
                   </label>
-                  <label className="flex items-center text-sm font-medium text-[#4A6B57] cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      checked={regRole === "admin"}
-                      onChange={() => setRegRole("admin")}
-                      className="h-4 w-4 text-[#4A6B57] focus:ring-[#4A6B57] border-[#AFC0B2] mr-2"
-                    />
-                    관리자 (말씀 공지 등록 권한)
-                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={12}
+                    value={regCode}
+                    onChange={(e) => setRegCode(e.target.value.toUpperCase())}
+                    placeholder="공동체 관리자에게 받으신 코드"
+                    className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm text-center tracking-widest shadow-sm uppercase"
+                  />
                 </div>
-              </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button
@@ -383,6 +409,23 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               </div>
             </form>
           )}
+
+          {/*
+            다른 교회 지체가 이 주소로 들어왔을 때의 문.
+            평소에는 눈에 잘 띄지 않게 두어, 우리 교인들이 헷갈리지 않게 한다.
+          */}
+          <div className="mt-6 pt-4 border-t border-[#EAEAEA] text-center">
+            <button
+              type="button"
+              onClick={() => {
+                clearToken();
+                setShowGate(true);
+              }}
+              className="text-xs text-[#6F8377] hover:text-[#0C3B2E] underline underline-offset-2 cursor-pointer"
+            >
+              다른 공동체로 들어가기 · 새 공동체 만들기
+            </button>
+          </div>
         </div>
       </div>
     </div>

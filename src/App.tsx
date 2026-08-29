@@ -12,6 +12,7 @@ import MyMeditations from "./components/MyMeditations";
 import FontSizeControl from "./components/FontSizeControl";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
+import CommunitySettings from "./components/CommunitySettings";
 import { clearToken } from "./lib/session";
 
 interface UserProfile {
@@ -134,6 +135,8 @@ export default function App() {
       clearToken();
       setCurrentUser(null);
       localStorage.removeItem("bible_med_user");
+      // 공동체는 기억해 둔다. 다시 들어올 때 코드를 또 넣지 않아도 되도록.
+      // (다른 공동체로 옮기려면 로그인 화면 아래의 '다른 공동체로 들어가기')
     }
   };
 
@@ -371,6 +374,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
               >
+                <CommunitySettings currentUser={currentUser} />
                 <NotificationSettings 
                   currentUser={currentUser} 
                   onUserUpdate={(updatedUser) => {

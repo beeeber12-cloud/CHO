@@ -7,9 +7,22 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import webpush from "web-push";
-import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan } from "./src/types";
+import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
-import { fetchFromFirestore, saveToFirestore } from "./server/firebaseDb.js";
+import {
+  fetchFromFirestore,
+  saveToFirestore,
+  fetchCommunities,
+  saveCommunities,
+  DEFAULT_COMMUNITY_ID
+} from "./server/firebaseDb.js";
+import {
+  newCommunityId,
+  newJoinCode,
+  normalizeJoinCode,
+  isValidCommunityId,
+  normalizeCommunityName
+} from "./server/community.js";
 import {
   hashPin,
   isHashed,
@@ -24,10 +37,38 @@ import {
 
 dotenv.config();
 
-// Create the data directory and db.json if they don't exist
-const DB_FILE = path.join(process.cwd(), "db.json");
+// ── 공동체별 저장소 ────────────────────────────────────────────
+/**
+ * 이 앱은 여러 공동체(교회·모임)가 함께 쓴다.
+ * 주소는 하나여도 데이터는 완전히 갈라져 있다 — 공동체마다 자기 몫을 하나씩 갖는다.
+ *
+ * ⚠️ 전역 `db` 를 일부러 없앴다.
+ *    라우트마다 `const db = dbOf(req)` 로 **자기 공동체 것**을 집어야 하는데,
+ *    전역이 남아 있으면 한 곳만 빠뜨려도 조용히 남의 공동체 데이터를 만지게 된다.
+ *    없애 두면 빠뜨린 자리가 타입 검사에서 바로 걸린다.
+ */
+const stores = new Map<string, DatabaseSchema>();
 
-let dbCache: DatabaseSchema | null = null;
+/**
+ * 데이터 덩어리가 어느 공동체 것인지 기억해 둔다.
+ * 덕분에 `saveDb(db)` 라고만 써도 알아서 제 자리에 저장된다
+ * (호출하는 곳이 60군데라 매번 공동체를 넘기게 하면 빠뜨리기 쉽다).
+ */
+const ownerOf = new WeakMap<object, string>();
+
+/** 어떤 공동체들이 있는지. 기동할 때 원격에서 읽어 온다. */
+let communities: Community[] = [];
+
+function dbFileFor(cid: string): string {
+  // 기존 파일 이름을 그대로 둔다 — 옮겨오는 동안 우리 교회 데이터가 끊기지 않게.
+  return cid === DEFAULT_COMMUNITY_ID
+    ? path.join(process.cwd(), "db.json")
+    : path.join(process.cwd(), `db.${cid}.json`);
+}
+
+/** (옛 이름 유지) 기본 공동체의 로컬 파일 */
+const DB_FILE = dbFileFor(DEFAULT_COMMUNITY_ID);
+
 let saveQueue = Promise.resolve();
 
 // Firestore 를 한 번이라도 정상적으로 읽었는지 (원격 데이터 보호용)
@@ -43,12 +84,16 @@ let remoteEverRead = false;
  */
 const FIRESTORE_WRITE_TIMEOUT_MS = 8000;
 
-async function saveToFirestoreSafely(data: DatabaseSchema, reason: string): Promise<boolean> {
+async function saveToFirestoreSafely(
+  data: DatabaseSchema,
+  cid: string,
+  reason: string
+): Promise<boolean> {
   try {
     // Firestore 는 undefined 필드를 거부한다. JSON 왕복으로 undefined 를 제거한 사본을 보낸다.
     const clean: DatabaseSchema = JSON.parse(JSON.stringify(data));
     await Promise.race([
-      saveToFirestore(clean),
+      saveToFirestore(clean, cid),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Firestore write timeout")), FIRESTORE_WRITE_TIMEOUT_MS)
       )
@@ -81,20 +126,61 @@ function isSeedLikeDb(d: DatabaseSchema): boolean {
   );
 }
 
-// Helper to load database
-function loadDb(): DatabaseSchema {
-  if (dbCache) return dbCache;
+/**
+ * 한 공동체의 데이터를 메모리로 올린다.
+ * 이미 올라와 있으면 그걸 그대로 돌려준다 (컨테이너가 사는 동안 이게 최신이다).
+ */
+function loadStore(cid: string): DatabaseSchema {
+  const hit = stores.get(cid);
+  if (hit) return hit;
+
+  let data: DatabaseSchema | null = null;
+  const file = dbFileFor(cid);
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const data = fs.readFileSync(DB_FILE, "utf-8");
-      dbCache = JSON.parse(data);
-      return dbCache!;
-    }
+    if (fs.existsSync(file)) data = JSON.parse(fs.readFileSync(file, "utf-8"));
   } catch (err) {
-    console.error("Failed to load DB file, using default:", err);
+    console.error(`[DB] ${cid} 로컬 파일을 읽지 못해 초기값으로 시작합니다:`, err);
   }
-  dbCache = getInitialDb();
-  return dbCache;
+  if (!data) data = cid === DEFAULT_COMMUNITY_ID ? getInitialDb() : getEmptyDb();
+
+  stores.set(cid, data);
+  ownerOf.set(data, cid);
+  return data;
+}
+
+/** 배경 작업(자정 공지·알림)처럼 요청 없이 도는 곳에서 쓴다 */
+function storeOf(cid: string): DatabaseSchema {
+  return loadStore(cid);
+}
+
+/**
+ * 이 요청이 **어느 공동체 것인지** 가린다.
+ *
+ * ⚠️ 로그인한 요청은 **증표에 적힌 공동체만** 믿는다.
+ *    요청 몸통이나 머리말에 실려 온 값을 믿으면, 남의 공동체 이름을 적어 보내
+ *    그 교회 묵상을 들여다볼 수 있다. (예전에 `adminId` 를 그대로 믿어 뚫렸던 것과 같은 실수)
+ *
+ * 로그인 전 화면(이름 목록·로그인·가입)은 증표가 없으니 머리말을 쓴다.
+ * 그 값으로 볼 수 있는 것은 **이름 목록뿐**이고, 공동체 이름표는 짐작할 수 없게 만든다.
+ */
+function cidOf(req: Request): string {
+  const fromToken = tokenOf(req)?.cid;
+  if (fromToken && isValidCommunityId(fromToken)) return fromToken;
+
+  const hinted =
+    (req.headers["x-community"] as string) ||
+    (req.query?.community as string) ||
+    (req.body && (req.body as any).communityId) ||
+    "";
+  if (isValidCommunityId(hinted) && communities.some((c) => c.id === hinted)) return hinted;
+
+  // 아직 갱신 안 된 옛 화면이 아무 표시 없이 들어오는 경우 — 우리 교회로 본다.
+  return DEFAULT_COMMUNITY_ID;
+}
+
+/** 라우트에서 자기 공동체 데이터를 집는 통로 */
+function dbOf(req: Request): DatabaseSchema {
+  return loadStore(cidOf(req));
 }
 
 // Helper to get current YYYY-MM-DD in Korea Standard Time (KST, UTC+9)
@@ -129,13 +215,24 @@ function pickNewerPlan(a?: BiblePlan, b?: BiblePlan): BiblePlan {
   return stamp(a) >= stamp(b) ? a : b;
 }
 
-async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<DatabaseSchema> {
+async function syncAndRefreshWithFirestore(
+  cid: string,
+  writeBack: boolean = false
+): Promise<DatabaseSchema> {
   try {
-    const localDb = loadDb();
-    const remoteDb = await fetchFromFirestore();
+    const localDb = loadStore(cid);
+    const remoteDb = await fetchFromFirestore(cid);
 
-    const dummyUserIds = new Set(["user-1", "user-2", "user-3", "user-4"]);
-    const dummyUserNames = new Set(["김은혜", "박요한", "이선민", "최영진"]);
+    /**
+     * 앱을 처음 만들 때 넣어 둔 예시 데이터를 걷어내는 규칙.
+     *
+     * ⚠️ **우리 교회에만 적용한다.** 여기 적힌 이름들은 흔한 이름이라,
+     *    다른 교회에 실제로 "김은혜" 님이 계시면 그분이 조용히 지워진다.
+     *    새로 만든 공동체에는 애초에 예시 데이터가 없으므로 걸러낼 것도 없다.
+     */
+    const isHomeCommunity = cid === DEFAULT_COMMUNITY_ID;
+    const dummyUserIds = new Set(isHomeCommunity ? ["user-1", "user-2", "user-3", "user-4"] : []);
+    const dummyUserNames = new Set(isHomeCommunity ? ["김은혜", "박요한", "이선민", "최영진"] : []);
 
     const isDummyUser = (u: User) => dummyUserIds.has(u.id) || dummyUserNames.has(u.name);
 
@@ -143,13 +240,17 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
       remoteEverRead = true;
       const userMap = new Map<string, User>();
 
-      userMap.set("admin-1", {
-        id: "admin-1",
-        name: "관리자",
-        role: "admin",
-        pin: "1234",
-        createdAt: "2026-06-21T12:45:23.303Z"
-      });
+      // ⚠️ 이 두 계정도 **우리 교회에만** 해당한다.
+      //    그냥 두면 새로 만든 교회마다 '관리자 / 비밀번호 1234' 라는 낯선 계정이 생긴다.
+      if (isHomeCommunity) {
+        userMap.set("admin-1", {
+          id: "admin-1",
+          name: "관리자",
+          role: "admin",
+          pin: "1234",
+          createdAt: "2026-06-21T12:45:23.303Z"
+        });
+      }
 
       if (localDb.users) {
         for (const u of localDb.users) {
@@ -191,7 +292,7 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
           lastReadChapter: newer?.lastReadChapter || 1,
           updatedAt: newer?.updatedAt || new Date().toISOString()
         };
-        if (!userMap.has(uId)) {
+        if (!userMap.has(uId) && isHomeCommunity) {
           if (uId === "u-gw7xfwjl9") {
             userMap.set(uId, {
               id: "u-gw7xfwjl9",
@@ -207,7 +308,8 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
       const mergedUsers = Array.from(userMap.values());
 
       const isDummyMeditation = (m: Meditation) =>
-        dummyUserIds.has(m.userId) || dummyUserNames.has(m.userName) || ["med-1", "med-2", "med-3"].includes(m.id);
+        isHomeCommunity &&
+        (dummyUserIds.has(m.userId) || dummyUserNames.has(m.userName) || ["med-1", "med-2", "med-3"].includes(m.id));
 
       const medMap = new Map<string, Meditation>();
       if (localDb.meditations) {
@@ -249,12 +351,12 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
       const sumMap = new Map<string, WeeklySummary>();
       if (localDb.summaries) {
         for (const s of localDb.summaries) {
-          if (s.id !== "sum-1") sumMap.set(s.id, s);
+          if (!isHomeCommunity || s.id !== "sum-1") sumMap.set(s.id, s);
         }
       }
       if (remoteDb.summaries) {
         for (const s of remoteDb.summaries) {
-          if (s.id !== "sum-1") sumMap.set(s.id, s);
+          if (!isHomeCommunity || s.id !== "sum-1") sumMap.set(s.id, s);
         }
       }
       const mergedSummaries = Array.from(sumMap.values());
@@ -330,45 +432,81 @@ async function syncAndRefreshWithFirestore(writeBack: boolean = false): Promise<
       }
 
       stripStorableVerseText(mergedDb);
-      dbCache = mergedDb;
-      db = mergedDb;
+      stores.set(cid, mergedDb);
+      ownerOf.set(mergedDb, cid);
       // 원격에서 받아온 변경도 클라이언트가 알아챌 수 있게 번호를 올린다
       dataRevision = Date.now();
       try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(mergedDb, null, 2), "utf-8");
+        fs.writeFileSync(dbFileFor(cid), JSON.stringify(mergedDb, null, 2), "utf-8");
       } catch (err) {
         console.error("Failed to save merged DB to local file:", err);
       }
 
       // 쓰기가 실패해도(할당량 초과 등) 서버 기동을 막아선 안 된다.
       if (writeBack) {
-        await saveToFirestoreSafely(mergedDb, "startup-merge");
+        await saveToFirestoreSafely(mergedDb, cid, "startup-merge");
       }
       return mergedDb;
     } else {
       // ⚠️ 여기 도달 = Firestore 를 읽지 못했거나 원격 문서가 없는 상태.
       // 이때 로컬(초기 상태) DB 를 원격에 쓰면 기존 회원·묵상이 전부 삭제된다.
       // (2026-07-24 실제 사고 발생: db.json 없는 새 컨테이너가 빈 DB로 Firestore 를 덮어씀)
-      const current = loadDb();
+      const current = loadStore(cid);
       if (isSeedLikeDb(current)) {
         console.error(
           "[SAFETY] Firestore 읽기 실패/비어있음 + 로컬이 초기상태 → 원격 쓰기를 건너뜁니다. (데이터 보호)"
         );
       } else if (writeBack) {
-        await saveToFirestoreSafely(current, "startup-local");
+        await saveToFirestoreSafely(current, cid, "startup-local");
       }
       return current;
     }
   } catch (err) {
     console.error("Error during Firestore sync:", err);
-    return loadDb();
+    return loadStore(cid);
   }
 }
 
 async function syncFirestoreOnStartup() {
+  // 공동체 명단을 먼저 읽어야 어떤 칸들을 준비할지 알 수 있다
+  await loadCommunityRegistry();
   // 기동 시에는 로컬/원격 병합 결과를 한 번 확정해 둔다 (되쓰기 허용)
-  await syncAndRefreshWithFirestore(true);
-  console.log("Initial Firestore sync completed.");
+  for (const c of communities) {
+    await syncAndRefreshWithFirestore(c.id, true);
+  }
+  console.log(`Initial Firestore sync completed. (공동체 ${communities.length}개)`);
+}
+
+/**
+ * 공동체 명단을 원격에서 읽어 온다.
+ * 아직 명단이 없으면(=처음 올라가는 판) 지금 쓰고 있는 우리 교회를 첫 공동체로 등록한다.
+ */
+async function loadCommunityRegistry(): Promise<void> {
+  const remote = await fetchCommunities();
+  if (remote && remote.length > 0) {
+    communities = remote;
+    return;
+  }
+  communities = [
+    {
+      id: DEFAULT_COMMUNITY_ID,
+      // 지금 교인들이 로그인 화면에서 보고 계신 이름 그대로 (바뀌면 낯설어진다)
+      name: process.env.DEFAULT_COMMUNITY_NAME || "은혜교회",
+      joinCode: newJoinCode(),
+      createdBy: "",
+      createdAt: new Date().toISOString(),
+      active: true
+    }
+  ];
+  await saveCommunities(communities).catch((err) =>
+    console.error("첫 공동체 등록 실패:", err)
+  );
+  console.log(`[공동체] 명단이 없어 기본 공동체를 등록했습니다 (가입코드 ${communities[0].joinCode}).`);
+}
+
+/** 명단에서 공동체 하나를 찾는다 */
+function findCommunity(cid: string): Community | undefined {
+  return communities.find((c) => c.id === cid);
 }
 
 // ── Firestore 쓰기 합치기(debounce) ────────────────────────────
@@ -380,29 +518,40 @@ async function syncFirestoreOnStartup() {
 //   로컬 db.json 은 즉시 저장하므로 컨테이너가 살아있는 동안의 정합성은 유지된다.
 const FIRESTORE_FLUSH_MS = 15000;
 let flushTimer: NodeJS.Timeout | null = null;
-let pendingFirestoreWrite = false;
+/** 아직 원격에 못 넘긴 변경이 있는 공동체들 */
+const dirtyCommunities = new Set<string>();
+
+/** (옛 이름 유지) 넘길 것이 남아 있는지 */
+function hasPendingWrites(): boolean {
+  return dirtyCommunities.size > 0;
+}
 
 async function flushToFirestore(reason: string = "debounce") {
-  if (!pendingFirestoreWrite) return;
-  pendingFirestoreWrite = false;
+  if (dirtyCommunities.size === 0) return;
+  const targets = [...dirtyCommunities];
+  dirtyCommunities.clear();
   if (flushTimer) {
     clearTimeout(flushTimer);
     flushTimer = null;
   }
-  try {
-    // ⚠️ 원격을 한 번도 못 읽은 상태에서 초기(빈) DB 를 쓰면 기존 데이터가 삭제된다.
-    if (!remoteEverRead && isSeedLikeDb(db)) {
-      console.error("[SAFETY] 원격 미확인 + 초기상태 DB → Firestore 쓰기 차단 (데이터 보호)");
-      return;
+  for (const cid of targets) {
+    const data = stores.get(cid);
+    if (!data) continue;
+    try {
+      // ⚠️ 원격을 한 번도 못 읽은 상태에서 초기(빈) DB 를 쓰면 기존 데이터가 삭제된다.
+      if (!remoteEverRead && isSeedLikeDb(data)) {
+        console.error(`[SAFETY] 원격 미확인 + 초기상태 DB → ${cid} Firestore 쓰기 차단 (데이터 보호)`);
+        continue;
+      }
+      await saveToFirestoreSafely(data, cid, reason);
+    } catch (err) {
+      console.error(`Failed to sync save to Firestore (${cid} / ${reason}):`, err);
     }
-    await saveToFirestoreSafely(db, reason);
-  } catch (err) {
-    console.error(`Failed to sync save to Firestore (${reason}):`, err);
   }
 }
 
-function scheduleFirestoreWrite() {
-  pendingFirestoreWrite = true;
+function scheduleFirestoreWrite(cid: string) {
+  dirtyCommunities.add(cid);
   if (flushTimer) return; // 이미 예약돼 있으면 그 타이머가 처리
   flushTimer = setTimeout(() => {
     flushTimer = null;
@@ -458,20 +607,25 @@ function stripStorableVerseText(dbData: DatabaseSchema) {
 
 function saveDb(dbData: DatabaseSchema) {
   stripStorableVerseText(dbData);
-  db = dbData;
-  dbCache = dbData;
+  // 이 덩어리가 어느 공동체 것인지는 dbOf/loadStore 가 이미 표시해 뒀다.
+  // 표시가 없는 덩어리(옛 코드 경로)는 기본 공동체로 본다.
+  const cid = ownerOf.get(dbData) || DEFAULT_COMMUNITY_ID;
+  ownerOf.set(dbData, cid);
+  stores.set(cid, dbData);
   dataRevision = Date.now();
+
+  const file = dbFileFor(cid);
   saveQueue = saveQueue.then(() => {
     return new Promise<void>((resolve) => {
       try {
-        const tempFile = `${DB_FILE}.tmp`;
+        const tempFile = `${file}.tmp`;
         fs.writeFileSync(tempFile, JSON.stringify(dbData, null, 2), "utf-8");
-        fs.renameSync(tempFile, DB_FILE);
+        fs.renameSync(tempFile, file);
       } catch (err) {
         console.error("Failed to save DB safely:", err);
       }
       // Firestore 는 즉시 쓰지 않고 모아서 보낸다
-      scheduleFirestoreWrite();
+      scheduleFirestoreWrite(cid);
       resolve();
     });
   });
@@ -503,14 +657,39 @@ function getInitialDb(): DatabaseSchema {
   return { users, notices, meditations, summaries, alarmConfigs, biblePlan };
 }
 
-// Ensure database file is generated immediately with seed data if absent
-let db = loadDb();
-if (!db.biblePlan) {
-  db.biblePlan = { book: "요한복음", currentChapter: 1, active: false };
-  saveDb(db);
+/**
+ * 새로 만들어진 공동체의 빈 상태.
+ *
+ * ⚠️ getInitialDb() 를 쓰면 안 된다 — 거기엔 우리 교회의 "관리자(목사님)" 계정과
+ *    예시 공지가 들어 있다. 새로 만든 교회에 낯선 관리자가 생기면 안 된다.
+ *    첫 관리자는 공동체를 만든 사람이 되며, 만들 때 함께 등록된다.
+ */
+function getEmptyDb(): DatabaseSchema {
+  return {
+    users: [],
+    notices: [],
+    meditations: [],
+    summaries: [],
+    alarmConfigs: [],
+    sokGroups: [],
+    gratitudes: [],
+    bibleQAs: [],
+    savedVerses: [],
+    userBibleProgress: {},
+    sharingGoals: {},
+    pushSubscriptions: [],
+    biblePlan: { book: "요한복음", currentChapter: 1, active: false }
+  };
 }
-if (!fs.existsSync(DB_FILE)) {
-  saveDb(db);
+
+// 기본 공동체(우리 교회)는 서버가 뜨자마자 준비해 둔다.
+{
+  const boot = loadStore(DEFAULT_COMMUNITY_ID);
+  if (!boot.biblePlan) {
+    boot.biblePlan = { book: "요한복음", currentChapter: 1, active: false };
+    saveDb(boot);
+  }
+  if (!fs.existsSync(DB_FILE)) saveDb(boot);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -522,7 +701,12 @@ if (!fs.existsSync(DB_FILE)) {
 // 재배포·재시작에도 같은 키가 유지되게 한다.
 let pushReady = false;
 
+/**
+ * 푸시 발신자 신원(VAPID)은 **앱 전체가 하나**다. 공동체마다 다르면 안 된다.
+ * 그래서 기본 공동체의 저장소에 담아 두고 거기서 읽는다 (원격에서는 app_config/global).
+ */
 function initWebPush() {
+  const db = storeOf(DEFAULT_COMMUNITY_ID);
   try {
     let publicKey = process.env.VAPID_PUBLIC_KEY || "";
     let privateKey = process.env.VAPID_PRIVATE_KEY || "";
@@ -554,7 +738,11 @@ function initWebPush() {
 }
 
 function getVapidPublicKey(): string {
-  return process.env.VAPID_PUBLIC_KEY || db.vapidKeys?.publicKey || activeVapidPublicKey;
+  return (
+    process.env.VAPID_PUBLIC_KEY ||
+    storeOf(DEFAULT_COMMUNITY_ID).vapidKeys?.publicKey ||
+    activeVapidPublicKey
+  );
 }
 
 // 주기적 동기화가 db 객체를 통째로 교체해도 실제 사용 중인 키를 잃지 않도록 따로 보관.
@@ -591,6 +779,7 @@ const PUSH_SEND_TIMEOUT_MS = 4000;
  * 알림이 조용히 사라진다. (테스트 알림만 되던 이유가 이것이다 — 그것만 await 했다)
  */
 async function sendPushToUsers(
+  db: DatabaseSchema,
   userIds: string[],
   payload: PushPayload,
   excludeUserId?: string
@@ -645,15 +834,19 @@ async function sendPushToUsers(
 }
 
 /** 전체 교인에게 (발신자 제외) */
-async function pushToEveryone(payload: PushPayload, excludeUserId?: string): Promise<number> {
-  return sendPushToUsers((db.users || []).map((u) => u.id), payload, excludeUserId);
+async function pushToEveryone(
+  db: DatabaseSchema,
+  payload: PushPayload,
+  excludeUserId?: string
+): Promise<number> {
+  return sendPushToUsers(db, (db.users || []).map((u) => u.id), payload, excludeUserId);
 }
 
 /**
  * 글 안에서 "@이름" 으로 부른 사람을 찾는다.
  * 이름에 괄호가 붙은 경우("관리자(목사님)")는 괄호 앞부분만 써도 찾아준다.
  */
-function findMentionedUserIds(text: string, excludeUserId?: string): string[] {
+function findMentionedUserIds(db: DatabaseSchema, text: string, excludeUserId?: string): string[] {
   if (!text || !text.includes("@")) return [];
   const found = new Set<string>();
   for (const u of db.users || []) {
@@ -671,6 +864,7 @@ function findMentionedUserIds(text: string, excludeUserId?: string): string[] {
  * 같은 글에서 다른 알림(댓글·새 묵상)도 받는 사람은 여기서 빼서 두 번 울리지 않게 한다.
  */
 async function pushMentions(
+  db: DatabaseSchema,
   text: string,
   fromUserName: string,
   where: string,
@@ -679,9 +873,9 @@ async function pushMentions(
   excludeUserIds: string[] = []
 ): Promise<number> {
   const skip = new Set(excludeUserIds);
-  const targets = findMentionedUserIds(text).filter((id) => !skip.has(id));
+  const targets = findMentionedUserIds(db, text).filter((id) => !skip.has(id));
   if (targets.length === 0) return 0;
-  return sendPushToUsers(targets, {
+  return sendPushToUsers(db, targets, {
     title: `📣 ${fromUserName} 님이 나를 불렀어요`,
     body: `${where} · ${text.replace(/\s+/g, " ").slice(0, 60)}`,
     url,
@@ -698,6 +892,8 @@ async function pushMentions(
  */
 function getSessionSecret(): string {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  // 공동체마다 다르면 서로의 증표를 확인할 수 없다. 앱 전체가 같은 키를 쓴다.
+  const db = storeOf(DEFAULT_COMMUNITY_ID);
   if (!db.sessionSecret) {
     db.sessionSecret = crypto.randomBytes(32).toString("hex");
     saveDb(db);
@@ -706,14 +902,25 @@ function getSessionSecret(): string {
   return db.sessionSecret;
 }
 
-/** 요청에 실려 온 증표에서 "누구인지"를 읽는다. 없거나 위조면 null. */
-function whoIs(req: Request): TokenPayload | null {
+/**
+ * 증표의 서명과 기한만 확인한다. **DB 는 보지 않는다.**
+ * 어느 공동체의 DB 를 봐야 하는지가 바로 이 증표에 적혀 있기 때문에,
+ * 여기서 DB 를 보려 하면 서로를 기다리는 꼴이 된다.
+ */
+function tokenOf(req: Request): TokenPayload | null {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return null;
-  const payload = verifyToken(getSessionSecret(), token);
+  return verifyToken(getSessionSecret(), token);
+}
+
+/** 요청에 실려 온 증표에서 "누구인지"를 읽는다. 없거나 위조면 null. */
+function whoIs(req: Request): TokenPayload | null {
+  const payload = tokenOf(req);
   if (!payload) return null;
-  // 탈퇴한 사람의 증표는 더 이상 통하지 않아야 한다
+  // 탈퇴한 사람의 증표는 더 이상 통하지 않아야 한다.
+  // 증표에 적힌 공동체 안에서 찾는다 — 다른 공동체의 동명이인이 통과하면 안 된다.
+  const db = loadStore(payload.cid || DEFAULT_COMMUNITY_ID);
   if (!(db.users || []).some((u) => u.id === payload.uid)) return null;
   return payload;
 }
@@ -733,7 +940,7 @@ function requireAdmin(req: Request, res: Response): TokenPayload | null {
   const me = requireLogin(req, res);
   if (!me) return null;
   // 증표에 적힌 역할을 그대로 믿지 않고 지금 DB 로 다시 확인한다
-  const fresh = (db.users || []).find((u) => u.id === me.uid);
+  const fresh = (loadStore(me.cid || DEFAULT_COMMUNITY_ID).users || []).find((u) => u.id === me.uid);
   if (fresh?.role !== "admin") {
     res.status(403).json({ error: "관리자만 할 수 있는 일입니다." });
     return null;
@@ -748,8 +955,9 @@ function requireAdmin(req: Request, res: Response): TokenPayload | null {
  * 그래서 **Cloud Run 콘솔에 들어갈 수 있는 사람만** 쓸 수 있는 길을 하나 둔다.
  * 인터넷에 열린 주소가 아니라 환경변수라서 밖에서는 건드릴 수 없다.
  *
- *   RESET_PIN_USER  = 이름 또는 계정 ID (예: "관리자(목사님)")
- *   RESET_ADMIN_PIN = 새 4자리
+ *   RESET_PIN_USER      = 이름 또는 계정 ID (예: "관리자(목사님)")
+ *   RESET_ADMIN_PIN     = 새 4자리
+ *   RESET_PIN_COMMUNITY = 어느 공동체인지 (안 적으면 기본 공동체)
  *
  * 같은 값으로는 한 번만 적용된다. 변수를 지우지 않고 두더라도
  * 나중에 바꾼 비밀번호가 서버 재시작 때 옛 값으로 되돌아가지 않는다.
@@ -757,6 +965,13 @@ function requireAdmin(req: Request, res: Response): TokenPayload | null {
 function applyPinResetFromEnv(): void {
   const newPin = (process.env.RESET_ADMIN_PIN || "").trim();
   if (!newPin) return;
+
+  const cid = (process.env.RESET_PIN_COMMUNITY || "").trim() || DEFAULT_COMMUNITY_ID;
+  if (!findCommunity(cid)) {
+    console.error(`[비밀번호 재설정] '${cid}' 공동체를 찾지 못했습니다. 건너뜁니다.`);
+    return;
+  }
+  const db = storeOf(cid);
 
   if (newPin.length !== 4 || !/^[0-9]+$/.test(newPin)) {
     console.error("[비밀번호 재설정] RESET_ADMIN_PIN 은 숫자 4자리여야 합니다. 건너뜁니다.");
@@ -841,15 +1056,16 @@ const ALARM_MESSAGES = [
  */
 const DEFAULT_ALARM = { time: "07:30", days: [1, 2, 3, 4, 5] };
 
-let alarmSweepRunning = false;
+const alarmSweepRunning = new Set<string>();
 
 /** 지금 울릴 차례인 알림을 찾아 보낸다. 1분마다, 그리고 외부 호출로도 돈다. */
-async function runAlarmSweep(): Promise<number> {
-  if (alarmSweepRunning) return 0;
+async function runAlarmSweep(cid: string = DEFAULT_COMMUNITY_ID): Promise<number> {
+  if (alarmSweepRunning.has(cid)) return 0;
   if (!pushReady) return 0;
+  const db = storeOf(cid);
   if (!db.pushSubscriptions || db.pushSubscriptions.length === 0) return 0;
 
-  alarmSweepRunning = true;
+  alarmSweepRunning.add(cid);
   try {
     const today = getKSTDateString();
     const { day, minutes } = getKSTClock();
@@ -906,7 +1122,7 @@ async function runAlarmSweep(): Promise<number> {
       due.map((cfg) => {
         const name = (db.users || []).find((u) => u.id === cfg.userId)?.name;
         const line = ALARM_MESSAGES[Math.floor(Math.random() * ALARM_MESSAGES.length)];
-        return sendPushToUsers([cfg.userId], {
+        return sendPushToUsers(db, [cfg.userId], {
           title: todayNotice?.verseTitle
             ? `📖 오늘의 말씀 · ${todayNotice.verseTitle}`
             : "📖 아침 묵상 시간이에요",
@@ -923,7 +1139,7 @@ async function runAlarmSweep(): Promise<number> {
     console.error("[알림] 스윕 실패:", err);
     return 0;
   } finally {
-    alarmSweepRunning = false;
+    alarmSweepRunning.delete(cid);
   }
 }
 
@@ -1055,7 +1271,7 @@ function parseChapterTitle(title: string): { book: string; chapter: number } | n
 }
 
 /** 그날 이전에 자동으로 나간 공지 중 가장 최근의 위치 */
-function lastAutoNoticePosition(beforeDate: string): { book: string; chapter: number } | null {
+function lastAutoNoticePosition(db: DatabaseSchema, beforeDate: string): { book: string; chapter: number } | null {
   const past = (db.notices || [])
     .filter((n) => n.createdBy === "성경 플래너(자동)" && n.date < beforeDate)
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -1075,14 +1291,14 @@ function lastAutoNoticePosition(beforeDate: string): { book: string; chapter: nu
  *
  * 관리자가 방금 진도를 지정한 경우에는 `lastUpdatedDate` 가 비어 있으므로 그대로 따른다.
  */
-function positionForNotice(dateStr: string): { book: string; chapter: number } {
+function positionForNotice(db: DatabaseSchema, dateStr: string): { book: string; chapter: number } {
   const plan = db.biblePlan!;
   const planned = normalizePlanPosition(plan.book, plan.currentChapter);
 
   // 관리자가 직접 지정한 직후 → 손대지 않는다
   if (!plan.lastUpdatedDate) return planned;
 
-  const last = lastAutoNoticePosition(dateStr);
+  const last = lastAutoNoticePosition(db, dateStr);
   if (!last) return planned;
 
   // 같은 책에서 뒤로 가거나 제자리인 경우만 바로잡는다.
@@ -1103,9 +1319,10 @@ function positionForNotice(dateStr: string): { book: string; chapter: number } {
  * 아무도 앱을 열지 않아도 다음 장으로 넘어간다.
  * 동시에 두 번 들어와 같은 날 공지가 두 개 생기던 문제를 잠금으로 막는다.
  */
-let noticeRollRunning = false;
-async function ensureTodayNotice(): Promise<Notice | null> {
-  if (noticeRollRunning) return null;
+const noticeRollRunning = new Set<string>();
+async function ensureTodayNotice(cid: string = DEFAULT_COMMUNITY_ID): Promise<Notice | null> {
+  if (noticeRollRunning.has(cid)) return null;
+  const db = storeOf(cid);
   if (!db.biblePlan?.active) return null;
 
   const today = getKSTDateString();
@@ -1126,23 +1343,23 @@ async function ensureTodayNotice(): Promise<Notice | null> {
   const existing = db.notices.find((n) => n.date === today);
   if (existing) return existing;
 
-  noticeRollRunning = true;
+  noticeRollRunning.add(cid);
   try {
-    const made = await autoPostNextBibleChapter(today);
+    const made = await autoPostNextBibleChapter(db, today);
     if (made) console.log(`[성경 플래너] ${today} 공지를 만들었습니다: ${made.verseTitle}`);
     return made;
   } catch (err) {
     console.error("[성경 플래너] 오늘 공지 생성 실패:", err);
     return null;
   } finally {
-    noticeRollRunning = false;
+    noticeRollRunning.delete(cid);
   }
 }
 
-async function autoPostNextBibleChapter(todayStr: string): Promise<Notice | null> {
+async function autoPostNextBibleChapter(db: DatabaseSchema, todayStr: string): Promise<Notice | null> {
   if (!db.biblePlan || !db.biblePlan.active) return null;
 
-  const position = positionForNotice(todayStr);
+  const position = positionForNotice(db, todayStr);
   if (position.book !== db.biblePlan.book || position.chapter !== db.biblePlan.currentChapter) {
     console.log(
       `[성경 플래너] 위치를 바로잡습니다: ${db.biblePlan.book} ${db.biblePlan.currentChapter}장 -> ${position.book} ${position.chapter}장`
@@ -1246,12 +1463,13 @@ async function startServer() {
 
   // 아직 평문으로 남아 있는 비밀번호를 되돌릴 수 없는 형태로 바꿔 둔다.
   // 교인들은 쓰던 4자리를 그대로 쓰면 된다 — 바뀌는 건 저장 방식뿐이다.
-  {
+  for (const c of communities) {
+    const db = storeOf(c.id);
     const plain = (db.users || []).filter((u) => u.pin && !isHashed(u.pin));
     if (plain.length > 0) {
       for (const u of plain) u.pin = hashPin(String(u.pin).trim());
       saveDb(db);
-      console.log(`[인증] 평문으로 남아 있던 비밀번호 ${plain.length}건을 암호화했습니다.`);
+      console.log(`[인증] ${c.name}: 평문으로 남아 있던 비밀번호 ${plain.length}건을 암호화했습니다.`);
     }
   }
 
@@ -1262,18 +1480,24 @@ async function startServer() {
   //  ① 오늘 말씀 공지 — 자정이 지났으면 다음 장으로 넘겨 새로 만든다
   //  ② 아침 묵상 시간 알림 — 울릴 차례인 사람에게 보낸다
   // 깨어난 직후에도 한 번 돌려서, 자고 있던 사이에 지난 것을 놓치지 않는다.
+  // 공동체마다 진도도 알림 시간도 다르므로 각각 돌려야 한다.
   const runMinuteJobs = async () => {
-    await ensureTodayNotice().catch(() => {});
-    await runAlarmSweep().catch(() => {});
+    for (const c of communities) {
+      if (!c.active) continue;
+      await ensureTodayNotice(c.id).catch(() => {});
+      await runAlarmSweep(c.id).catch(() => {});
+    }
   };
   runMinuteJobs();
   setInterval(runMinuteJobs, 60 * 1000);
 
   // 본문이 비어 있는 것은 이제 정상이다 (읽을 때 withVerseText 가 채운다).
   // 옛 버전이 남긴 "불러오는 중" 같은 껍데기 본문만 비워서 정상 경로를 타게 한다.
-  if (db.notices && db.notices.length > 0) {
+  for (const c of communities) {
+    const db = storeOf(c.id);
+    if (!db.notices || db.notices.length === 0) continue;
     let sanitized = false;
-    db.notices.forEach(n => {
+    db.notices.forEach((n) => {
       if (n.verseText && n.verseText.includes("불러오는 중")) {
         n.verseText = "";
         sanitized = true;
@@ -1294,9 +1518,10 @@ async function startServer() {
       lastSyncTime = now;
       // 아직 원격에 못 넘긴 로컬 변경이 있으면 병합하지 않는다.
       // (병합은 합집합이라, 방금 지운 항목이 원격 사본에서 되살아난다)
-      if (!pendingFirestoreWrite) {
+      if (!hasPendingWrites()) {
         try {
-          await syncAndRefreshWithFirestore(false); // 읽기 전용 — 되쓰지 않는다
+          // 지금 요청이 향한 공동체만 새로 읽는다 (전부 읽으면 읽기 한도가 아깝다)
+          await syncAndRefreshWithFirestore(cidOf(req), false); // 읽기 전용 — 되쓰지 않는다
         } catch (err) {
           console.error("Auto sync in API middleware error:", err);
         }
@@ -1305,17 +1530,219 @@ async function startServer() {
     next();
   });
 
+  // --- 공동체 APIs ---
+  //
+  // 앱 하나를 여러 교회가 나눠 쓴다. 주소는 같아도 서로의 글은 보이지 않는다.
+  // 격리의 핵심은 딱 하나 — **어느 공동체인지를 앱이 보낸 값으로 정하지 않고,
+  // 로그인 증표 안에 서명해 넣은 값으로만 정한다** (cidOf 주석 참고).
+
+  /**
+   * 지금 들어온 사람이 보게 될 공동체의 이름.
+   * 로그인 화면 맨 위에 "○○교회" 를 띄우기 위한 것이라 로그인 없이도 답한다.
+   * 이름 말고는 아무것도 알려주지 않는다.
+   */
+  app.get("/api/communities/current", (req: Request, res: Response) => {
+    const community = findCommunity(cidOf(req));
+    if (!community || !community.active) {
+      return res.status(404).json({ error: "공동체를 찾을 수 없습니다." });
+    }
+    res.json({
+      id: community.id,
+      name: community.name,
+      // 우리 교회는 지금까지 코드 없이 등록해 왔다. 그대로 둔다 (register 라우트와 짝을 맞춘다)
+      requiresJoinCode: community.id !== DEFAULT_COMMUNITY_ID
+    });
+  });
+
+  /** 가입코드로 공동체를 찾는다. 코드가 맞아야 그 공동체의 로그인 화면으로 갈 수 있다. */
+  app.post("/api/communities/resolve", (req: Request, res: Response) => {
+    // 6자리는 기계로 두드리면 뚫린다. 로그인과 같은 방식으로 횟수를 제한한다.
+    const who = "joincode:" + (req.ip || req.socket.remoteAddress || "unknown");
+    const gate = checkLoginAllowed(who);
+    if (!gate.allowed) {
+      return res.status(429).json({
+        error: `가입코드를 여러 번 잘못 입력했습니다. ${gate.retryAfterMin}분 뒤에 다시 시도해주세요.`
+      });
+    }
+
+    const code = normalizeJoinCode(req.body?.joinCode);
+    const found = communities.find((c) => c.joinCode === code && c.active);
+    if (!code || !found) {
+      recordLoginFailure(who);
+      return res.status(404).json({ error: "그런 가입코드가 없습니다. 다시 확인해주세요." });
+    }
+    clearLoginFailures(who);
+    // 이름표와 이름만 알려준다. 명단·글은 로그인해야 보인다.
+    res.json({ id: found.id, name: found.name });
+  });
+
+  /**
+   * 새 공동체를 만든다. 만든 사람이 그 공동체의 첫 관리자가 된다.
+   * 여기서만 관리자가 '자동으로' 생긴다 — 그 밖의 가입은 전부 일반 지체다.
+   */
+  app.post("/api/communities/create", async (req: Request, res: Response) => {
+    const name = normalizeCommunityName(req.body?.name);
+    const adminName = String(req.body?.adminName ?? "").trim();
+    const pin = String(req.body?.pin ?? "").trim();
+
+    if (!name) return res.status(400).json({ error: "공동체 이름을 2~40자로 입력해주세요." });
+    if (!adminName) return res.status(400).json({ error: "관리자로 등록할 성함을 입력해주세요." });
+    if (pin.length !== 4 || !/^[0-9]+$/.test(pin)) {
+      return res.status(400).json({ error: "비밀번호는 숫자 4자리로 정해주세요." });
+    }
+
+    // 이름표와 가입코드는 겹치면 안 된다 (겹칠 확률은 낮지만 확인은 공짜다)
+    let id = newCommunityId();
+    while (communities.some((c) => c.id === id)) id = newCommunityId();
+    let joinCode = newJoinCode();
+    while (communities.some((c) => c.joinCode === joinCode)) joinCode = newJoinCode();
+
+    const admin: User = {
+      id: "u-" + Math.random().toString(36).substring(2, 11),
+      name: adminName,
+      role: "admin",
+      pin: hashPin(pin),
+      createdAt: new Date().toISOString(),
+      communityId: id
+    };
+
+    const fresh = getEmptyDb();
+    fresh.users.push(admin);
+    stores.set(id, fresh);
+    ownerOf.set(fresh, id);
+
+    const community: Community = {
+      id,
+      name,
+      joinCode,
+      createdBy: admin.id,
+      createdAt: new Date().toISOString(),
+      active: true
+    };
+    communities = [...communities, community];
+
+    try {
+      await saveCommunities(communities);
+    } catch (err) {
+      // 명단에 못 올리면 아무도 이 공동체를 찾을 수 없다. 만들다 만 상태로 두지 않는다.
+      communities = communities.filter((c) => c.id !== id);
+      stores.delete(id);
+      console.error("[공동체] 만들기 실패:", err);
+      return res.status(500).json({ error: "공동체를 만들지 못했습니다. 잠시 뒤 다시 시도해주세요." });
+    }
+    saveDb(fresh);
+
+    console.log(`[공동체] '${name}' 을(를) 만들었습니다 (${id}, 첫 관리자 ${adminName}).`);
+    res.json({
+      community: { id, name, joinCode },
+      user: { id: admin.id, name: admin.name, role: admin.role },
+      token: issueToken(getSessionSecret(), admin.id, admin.role, id)
+    });
+  });
+
+  /** 내가 속한 공동체 정보. 가입코드는 관리자에게만 보여준다. */
+  app.get("/api/communities/mine", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const community = findCommunity(me.cid || DEFAULT_COMMUNITY_ID);
+    if (!community) return res.status(404).json({ error: "공동체를 찾을 수 없습니다." });
+
+    const db = loadStore(community.id);
+    const isAdmin = (db.users || []).find((u) => u.id === me.uid)?.role === "admin";
+    res.json({
+      id: community.id,
+      name: community.name,
+      memberCount: (db.users || []).length,
+      createdAt: community.createdAt,
+      joinCode: isAdmin ? community.joinCode : undefined
+    });
+  });
+
+  /** 가입코드 새로 발급 (관리자). 코드가 새어나갔을 때 쓴다. */
+  app.post("/api/communities/regenerate-code", async (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const cid = me.cid || DEFAULT_COMMUNITY_ID;
+    const community = findCommunity(cid);
+    if (!community) return res.status(404).json({ error: "공동체를 찾을 수 없습니다." });
+
+    let code = newJoinCode();
+    while (communities.some((c) => c.joinCode === code)) code = newJoinCode();
+    const before = community.joinCode;
+    community.joinCode = code;
+
+    try {
+      await saveCommunities(communities);
+    } catch {
+      community.joinCode = before; // 저장 실패 시 되돌린다
+      return res.status(500).json({ error: "가입코드를 바꾸지 못했습니다." });
+    }
+    res.json({ joinCode: code });
+  });
+
+  /**
+   * 지체를 관리자로 세우거나 내린다 (관리자만).
+   * 가입할 때 스스로 관리자가 될 수 없게 막았으므로, 권한은 여기로만 올라간다.
+   */
+  app.post("/api/auth/users/role", (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const db = loadStore(me.cid || DEFAULT_COMMUNITY_ID);
+    const { userId, role } = req.body || {};
+    if (role !== "admin" && role !== "member") {
+      return res.status(400).json({ error: "역할이 올바르지 않습니다." });
+    }
+    const target = (db.users || []).find((u) => u.id === userId);
+    if (!target) return res.status(404).json({ error: "그런 지체가 없습니다." });
+
+    // 관리자가 한 명도 없는 상태가 되면 아무도 공동체를 돌볼 수 없다.
+    if (role === "member") {
+      const admins = db.users.filter((u) => u.role === "admin");
+      if (admins.length <= 1 && target.role === "admin") {
+        return res.status(400).json({ error: "관리자가 한 분뿐이라 내릴 수 없습니다. 먼저 다른 분을 관리자로 세워주세요." });
+      }
+    }
+
+    target.role = role;
+    saveDb(db);
+    res.json({ id: target.id, name: target.name, role: target.role });
+  });
+
   // --- Auth APIs ---
   app.get("/api/auth/users", (req: Request, res: Response) => {
+    const db = dbOf(req);
     // Only return id, name, role for selection screen to keep PIN private
     const publicUsers = db.users.map(({ id, name, role }) => ({ id, name, role }));
     res.json(publicUsers);
   });
 
+  /**
+   * 새 지체 등록.
+   *
+   * ⚠️ 예전에는 요청에 `role: "admin"` 을 적어 보내면 그대로 관리자가 됐다.
+   *    가입 화면에도 '관리자' 선택지가 그대로 노출돼 있어서, 주소를 아는 누구나
+   *    관리자가 되어 공지를 올리고 남의 계정을 지울 수 있었다.
+   *    이제 가입은 **언제나 일반 지체**로만 되고, 관리자 권한은 기존 관리자가 준다.
+   *    (공동체를 처음 만든 사람만 예외 — 그 사람이 첫 관리자다)
+   */
   app.post("/api/auth/register", (req: Request, res: Response) => {
-    const { name, pin, role } = req.body;
+    const cid = cidOf(req);
+    const community = findCommunity(cid);
+    const db = loadStore(cid);
+    const { name, pin, joinCode } = req.body;
     if (!name || !pin) {
       return res.status(400).json({ error: "이름과 4자리 비밀번호(PIN)를 입력해주세요." });
+    }
+    if (!community || !community.active) {
+      return res.status(404).json({ error: "공동체를 찾을 수 없습니다. 가입코드를 다시 확인해주세요." });
+    }
+
+    // 우리 교회(기본 공동체)는 지금까지 코드 없이 등록해 왔다. 그대로 둔다.
+    // 새로 생긴 공동체는 반드시 가입코드가 맞아야 들어올 수 있다.
+    if (cid !== DEFAULT_COMMUNITY_ID) {
+      if (normalizeJoinCode(joinCode) !== community.joinCode) {
+        return res.status(403).json({ error: "가입코드가 맞지 않습니다." });
+      }
     }
 
     const existing = db.users.find(u => u.name === name);
@@ -1326,9 +1753,10 @@ async function startServer() {
     const newUser: User = {
       id: "u-" + Math.random().toString(36).substring(2, 11),
       name,
-      role: role || "member",
+      role: "member",
       pin: hashPin(String(pin).trim()),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      communityId: cid
     };
 
     db.users.push(newUser);
@@ -1339,6 +1767,10 @@ async function startServer() {
   });
 
   app.post("/api/auth/login", (req: Request, res: Response) => {
+    // 로그인 전이라 증표가 없다. 앱이 알려준 공동체를 쓰되,
+    // **여기서 정해진 공동체가 증표에 새겨져** 이후로는 바꿀 수 없게 된다.
+    const cid = cidOf(req);
+    const db = loadStore(cid);
     const { userId, name, userName, pin } = req.body;
     const searchIdentifier = (userId || name || userName || "").toString().trim();
     if (!searchIdentifier || !pin) {
@@ -1377,11 +1809,12 @@ async function startServer() {
       name: user.name,
       role: user.role,
       // 이 증표가 있어야 계정 삭제·비밀번호 변경 같은 일을 할 수 있다
-      token: issueToken(getSessionSecret(), user.id, user.role)
+      token: issueToken(getSessionSecret(), user.id, user.role, cid)
     });
   });
 
   app.post("/api/auth/users/update", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, name, pin } = req.body;
     const actor = requireLogin(req, res);
     if (!actor) return;
@@ -1427,6 +1860,7 @@ async function startServer() {
   });
 
   app.post("/api/auth/users/admin-update-pin", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { adminId, targetUserId, newPin } = req.body;
     // 몸통에 적힌 adminId 가 아니라 로그인 증표로 확인한다
     const actor = requireAdmin(req, res);
@@ -1456,6 +1890,7 @@ async function startServer() {
   });
 
   app.delete("/api/auth/users/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { requestorId } = req.body;
     const actor = requireLogin(req, res);
@@ -1499,10 +1934,12 @@ async function startServer() {
 
   // --- Daily Notices / Verses APIs ---
   app.get("/api/notices", (req: Request, res: Response) => {
+    const db = dbOf(req);
     res.json(db.notices.map(withVerseText));
   });
 
   app.get("/api/notices/today", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     // Find notice for today, or get the latest notice in KST (Korea Standard Time)
     const todayStr = getKSTDateString();
 
@@ -1525,10 +1962,12 @@ async function startServer() {
 
   // --- Bible Plan Settings APIs ---
   app.get("/api/bible-plan", (req: Request, res: Response) => {
+    const db = dbOf(req);
     res.json(db.biblePlan || { book: "요한복음", currentChapter: 1, active: false });
   });
 
   app.post("/api/bible-plan", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { book, currentChapter, active } = req.body;
     if (!book) {
       return res.status(400).json({ error: "성경 책 이름을 지정해주세요 (예: 요한복음)." });
@@ -1561,6 +2000,7 @@ async function startServer() {
    * 구독 키는 절대 내보내지 않는다.
    */
   app.get("/api/push/status", (req: Request, res: Response) => {
+    const db = dbOf(req);
     if (!requireAdmin(req, res)) return;
     const subs = db.pushSubscriptions || [];
     const byUser = new Map<string, number>();
@@ -1583,6 +2023,7 @@ async function startServer() {
   });
 
   app.post("/api/push/subscribe", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, subscription, userAgent } = req.body;
     if (!userId || !subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
       return res.status(400).json({ error: "구독 정보가 올바르지 않습니다." });
@@ -1607,6 +2048,7 @@ async function startServer() {
   });
 
   app.post("/api/push/unsubscribe", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { endpoint } = req.body;
     if (!endpoint) return res.status(400).json({ error: "endpoint 가 필요합니다." });
     db.pushSubscriptions = (db.pushSubscriptions || []).filter((s) => s.endpoint !== endpoint);
@@ -1616,6 +2058,7 @@ async function startServer() {
 
   /** 설정 화면에서 "내 폰에 실제로 오는지" 확인용 */
   app.post("/api/push/test", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId 가 필요합니다." });
     if (!pushReady) return res.status(503).json({ error: "푸시가 준비되지 않았습니다." });
@@ -1625,7 +2068,7 @@ async function startServer() {
       return res.status(404).json({ error: "이 기기에 등록된 알림이 없습니다. 먼저 알림을 켜주세요." });
     }
 
-    await sendPushToUsers([userId], {
+    await sendPushToUsers(db, [userId], {
       title: "🔔 알림 테스트",
       body: "알림이 정상적으로 도착했습니다. 앱을 닫아두셔도 이렇게 받아보실 수 있어요.",
       url: "/?tab=settings",
@@ -1635,6 +2078,7 @@ async function startServer() {
   });
 
   app.post("/api/notices/create", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { verseTitle, verseText, content, createdBy, noticeId } = req.body;
     if (!verseTitle || !verseText) {
       return res.status(400).json({ error: "성경 구절 제목과 본문을 입력해주세요." });
@@ -1673,7 +2117,7 @@ async function startServer() {
     saveDb(db);
 
     // ⚠️ 알림은 응답을 보내기 전에 끝내야 한다 (§ sendPushToUsers 주석 참고)
-    await pushToEveryone({
+    await pushToEveryone(db, {
       title: "📖 오늘의 말씀이 올라왔어요",
       body: verseTitle,
       url: "/?tab=notice",
@@ -1684,6 +2128,7 @@ async function startServer() {
   });
 
   app.post("/api/notices/:id/read", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
 
@@ -1709,11 +2154,13 @@ async function startServer() {
 
   // --- Sok (Small Group) APIs ---
   app.get("/api/soks", (req: Request, res: Response) => {
+    const db = dbOf(req);
     if (!db.sokGroups) db.sokGroups = [];
     res.json(db.sokGroups);
   });
 
   app.post("/api/soks", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { name, description, memberUserIds } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ error: "속 이름을 입력해 주세요." });
@@ -1735,6 +2182,7 @@ async function startServer() {
   });
 
   app.put("/api/soks/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { name, description, memberUserIds } = req.body;
 
@@ -1753,6 +2201,7 @@ async function startServer() {
   });
 
   app.delete("/api/soks/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
 
     if (!db.sokGroups) db.sokGroups = [];
@@ -1776,6 +2225,7 @@ async function startServer() {
 
   // --- Meditations APIs ---
   app.get("/api/meditations", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId } = req.query;
     let list = [...db.meditations];
     if (userId && typeof userId === "string") {
@@ -1787,6 +2237,7 @@ async function startServer() {
 
 
   app.post("/api/meditations/create", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, userName, verseTitle, title, content, prayer, meditationId, sokId } = req.body;
     if (!userId || !userName || !verseTitle || !title || !content) {
       return res.status(400).json({ error: "필수 정보(구절, 제목, 본문)를 누락하였습니다." });
@@ -1836,6 +2287,7 @@ async function startServer() {
 
     try {
       await sendPushToUsers(
+        db,
         audience,
         {
           title: "📖 새 묵상이 올라왔어요",
@@ -1847,6 +2299,7 @@ async function startServer() {
       );
       // "@이름" 으로 부른 사람에게 따로 한 번 더 (위 알림을 이미 받은 사람은 뺀다)
       await pushMentions(
+        db,
         `${title}\n${content}\n${prayer || ""}`,
         userName,
         "묵상 나눔",
@@ -1862,6 +2315,7 @@ async function startServer() {
   });
 
   app.delete("/api/meditations/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
 
@@ -1880,6 +2334,7 @@ async function startServer() {
   });
 
   app.post("/api/meditations/:id/like", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
 
@@ -1905,6 +2360,7 @@ async function startServer() {
 
   /** 반응 토글 (🙏 기도할게요 / 🤍 은혜받았어요 / 👏 축하해요) */
   app.post("/api/meditations/:id/react", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId, type } = req.body;
     if (!userId || !VALID_REACTIONS.includes(type)) {
@@ -1937,6 +2393,7 @@ async function startServer() {
           : `${who} 님이 내 묵상에 반응했어요`;
 
       await sendPushToUsers(
+        db,
         [med.userId],
         {
           title: `${label.emoji} ${label.text}`,
@@ -1952,6 +2409,7 @@ async function startServer() {
   });
 
   app.post("/api/meditations/:id/comment", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId, userName, content } = req.body;
 
@@ -1979,6 +2437,7 @@ async function startServer() {
     const participants = new Set<string>([med.userId, ...med.comments.map((c) => c.userId)]);
     try {
       await sendPushToUsers(
+        db,
         [...participants],
         {
           // 글쓴이 본인과 그 밖의 참여자가 같은 문구를 받으므로 두루 맞는 표현으로 둔다
@@ -1989,7 +2448,7 @@ async function startServer() {
         },
         userId
       );
-      await pushMentions(content, userName, "묵상 댓글", "/?tab=feed", "mention-" + newComment.id, [
+      await pushMentions(db, content, userName, "묵상 댓글", "/?tab=feed", "mention-" + newComment.id, [
         userId,
         ...participants
       ]);
@@ -2001,6 +2460,7 @@ async function startServer() {
   });
 
   app.delete("/api/meditations/:id/comment/:commentId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id, commentId } = req.params;
     const { userId } = req.body;
 
@@ -2025,12 +2485,14 @@ async function startServer() {
 
   // --- Weekly Summaries API with Gemini integration ---
   app.get("/api/summaries", (req: Request, res: Response) => {
+    const db = dbOf(req);
     // Sort by latest generated summary
     const sorted = [...db.summaries].sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
     res.json(sorted);
   });
 
   app.post("/api/summaries/generate", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { weekLabel, daysCount } = req.body;
     const limitDays = daysCount || 7;
     const sinceDate = getKSTDateString(new Date(Date.now() - limitDays * 24 * 3600 * 1000));
@@ -2333,19 +2795,32 @@ JSON format:
    * 둘 다 하루 한 번만 하도록 막혀 있어 여러 번 불려도 안전하다.
    * (아래 "/api/alarms/:userId" 보다 반드시 먼저 등록해야 tick 이 사용자 ID 로 잡히지 않는다)
    */
+  // Cloud Scheduler 가 5분마다 두드린다. 특정 공동체의 요청이 아니므로 **전부** 돈다.
   app.all("/api/alarms/tick", async (req: Request, res: Response) => {
-    const notice = await ensureTodayNotice();
-    const sent = await runAlarmSweep();
-    res.json({ ok: true, sent, notice: notice ? notice.verseTitle : null });
+    const done: Array<{ community: string; notice: string | null; sent: number }> = [];
+    for (const c of communities) {
+      if (!c.active) continue;
+      const notice = await ensureTodayNotice(c.id).catch(() => null);
+      const sent = await runAlarmSweep(c.id).catch(() => 0);
+      done.push({ community: c.id, notice: notice ? notice.verseTitle : null, sent });
+    }
+    res.json({
+      ok: true,
+      sent: done.reduce((n, d) => n + d.sent, 0),
+      notice: done[0]?.notice ?? null,
+      communities: done
+    });
   });
 
   app.get("/api/alarms/:userId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId } = req.params;
     const config = db.alarmConfigs.find(a => a.userId === userId);
     res.json(config || { userId, time: "07:30", enabled: true, days: [1, 2, 3, 4, 5] });
   });
 
   app.post("/api/alarms", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, time, enabled, days } = req.body;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
@@ -2376,6 +2851,7 @@ JSON format:
 
   // --- User Bible Progress APIs ---
   app.get("/api/bible-progress/:userId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
@@ -2403,6 +2879,7 @@ JSON format:
   });
 
   app.post("/api/bible-progress", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter } = req.body;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
@@ -2448,6 +2925,7 @@ JSON format:
 
   // --- 체크해 둔 말씀 (성경 읽다 절을 눌러 저장) ---
   app.get("/api/saved-verses/:userId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId } = req.params;
     if (!db.savedVerses) db.savedVerses = [];
     const mine = db.savedVerses
@@ -2458,6 +2936,7 @@ JSON format:
 
   /** 같은 절을 다시 누르면 해제되는 토글 방식 */
   app.post("/api/saved-verses/toggle", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, book, chapter, verseNum, text } = req.body;
     if (!userId || !book || !chapter || !verseNum) {
       return res.status(400).json({ error: "구절 정보가 올바르지 않습니다." });
@@ -2493,6 +2972,7 @@ JSON format:
   });
 
   app.delete("/api/saved-verses/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
     if (!db.savedVerses) db.savedVerses = [];
@@ -2505,6 +2985,7 @@ JSON format:
 
   // --- 나눔 목표 (주간 묵상/감사 목표) ---
   app.get("/api/sharing-goal/:userId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId } = req.params;
     if (!db.sharingGoals) db.sharingGoals = {};
     const goal = db.sharingGoals[userId] || {
@@ -2517,6 +2998,7 @@ JSON format:
   });
 
   app.post("/api/sharing-goal", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, weeklyMeditations, weeklyGratitudes } = req.body;
     if (!userId) return res.status(400).json({ error: "로그인이 필요합니다." });
 
@@ -2540,12 +3022,14 @@ JSON format:
 
   // --- Daily Gratitude Board APIs ---
   app.get("/api/gratitudes", (req: Request, res: Response) => {
+    const db = dbOf(req);
     if (!db.gratitudes) db.gratitudes = [];
     const sorted = [...db.gratitudes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     res.json(sorted);
   });
 
   app.post("/api/gratitudes/create", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { userId, userName, isAnonymous, content, date, gratitudeId } = req.body;
     if (!userId || !userName || !content || !content.trim()) {
       return res.status(400).json({ error: "감사 나눔 내용을 입력해주세요." });
@@ -2587,7 +3071,7 @@ JSON format:
     db.gratitudes.unshift(newGratitude);
     saveDb(db);
 
-    await pushToEveryone(
+    await pushToEveryone(db, 
       {
         title: "🤍 새로운 감사 나눔",
         body: `${newGratitude.isAnonymous ? "익명" : userName} : ${newGratitude.content.slice(0, 60)}`,
@@ -2601,6 +3085,7 @@ JSON format:
   });
 
   app.delete("/api/gratitudes/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
 
@@ -2621,6 +3106,7 @@ JSON format:
   });
 
   app.post("/api/gratitudes/:id/like", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
 
@@ -2647,6 +3133,7 @@ JSON format:
 
   /** 감사 글 반응 토글 */
   app.post("/api/gratitudes/:id/react", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId, type } = req.body;
     if (!userId || !VALID_REACTIONS.includes(type)) {
@@ -2671,6 +3158,7 @@ JSON format:
       const label = REACTION_LABEL[type as ReactionType];
       const who = (db.users || []).find((u) => u.id === userId)?.name || "누군가";
       await sendPushToUsers(
+        db,
         [grat.userId],
         {
           title: `${label.emoji} ${label.text}`,
@@ -2686,6 +3174,7 @@ JSON format:
   });
 
   app.post("/api/gratitudes/:id/comment", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId, userName, content } = req.body;
 
@@ -2713,6 +3202,7 @@ JSON format:
     const participants = new Set<string>([grat.userId, ...grat.comments.map((c) => c.userId)]);
     try {
       await sendPushToUsers(
+        db,
         [...participants],
         {
           title: "💬 감사 나눔에 댓글이 달렸어요",
@@ -2723,6 +3213,7 @@ JSON format:
         userId
       );
       await pushMentions(
+        db,
         newComment.content,
         userName,
         "감사 나눔 댓글",
@@ -2738,6 +3229,7 @@ JSON format:
   });
 
   app.delete("/api/gratitudes/:id/comment/:commentId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id, commentId } = req.params;
     const { userId } = req.body;
 
@@ -2764,12 +3256,14 @@ JSON format:
 
   // --- Bible Q&A (AI Search & Pastoral Comments) APIs ---
   app.get("/api/qna", (req: Request, res: Response) => {
+    const db = dbOf(req);
     if (!db.bibleQAs) db.bibleQAs = [];
     const sorted = [...db.bibleQAs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     res.json(sorted);
   });
 
   app.post("/api/qna/ask", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { question, category } = req.body;
     if (!question || !question.trim()) {
       return res.status(400).json({ error: "성경 질문 및 배경 탐구 내용을 입력해주세요." });
@@ -2801,6 +3295,7 @@ JSON format:
   });
 
   app.post("/api/qna/:id/regenerate", async (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     if (!db.bibleQAs) db.bibleQAs = [];
     const qa = db.bibleQAs.find(q => q.id === id);
@@ -2817,6 +3312,7 @@ JSON format:
   });
 
   app.delete("/api/qna/:id", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     if (!db.bibleQAs) db.bibleQAs = [];
     const idx = db.bibleQAs.findIndex(q => q.id === id);
@@ -2830,6 +3326,7 @@ JSON format:
   });
 
   app.post("/api/qna/:id/like", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId } = req.body;
 
@@ -2851,6 +3348,7 @@ JSON format:
   });
 
   app.post("/api/qna/:id/comment", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id } = req.params;
     const { userId, userName, content } = req.body;
 
@@ -2876,6 +3374,7 @@ JSON format:
   });
 
   app.delete("/api/qna/:id/comment/:commentId", (req: Request, res: Response) => {
+    const db = dbOf(req);
     const { id, commentId } = req.params;
     const { userId } = req.body;
 

@@ -107,13 +107,30 @@ const fromB64url = (s: string) => Buffer.from(s.replace(/-/g, "+").replace(/_/g,
 export interface TokenPayload {
   uid: string;
   role: "admin" | "member";
+  /**
+   * 어느 공동체 사람인지.
+   *
+   * ⚠️ 이 값이 **격리의 핵심**이다. 앱이 보낸 값으로 공동체를 정하면
+   *    남의 공동체 이름을 적어 보내 그 교회 묵상을 들여다볼 수 있다.
+   *    그래서 로그인할 때 서명해서 넣고, 그 뒤로는 이것만 믿는다.
+   *
+   * 이 값이 생기기 전에 발급된 증표에는 없다. 그런 증표는 기본 공동체로 본다
+   * (앱을 갱신하지 않은 분들이 갑자기 로그아웃되지 않게).
+   */
+  cid?: string;
   exp: number;
 }
 
-export function issueToken(secret: string, uid: string, role: "admin" | "member"): string {
+export function issueToken(
+  secret: string,
+  uid: string,
+  role: "admin" | "member",
+  cid: string
+): string {
   const payload: TokenPayload = {
     uid,
     role,
+    cid,
     exp: Date.now() + TOKEN_DAYS * 24 * 60 * 60 * 1000
   };
   const body = b64url(Buffer.from(JSON.stringify(payload), "utf8"));

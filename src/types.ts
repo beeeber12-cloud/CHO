@@ -1,9 +1,37 @@
+/**
+ * 공동체 — 한 교회/모임의 울타리.
+ *
+ * 묵상·감사·통독은 전부 공동체 안에서만 오간다.
+ * 다른 공동체의 글은 화면에서 가리는 게 아니라 **서버가 아예 내보내지 않는다.**
+ */
+export interface Community {
+  /** 겉으로 드러나는 짧은 이름표. 짐작할 수 없게 무작위로 만든다 */
+  id: string;
+  /** "○○교회 청년부" 처럼 사람에게 보이는 이름 */
+  name: string;
+  /** 새 지체를 들일 때 알려주는 6자리. 새어나가면 관리자가 다시 발급한다 */
+  joinCode: string;
+  /** 이 공동체를 만든 사람 (첫 관리자) */
+  createdBy: string;
+  createdAt: string;
+  /** 꺼두면 아무도 못 들어온다 (앱 운영자만 조작) */
+  active: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
   role: 'admin' | 'member';
   pin: string; // 4-digit PIN code
   createdAt: string;
+  /**
+   * 어느 공동체 사람인지.
+   * ⚠️ 이 값은 **요청에 실려 온 것을 믿지 않는다.** 로그인 증표 안에 든 것만 쓴다.
+   * 그러지 않으면 남의 공동체 이름을 적어 보내 묵상을 들여다볼 수 있다.
+   */
+  communityId?: string;
+  /** 앱 전체 운영자. 공동체 목록·정지만 가능하고 남의 공동체 글은 못 본다 */
+  isAppOwner?: boolean;
 }
 
 export interface Notice {
@@ -160,6 +188,13 @@ export interface SavedVerse {
   createdAt: string;
 }
 
+/**
+ * 한 공동체가 담고 있는 것 전부.
+ *
+ * 이름이 Database 로 시작하지만 실제로는 **공동체 하나치**다.
+ * (앱이 하나의 공동체로만 돌던 시절의 이름을 그대로 두었다 —
+ *  서버 코드 200 곳 가까이가 이 이름을 쓰고 있어 바꾸면 얻는 것보다 잃는 게 크다)
+ */
 export interface DatabaseSchema {
   users: User[];
   notices: Notice[];
