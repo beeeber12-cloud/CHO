@@ -504,6 +504,24 @@ async function loadCommunityRegistry(): Promise<void> {
   console.log(`[공동체] 명단이 없어 기본 공동체를 등록했습니다 (가입코드 ${communities[0].joinCode}).`);
 }
 
+/**
+ * 공동체 명단을 원격에서 다시 읽어 온다.
+ *
+ * 명단은 기동할 때 한 번만 읽으므로, 밖에서 공동체를 지우거나 이름을 바꿔도
+ * 이 컨테이너는 옛 명단을 계속 들고 있게 된다. 그 상태에서 새 공동체가 하나
+ * 만들어지면 옛 명단이 통째로 다시 저장돼 지운 것이 되살아난다.
+ * 몇 분에 한 번 맞춰 두면 그런 일이 없다. 읽기는 문서 하나라 거의 공짜다.
+ */
+async function refreshCommunityRegistry(): Promise<void> {
+  try {
+    const remote = await fetchCommunities();
+    // 읽기에 실패했거나(null) 비어 있으면 지금 것을 그대로 둔다 — 지우는 쪽으로 기울지 않는다
+    if (remote && remote.length > 0) communities = remote;
+  } catch (err) {
+    console.error("공동체 명단 새로고침 실패:", err);
+  }
+}
+
 /** 명단에서 공동체 하나를 찾는다 */
 function findCommunity(cid: string): Community | undefined {
   return communities.find((c) => c.id === cid);
@@ -1481,7 +1499,10 @@ async function startServer() {
   //  ② 아침 묵상 시간 알림 — 울릴 차례인 사람에게 보낸다
   // 깨어난 직후에도 한 번 돌려서, 자고 있던 사이에 지난 것을 놓치지 않는다.
   // 공동체마다 진도도 알림 시간도 다르므로 각각 돌려야 한다.
+  let minuteTicks = 0;
   const runMinuteJobs = async () => {
+    // 5분에 한 번 공동체 명단을 맞춘다
+    if (minuteTicks++ % 5 === 0) await refreshCommunityRegistry();
     for (const c of communities) {
       if (!c.active) continue;
       await ensureTodayNotice(c.id).catch(() => {});
