@@ -1,8 +1,17 @@
 rules_version = '2';
+
+// 이 데이터에 닿는 길은 '우리 서버' 하나뿐이다.
+//
+// 서버는 관리자(Admin) SDK 로 접속하고, 관리자 SDK 는 이 규칙을 거치지 않는다.
+// 그래서 아래처럼 전면 차단해도 앱은 그대로 동작하고,
+// 접속 정보를 손에 넣은 외부인은 아무것도 읽거나 쓸 수 없다.
+//
+// ⚠️ 서버가 브라우저용 SDK 로 돌아가던 시절에는 이 규칙이 열려 있어야만 앱이 동작했다.
+//    서버를 관리자 SDK 로 바꾸기 전에 이 파일을 배포하면 앱이 멈춘다.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
