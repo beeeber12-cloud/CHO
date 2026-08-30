@@ -156,7 +156,11 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       <CommunityGate
         onCancel={() => setShowGate(false)}
         onReady={(picked, loggedIn) => {
-          setCommunity({ id: picked.id, name: picked.name, requiresJoinCode: true });
+          setCommunity({ id: picked.id, name: picked.name });
+          fetch("/api/communities/current")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((c) => c && setCommunity(c))
+            .catch(() => {});
           setShowGate(false);
           setError("");
           setSelectedUser("");

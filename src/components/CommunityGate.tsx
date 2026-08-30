@@ -4,6 +4,7 @@ import { KeyRound, Church, ArrowLeft, Loader2, Home, X } from "lucide-react";
 import {
   saveCommunity,
   saveToken,
+  getCommunity,
   getCommunityHistory,
   forgetCommunity,
   StoredCommunity
@@ -28,8 +29,14 @@ type Mode = "menu" | "join" | "create";
 
 export default function CommunityGate({ onReady, onCancel }: Props) {
   const [mode, setMode] = useState<Mode>("menu");
-  // 이 기기에서 지나온 공동체들. 코드를 몰라도 눌러서 돌아갈 수 있다.
-  const [history, setHistory] = useState<StoredCommunity[]>(() => getCommunityHistory());
+  /**
+   * 이 기기에서 지나온 공동체들. 코드를 몰라도 눌러서 돌아갈 수 있다.
+   * 지금 있는 곳은 뺀다 — 여기 있는데 "여기로 가기" 버튼이 있으면 헷갈리기만 한다.
+   */
+  const here = getCommunity()?.id;
+  const [history, setHistory] = useState<StoredCommunity[]>(
+    () => getCommunityHistory().filter((c) => c.id !== here)
+  );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -153,7 +160,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
 (공동체가 없어지는 것은 아닙니다)`;
                         if (!confirm(msg)) return;
                         forgetCommunity(h.id);
-                        setHistory(getCommunityHistory());
+                        setHistory(getCommunityHistory().filter((c) => c.id !== here));
                       }}
                       className="p-3 rounded-2xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                       title="목록에서 지우기"
