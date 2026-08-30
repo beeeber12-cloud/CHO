@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AlarmConfig } from "../types";
-import { Bell, Clock, Calendar, Check, AlertCircle, Volume2, Sparkles, Send, BellOff, X, User, Lock, ShieldAlert, Trash2, Users, Type, ZoomIn, Smartphone } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { Bell, Clock, Check, Send, BellOff, User, Lock, ShieldAlert, Trash2, Users, Type, ZoomIn, Smartphone } from "lucide-react";
 import { useFontSize, FontScale } from "../context/FontSizeContext";
 import { checkPushSupport, enablePush, disablePush, isPushEnabled, sendTestPush, PushSupport } from "../lib/push";
 import { authFetch, clearToken } from "../lib/session";
@@ -24,7 +23,7 @@ function FontSizeSettingCard() {
   ];
 
   return (
-    <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
         <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
           <ZoomIn size={18} />
@@ -72,7 +71,14 @@ function FontSizeSettingCard() {
  * 진짜 푸시 알림 설정.
  * 브라우저를 닫아둬도 도착하는 알림이라, 기존의 "브라우저 열려 있을 때만 오는 알림"과는 다르다.
  */
-function PushNotificationCard({ userId }: { userId: string }) {
+function PushNotificationCard({
+  userId,
+  onEnabledChange
+}: {
+  userId: string;
+  /** 이 기기에서 알림이 켜졌는지 위쪽에 알려준다 (묵상 알림 안내 문구에 쓴다) */
+  onEnabledChange?: (on: boolean) => void;
+}) {
   const [support, setSupport] = useState<PushSupport>("unsupported");
   const [enabled, setEnabled] = useState<boolean>(false);
   const [busy, setBusy] = useState<boolean>(false);
@@ -126,18 +132,37 @@ function PushNotificationCard({ userId }: { userId: string }) {
     setBusy(false);
   };
 
+  useEffect(() => {
+    onEnabledChange?.(enabled);
+  }, [enabled]);
+
   return (
-    <div className="border-t border-[#E3E9E2] pt-5 space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
-          <Smartphone size={18} />
+    <div className="space-y-2.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
+            <Smartphone size={18} />
+          </div>
+          <div className="min-w-0">
+            <span className="block font-bold text-[#14261E] text-sm">휴대폰 알림</span>
+            <p className="text-2xs text-[#6F8377]">
+              앱을 닫아두셔도 새 말씀·묵상·댓글이 도착합니다
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="font-bold text-[#0C3B2E] text-base">새 글 알림</h3>
-          <p className="text-xs text-[#6F8377] font-medium">
-            새 말씀·묵상·댓글이 올라오면 휴대폰으로 바로 알려드립니다.
-          </p>
-        </div>
+        {support !== "ios-needs-install" && support !== "unsupported" && (
+          <button
+            onClick={handleToggle}
+            disabled={busy}
+            className={`shrink-0 text-xs font-bold py-2 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50 ${
+              enabled
+                ? "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
+                : "bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#E8A900]"
+            }`}
+          >
+            {busy ? "처리 중" : enabled ? "끄기" : "켜기"}
+          </button>
+        )}
       </div>
 
       {support === "ios-needs-install" ? (
@@ -153,31 +178,16 @@ function PushNotificationCard({ userId }: { userId: string }) {
           이 브라우저는 푸시 알림을 지원하지 않습니다. 크롬 또는 삼성 인터넷을 사용해 주세요.
         </div>
       ) : (
-        <div className="space-y-2.5">
+        enabled && (
           <button
-            onClick={handleToggle}
+            onClick={handleTest}
             disabled={busy}
-            className={`w-full flex items-center justify-center gap-2 text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50 ${
-              enabled
-                ? "bg-[#F5F5F5] text-[#0C3B2E] hover:bg-[#D2DDD3]"
-                : "bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#E8A900]"
-            }`}
+            className="w-full flex items-center justify-center gap-1.5 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#4A6B57] text-xs font-bold py-2.5 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50"
           >
-            {enabled ? <BellOff size={14} /> : <Bell size={14} />}
-            {busy ? "처리 중..." : enabled ? "이 기기에서 알림 끄기" : "휴대폰 알림 켜기"}
+            <Send size={13} />
+            테스트 알림 받아보기
           </button>
-
-          {enabled && (
-            <button
-              onClick={handleTest}
-              disabled={busy}
-              className="w-full flex items-center justify-center gap-2 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#0C3B2E] text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50"
-            >
-              <Send size={14} />
-              테스트 알림 받기
-            </button>
-          )}
-        </div>
+        )
       )}
 
       {msg && (
@@ -226,7 +236,7 @@ function PushStatusCard() {
   const off = status?.users.filter((u) => u.devices === 0) || [];
 
   return (
-    <div className="border-t border-[#E3E9E2] pt-5 space-y-3">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
@@ -287,7 +297,7 @@ function PushStatusCard() {
           {off.length > 0 && (
             <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F5F5F5] rounded-3xl p-3">
               꺼진 지체에게는 이렇게 안내해 주세요 —
-              <strong className="text-[#0C3B2E]"> 알림 설정 → 새 글 알림 → 휴대폰 알림 켜기</strong>.
+              <strong className="text-[#0C3B2E]"> 알림 설정 → 알림 → 휴대폰 알림 '켜기'</strong>.
               아이폰은 사파리 공유 버튼 → 홈 화면에 추가로 <strong className="text-[#0C3B2E]">앱을 설치한 뒤</strong> 켜야 합니다.
             </p>
           )}
@@ -308,9 +318,8 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [success, setSuccess] = useState<string>("");
-
-  // Simulated Alert State
-  const [simulatedAlert, setSimulatedAlert] = useState<string | null>(null);
+  /** 이 기기에서 휴대폰 알림이 켜져 있는지 (아직 확인 전이면 null) */
+  const [pushOn, setPushOn] = useState<boolean | null>(null);
 
   // Profile update state
   const [profileName, setProfileName] = useState<string>(currentUser.name);
@@ -476,8 +485,24 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * 시간·요일·켜짐을 바꾸면 잠시 뒤 알아서 저장한다.
+   * 저장 버튼을 없앴다 — 어르신들께는 누를 것이 하나라도 적은 편이 낫고,
+   * 예전에는 바꿔놓고 저장을 안 눌러 알림이 안 오는 일이 생겼다.
+   */
+  // 서버에서 막 불러온 값을 그대로 되돌려 쓰는 낭비를 막는다 (첫 한 번은 건너뛴다)
+  const skipFirstSave = useRef(true);
+  useEffect(() => {
+    if (loading) return;
+    if (skipFirstSave.current) {
+      skipFirstSave.current = false;
+      return;
+    }
+    const timer = setTimeout(() => { saveAlarm(); }, 700);
+    return () => clearTimeout(timer);
+  }, [time, enabled, days, loading]);
+
+  const saveAlarm = async () => {
     setSaving(true);
     setSuccess("");
 
@@ -496,8 +521,8 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       if (res.ok) {
         const data = await res.json();
         setConfig(data);
-        setSuccess("매일 아침 묵상 독려 알림 설정이 저장되었습니다!");
-        setTimeout(() => setSuccess(""), 3000);
+        setSuccess("저장했습니다");
+        setTimeout(() => setSuccess(""), 2500);
       }
     } catch (err) {
       console.error("Failed to save alarm:", err);
@@ -514,68 +539,42 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
     }
   };
 
-  const triggerSimulatedNotification = () => {
-    // Encouragement templates
-    const messages = [
-      `📢 말씀 배달! "${currentUser.name} 성도님, 맑은 아침입니다. 오늘 배달된 말씀 공지를 확인하고, 5분의 묵상으로 은혜 가득한 하루를 시작해보세요!"`,
-      `🌅 아침 묵상 시간 독려: "오늘의 주님 약속이 등록되었습니다. 소그룹 동역자들과 은혜를 나누기 위해 오늘 한 절 말씀을 꼭 묵상해봐요."`,
-      `🙏 ${currentUser.name}님을 위한 응원 알림: "지체들의 묵상 글이 공유되고 있습니다. 서로를 격려하는 소중한 나눔터로 놀러오세요!"`,
-      `✨ 오늘 하루도 주님과 동행하세요! "바쁘고 분주한 일상 속에서 잠시 멈춰, 오늘의 말씀을 묵상하는 영적인 쉼을 누려봅시다."`
-    ];
-    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-    setSimulatedAlert(randomMessage);
-
-    // Optional browser standard notification
-    if ("Notification" in window) {
-      if (Notification.permission === "granted") {
-        new Notification("📖 아침 성경 묵상 독려", {
-          body: randomMessage,
-          icon: "/favicon.ico"
-        });
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-          if (permission === "granted") {
-            new Notification("📖 아침 성경 묵상 독려", {
-              body: randomMessage
-            });
-          }
-        });
-      }
-    }
-  };
 
   return (
+    <div className="space-y-3 sm:space-y-4">
     <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-5">
+      {/*
+        알림은 한 박스 안에 모은다.
+        예전에는 '아침 묵상 알림' 과 '새 글 알림' 이 따로 떨어져 있고 그 사이에
+        시뮬레이터까지 끼어 있어서, 무엇을 먼저 켜야 하는지 한눈에 안 들어왔다.
+        순서도 뒤집었다 — **휴대폰 알림이 켜져야 묵상 알림이 의미가 있다.**
+      */}
       <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3">
         <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
           <Bell size={18} />
         </div>
         <div>
-          <h3 className="font-bold text-[#0C3B2E] text-base sm:text-lg whitespace-nowrap">아침 묵상 알림 및 설정</h3>
-          <p className="text-2xs sm:text-xs text-[#6F8377]">매일 아침 약속된 시간에 묵상을 독려하는 알림 및 개인 설정을 관리합니다</p>
+          <h3 className="font-bold text-[#0C3B2E] text-base sm:text-lg">알림</h3>
+          <p className="text-2xs sm:text-xs text-[#6F8377]">휴대폰으로 받을 알림을 정합니다</p>
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-5">
-        {/* Enabled Status Toggle */}
-        <div className="flex items-center justify-between p-3.5 bg-[#F5F5F5] rounded-3xl">
-          <div className="flex items-center gap-2.5">
-            {enabled ? (
-              <div className="p-1.5 bg-[#F5F5F5] text-[#0C3B2E] rounded-xl">
-                <Bell size={18} />
-              </div>
-            ) : (
-              <div className="p-1.5 bg-[#F8E3E3] text-[#8F1E17] rounded-xl">
-                <BellOff size={18} />
-              </div>
-            )}
-            <div>
-              <span className="text-xs font-bold text-[#14261E] block">알림 기능 활성화</span>
-              <p className="text-2xs text-[#6F8377]">설정한 시간에 알람 독려를 활성화합니다</p>
+      {/* ① 먼저 켜야 하는 것 */}
+      <PushNotificationCard userId={currentUser.id} onEnabledChange={setPushOn} />
+
+      {/* ② 아침 묵상 알림 */}
+      <div className="border-t border-[#E3E9E2] pt-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
+              <Clock size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="block font-bold text-[#14261E] text-sm">아침 묵상 알림</span>
+              <p className="text-2xs text-[#6F8377]">정한 시간에 오늘의 말씀을 알려드립니다</p>
             </div>
           </div>
-
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
             <input
               type="checkbox"
               checked={enabled}
@@ -586,136 +585,75 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           </label>
         </div>
 
-        {/* Time selection */}
-        <div>
-          <label className="block text-xs font-semibold text-[#6F8377] mb-1.5 flex items-center gap-1">
-            <Clock size={14} className="text-[#4A6B57]" />
-            독려 알림 희망 시간
-          </label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="px-3.5 py-2.5 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold shadow-sm"
-          />
-          <p className="text-2xs text-[#6F8377] mt-1.5 leading-relaxed">
-            설정한 시간이 되면 휴대폰으로 오늘의 말씀 알림이 갑니다.
-            받으려면 아래 <strong className="text-[#0C3B2E]">새 글 알림</strong>을 먼저 켜주세요.
-          </p>
-        </div>
+        {enabled && (
+          <div className="space-y-3 pl-1">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-semibold text-[#6F8377] w-8 shrink-0">시간</span>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="px-3.5 py-2 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold"
+              />
+            </div>
 
-        {/* Days Selection */}
-        <div>
-          <label className="block text-xs font-semibold text-[#6F8377] mb-2 flex items-center gap-1">
-            <Calendar size={14} className="text-[#4A6B57]" />
-            알림 요일 반복 선택
-          </label>
-          <div className="flex gap-1.5">
-            {dayLabels.map((label, index) => {
-              const isSelected = days.includes(index);
-              const isWeekend = index === 0 || index === 6;
-              return (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => toggleDay(index)}
-                  className={`w-9 h-9 rounded-3xl text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
-                    isSelected
-                      ? "bg-[#0C3B2E] border-[#0C3B2E] text-white"
-                      : isWeekend
-                      ? "bg-[#F5F5F5] border-[#E3E9E2] text-[#B3261E] hover:bg-[#D2DDD3]"
-                      : "bg-[#F5F5F5] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#D2DDD3]"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-semibold text-[#6F8377] w-8 shrink-0">요일</span>
+              <div className="flex gap-1">
+                {dayLabels.map((label, index) => {
+                  const isSelected = days.includes(index);
+                  const isWeekend = index === 0 || index === 6;
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => toggleDay(index)}
+                      className={`w-8 h-8 rounded-2xl text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
+                        isSelected
+                          ? "bg-[#0C3B2E] border-[#0C3B2E] text-white"
+                          : isWeekend
+                          ? "bg-[#F5F5F5] border-[#E3E9E2] text-[#B3261E] hover:bg-[#D2DDD3]"
+                          : "bg-[#F5F5F5] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#D2DDD3]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 순서를 헷갈리지 않도록, 필요할 때만 한 줄로 알려준다 */}
+            {pushOn === false && (
+              <p className="text-2xs text-[#8F6B00] bg-[#FFF7E0] rounded-2xl px-3 py-2 leading-relaxed">
+                위의 <strong>휴대폰 알림</strong>을 먼저 켜주셔야 이 알림이 도착합니다.
+              </p>
+            )}
           </div>
-        </div>
-
-        {success && (
-          <p className="text-xs text-[#4A6B57] font-semibold bg-[#F5F5F5] p-2.5 rounded-3xl flex items-center gap-1.5">
-            <Check size={14} className="stroke-[3px]" />
-            {success}
-          </p>
         )}
 
-        {/* Save button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] px-4 py-2.5 rounded-3xl shadow-md transition cursor-pointer"
-          >
-            {saving ? "설정 저장 중..." : "알림 설정 저장"}
-          </button>
-        </div>
-      </form>
-
-      {/* 진짜 푸시 알림 (앱을 닫아둬도 도착) */}
-      <PushNotificationCard userId={currentUser.id} />
-
-      {/* 누가 켰고 누가 안 켰는지 — 관리자만 */}
-      {currentUser.role === "admin" && <PushStatusCard />}
-
-      {/* Interactive push simulator */}
-      <div className="border-t border-[#E3E9E2] pt-5 space-y-3">
-        <h4 className="text-xs font-bold text-[#14261E] flex items-center gap-1">
-          <Sparkles className="text-[#4A6B57] animate-pulse" size={14} />
-          알림 기능 테스트 및 시뮬레이션
-        </h4>
-        <p className="text-2xs text-[#6F8377] leading-relaxed">
-          웹 브라우저 및 앱 환경에서 매일 아침 성도들에게 발송될 묵상 시간 독려 알림 메시지를 즉시 미리 받아보실 수 있습니다.
+        {/* 저장 버튼 없이 바로 저장된다 — 누를 것이 하나라도 줄어드는 편이 낫다 */}
+        <p className="text-2xs text-[#4A6B57] h-4 flex items-center gap-1">
+          {saving ? "저장 중..." : success ? (<><Check size={12} className="stroke-[3px]" />{success}</>) : ""}
         </p>
-
-        <button
-          onClick={triggerSimulatedNotification}
-          className="w-full flex items-center justify-center gap-2 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#0C3B2E] text-xs font-bold py-3 px-4 rounded-3xl transition cursor-pointer"
-        >
-          <Send size={14} />
-          아침 묵상 독려 알림 가상 수신하기
-        </button>
-
-        {/* Real-time beautiful simulated alert display */}
-        <AnimatePresence>
-          {simulatedAlert && (
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: -10 }}
-              className="bg-[#0C3B2E] text-white rounded-[32px] p-4 shadow-lg relative overflow-hidden"
-            >
-              <div className="flex gap-2.5 items-start">
-                <div className="p-2 bg-[#4A6B57] rounded-3xl text-white">
-                  <Volume2 size={16} />
-                </div>
-                <div className="space-y-1">
-                  <span className="block text-2xs uppercase font-bold text-[#F5F5F5] tracking-widest flex items-center gap-1">
-                    <Bell size={10} className="animate-bounce" />
-                    BIBLE MEDITATION NOTIFICATION
-                  </span>
-                  <p className="text-xs leading-relaxed text-[#F5F5F5] font-medium">
-                    {simulatedAlert}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSimulatedAlert(null)}
-                className="absolute right-2 top-2 p-1 text-[#F5F5F5] hover:text-white rounded-lg cursor-pointer"
-              >
-                <X size={12} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
+    </div>
+
+      {/* 누가 켰고 누가 안 켰는지 — 관리자만 */}
+      {currentUser.role === "admin" && (
+        <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6">
+          <PushStatusCard />
+        </div>
+      )}
+
       {/* Font size settings for adults and seniors */}
-      <FontSizeSettingCard />
+      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6">
+        <FontSizeSettingCard />
+      </div>
 
       {/* Profile modification section */}
-      <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
+      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-4">
 
         <div className="flex items-center gap-2">
           <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
@@ -780,7 +718,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       </div>
 
       {/* Account Deletion and Member List Management section */}
-      <div className="border-t border-[#E3E9E2] pt-6 space-y-4">
+      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-4">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-[#FDF3F3] text-[#8F1E17] rounded-3xl">
             <Users size={18} />
@@ -893,7 +831,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
       </div>
 
       {/* 앱 버전 — 휴대폰에 옛 화면이 남아 있는지 확인할 때 쓴다 */}
-      <p className="text-2xs text-[#A8B3A9] text-center pt-2">앱 버전 {__BUILD_TIME__}</p>
+      <p className="text-2xs text-[#A8B3A9] text-center pt-1">앱 버전 {__BUILD_TIME__}</p>
     </div>
   );
 }
