@@ -13,7 +13,7 @@ import FontSizeControl from "./components/FontSizeControl";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
-import { clearToken } from "./lib/session";
+import { clearToken, getCommunity, saveCommunity } from "./lib/session";
 
 interface UserProfile {
   id: string;
@@ -57,6 +57,11 @@ export default function App() {
   });
 
   const [allUsers, setAllUsers] = useState<{ id: string; name: string; role: string }[]>([]);
+  /**
+   * 앱 머리에 뜨는 공동체 이름.
+   * 기기에 기억해 둔 이름을 먼저 보여주고(깜빡임 없음), 서버 값으로 맞춘다.
+   */
+  const [communityName, setCommunityName] = useState<string>(() => getCommunity()?.name || "말씀나눔");
   const [activeTab, setActiveTab] = useState<TabType>(() => tabFromUrl() || 'notice');
 
   // Prefilled Bible Verse state for writing meditation
@@ -65,9 +70,16 @@ export default function App() {
   const [bibleQuery, setBibleQuery] = useState<{ query: string; nonce: number }>({ query: "", nonce: 0 });
 
   useEffect(() => {
-    if (currentUser) {
-      fetchAllUsers();
-    }
+    if (!currentUser) return;
+    fetchAllUsers();
+    fetch("/api/communities/mine")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => {
+        if (!c?.name) return;
+        setCommunityName(c.name);
+        saveCommunity({ id: c.id, name: c.name });
+      })
+      .catch(() => {});
   }, [currentUser]);
 
   // Q&A 를 숨긴 상태에서 이전 세션의 활성 탭이 qna 로 남아 빈 화면이 되는 것 방지
@@ -175,7 +187,7 @@ export default function App() {
               <Cross size={18} className="sm:w-5 sm:h-5" />
             </div>
             <div className="shrink-0">
-              <h1 className="font-bold text-base sm:text-lg text-[#0C3B2E] tracking-tight leading-none whitespace-nowrap">은혜교회</h1>
+              <h1 className="font-bold text-base sm:text-lg text-[#0C3B2E] tracking-tight leading-none whitespace-nowrap">{communityName}</h1>
               <span className="text-2xs sm:text-2xs text-[#4A6B57] font-bold uppercase tracking-wider block whitespace-nowrap">말씀 묵상 나눔방</span>
             </div>
           </div>
@@ -374,7 +386,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
               >
-                <CommunitySettings currentUser={currentUser} />
+                <CommunitySettings currentUser={currentUser} onRenamed={setCommunityName} />
                 <NotificationSettings 
                   currentUser={currentUser} 
                   onUserUpdate={(updatedUser) => {

@@ -1679,6 +1679,31 @@ async function startServer() {
     });
   });
 
+  /**
+   * 공동체 이름 바꾸기 (관리자).
+   * 이 이름이 로그인 화면과 앱 머리에 그대로 나온다.
+   */
+  app.post("/api/communities/rename", async (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const community = findCommunity(me.cid || DEFAULT_COMMUNITY_ID);
+    if (!community) return res.status(404).json({ error: "공동체를 찾을 수 없습니다." });
+
+    const name = normalizeCommunityName(req.body?.name);
+    if (!name) return res.status(400).json({ error: "공동체 이름을 2~40자로 입력해주세요." });
+
+    const before = community.name;
+    community.name = name;
+    try {
+      await saveCommunities(communities);
+    } catch {
+      community.name = before; // 저장 실패 시 되돌린다
+      return res.status(500).json({ error: "이름을 바꾸지 못했습니다." });
+    }
+    console.log(`[공동체] 이름 변경: '${before}' -> '${name}'`);
+    res.json({ id: community.id, name: community.name });
+  });
+
   /** 가입코드 새로 발급 (관리자). 코드가 새어나갔을 때 쓴다. */
   app.post("/api/communities/regenerate-code", async (req: Request, res: Response) => {
     const me = requireAdmin(req, res);

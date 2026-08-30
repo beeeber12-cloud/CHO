@@ -652,7 +652,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   onChange={(e) => setSokIdForForm(e.target.value || null)}
                   className="w-full text-xs px-3 py-2.5 bg-white border-2 border-[#0C3B2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold cursor-pointer"
                 >
-                  <option value="">🌐 전체 공유 (교회 모든 식구와 나눔)</option>
+                  <option value="">🌐 전체 공유 (우리 공동체 모두와 나눔)</option>
                   {accessibleSoks.map((sok) => (
                     <option key={sok.id} value={sok.id}>
                       🏷️ {sok.name} 모임 식구들에게만 공유

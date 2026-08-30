@@ -184,9 +184,9 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         >
           <UserCheck size={36} />
         </motion.div>
-        <h2 className="text-3xl font-bold text-[#0C3B2E] tracking-tight">{community?.name || "은혜교회"}</h2>
+        <h2 className="text-3xl font-bold text-[#0C3B2E] tracking-tight">{community?.name || "말씀나눔"}</h2>
         <p className="mt-2 text-sm text-[#6F8377]">
-          우리 성도님들과 소그룹을 위한 매일 말씀 묵상과 따뜻한 은혜 나눔터
+          우리 공동체를 위한 매일 말씀 묵상과 따뜻한 은혜 나눔터
         </p>
       </div>
 

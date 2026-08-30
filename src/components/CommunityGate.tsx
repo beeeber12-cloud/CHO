@@ -227,7 +227,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="예: 은혜교회 청년부"
+                placeholder="예: 소망교회 청년부"
                 autoFocus
                 className="w-full text-lg py-4 px-4 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 outline-none"
               />
