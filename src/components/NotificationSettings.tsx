@@ -22,10 +22,10 @@ function FontSizeSettingCard() {
    * 대신 버튼의 '가' 를 실제 크기 차이로 보여준다.
    */
   const scales: { key: FontScale; label: string; sample: string }[] = [
-    { key: "small", label: "작게", sample: "text-xs" },
-    { key: "normal", label: "보통", sample: "text-base" },
-    { key: "large", label: "크게", sample: "text-xl" },
-    { key: "xlarge", label: "아주크게", sample: "text-2xl" },
+    { key: "small", label: "작게", sample: "text-2xs" },
+    { key: "normal", label: "보통", sample: "text-xs" },
+    { key: "large", label: "크게", sample: "text-sm" },
+    { key: "xlarge", label: "아주크게", sample: "text-base" },
   ];
 
   return (
@@ -37,13 +37,13 @@ function FontSizeSettingCard() {
         <h3 className="font-bold text-[#0C3B2E] text-base">글씨 크기</h3>
       </div>
 
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-4 gap-1">
         {scales.map((s) => (
           <button
             key={s.key}
             type="button"
             onClick={() => setFontScale(s.key)}
-            className={`flex flex-col items-center justify-center gap-0.5 py-2.5 rounded-2xl border transition cursor-pointer ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl border transition cursor-pointer ${
               fontScale === s.key
                 ? "bg-[#0C3B2E] text-white border-[#0C3B2E] shadow-sm"
                 : "bg-[#F5F5F5] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
