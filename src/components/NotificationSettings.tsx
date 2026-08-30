@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AlarmConfig } from "../types";
-import { Bell, Clock, Check, Send, BellOff, User, Lock, ShieldAlert, Trash2, Users, Type, ZoomIn, Smartphone } from "lucide-react";
+import { Bell, Clock, Check, Send, BellOff, User, Lock, ShieldAlert, Trash2, Users, ZoomIn, Smartphone } from "lucide-react";
 import { useFontSize, FontScale } from "../context/FontSizeContext";
 import { checkPushSupport, enablePush, disablePush, isPushEnabled, sendTestPush, PushSupport } from "../lib/push";
 import { authFetch, clearToken } from "../lib/session";
@@ -15,51 +15,42 @@ interface NotificationSettingsProps {
 function FontSizeSettingCard() {
   const { fontScale, setFontScale } = useFontSize();
 
-  const scales: { key: FontScale; label: string; desc: string }[] = [
-    { key: "small", label: "작게", desc: "11px 아담하고 작고 깔끔한 폰트" },
-    { key: "normal", label: "보통 크기", desc: "기본 폰트 크기 유지" },
-    { key: "large", label: "크게", desc: "20px 시원하고 읽기 편함" },
-    { key: "xlarge", label: "아주 크게", desc: "28px 선명한 대형 폰트" },
+  /**
+   * 네 칸을 한 줄에 나란히 둔다.
+   * 예전에는 세로로 쌓이고 칸마다 "11px 아담하고 작고 깔끔한 폰트" 같은 설명이 붙어
+   * 자리를 많이 차지했다. 글자 크기는 눌러 보면 바로 아는 것이라 설명이 필요 없다.
+   * 대신 버튼의 '가' 를 실제 크기 차이로 보여준다.
+   */
+  const scales: { key: FontScale; label: string; sample: string }[] = [
+    { key: "small", label: "작게", sample: "text-xs" },
+    { key: "normal", label: "보통", sample: "text-base" },
+    { key: "large", label: "크게", sample: "text-xl" },
+    { key: "xlarge", label: "아주크게", sample: "text-2xl" },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
           <ZoomIn size={18} />
         </div>
-        <div>
-          <h3 className="font-bold text-[#0C3B2E] text-base">어르신 화면 글씨 크기 설정</h3>
-          <p className="text-2xs text-[#6F8377]">성경 말씀과 묵상 글을 시원하고 큼직하게 읽으실 수 있습니다.</p>
-        </div>
+        <h3 className="font-bold text-[#0C3B2E] text-base">글씨 크기</h3>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-4 gap-1.5">
         {scales.map((s) => (
           <button
             key={s.key}
             type="button"
             onClick={() => setFontScale(s.key)}
-            className={`flex items-center justify-between p-3.5 rounded-3xl border transition text-left cursor-pointer ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-2.5 rounded-2xl border transition cursor-pointer ${
               fontScale === s.key
                 ? "bg-[#0C3B2E] text-white border-[#0C3B2E] shadow-sm"
-                : "bg-[#F0F0F0] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#F5F5F5]"
+                : "bg-[#F5F5F5] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
             }`}
           >
-            <div>
-              <div className="text-xs font-bold flex items-center gap-1.5">
-                <Type size={14} />
-                {s.label}
-              </div>
-              <div className={`text-2xs mt-0.5 ${fontScale === s.key ? "text-[#F5F5F5]" : "text-[#6F8377]"}`}>
-                {s.desc}
-              </div>
-            </div>
-            {fontScale === s.key && (
-              <span className="text-2xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-black">
-                적용중
-              </span>
-            )}
+            <span className={`${s.sample} font-bold leading-none`}>가</span>
+            <span className="text-2xs font-bold whitespace-nowrap">{s.label}</span>
           </button>
         ))}
       </div>
