@@ -13,6 +13,13 @@
 
 const TOKEN_KEY = "bible_med_token";
 const COMMUNITY_KEY = "bible_med_community";
+/**
+ * 이 기기에서 지나온 공동체들.
+ *
+ * 다른 공동체로 옮기고 나면 원래 있던 곳의 가입코드를 모르면 돌아올 수가 없었다.
+ * (실제로 그 일이 있었다) 지나온 곳을 기억해 두고 한 번 눌러 돌아가게 한다.
+ */
+const HISTORY_KEY = "bible_med_communities";
 
 export interface StoredCommunity {
   id: string;
@@ -47,7 +54,32 @@ export function clearToken(): void {
 
 export function saveCommunity(c: StoredCommunity): void {
   try {
-    if (c?.id) localStorage.setItem(COMMUNITY_KEY, JSON.stringify(c));
+    if (!c?.id) return;
+    localStorage.setItem(COMMUNITY_KEY, JSON.stringify(c));
+    // 지나온 목록에도 남긴다 (가장 최근 것이 앞으로)
+    const rest = getCommunityHistory().filter((x) => x.id !== c.id);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify([c, ...rest].slice(0, 8)));
+  } catch {
+    // 무시
+  }
+}
+
+/** 이 기기에서 들어가 봤던 공동체들 (최근 순) */
+export function getCommunityHistory(): StoredCommunity[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((c) => c?.id && c?.name) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 지나온 목록에서 하나 지운다 (잘못 만든 시험용 공동체 등) */
+export function forgetCommunity(id: string): void {
+  try {
+    const rest = getCommunityHistory().filter((c) => c.id !== id);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(rest));
   } catch {
     // 무시
   }

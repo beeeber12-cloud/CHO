@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { KeyRound, Church, ArrowLeft, Loader2 } from "lucide-react";
-import { saveCommunity, saveToken, StoredCommunity } from "../lib/session";
+import { KeyRound, Church, ArrowLeft, Loader2, Home, X } from "lucide-react";
+import {
+  saveCommunity,
+  saveToken,
+  getCommunityHistory,
+  forgetCommunity,
+  StoredCommunity
+} from "../lib/session";
 
 /**
  * 공동체 문 앞.
@@ -22,6 +28,8 @@ type Mode = "menu" | "join" | "create";
 
 export default function CommunityGate({ onReady, onCancel }: Props) {
   const [mode, setMode] = useState<Mode>("menu");
+  // 이 기기에서 지나온 공동체들. 코드를 몰라도 눌러서 돌아갈 수 있다.
+  const [history, setHistory] = useState<StoredCommunity[]>(() => getCommunityHistory());
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -116,6 +124,46 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
               <br />
               다른 공동체의 글은 보이지 않습니다.
             </p>
+
+            {/*
+              지나온 공동체로 한 번에 돌아가기.
+              이게 없어서, 다른 공동체로 옮기고 나면 원래 있던 곳의 가입코드를
+              모르면 돌아올 수가 없었다. 실제로 그 일이 있었다.
+            */}
+            {history.length > 0 && (
+              <div className="mb-6">
+                <p className="text-sm font-semibold text-slate-500 mb-2">
+                  전에 들어갔던 공동체
+                </p>
+                {history.map((h) => (
+                  <div key={h.id} className="flex items-center gap-2 mb-2">
+                    <button
+                      onClick={() => {
+                        saveCommunity(h);
+                        onReady(h);
+                      }}
+                      className="flex-1 flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 hover:border-emerald-400 transition text-left"
+                    >
+                      <Home className="text-emerald-600 shrink-0" size={22} />
+                      <span className="font-semibold text-slate-800">{h.name}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        const msg = `목록에서 '${h.name}' 을(를) 지울까요?
+(공동체가 없어지는 것은 아닙니다)`;
+                        if (!confirm(msg)) return;
+                        forgetCommunity(h.id);
+                        setHistory(getCommunityHistory());
+                      }}
+                      className="p-3 rounded-2xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                      title="목록에서 지우기"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <button
               onClick={() => setMode("join")}

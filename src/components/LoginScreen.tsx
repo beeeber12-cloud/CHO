@@ -32,7 +32,13 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     // 기억해 둔 공동체가 있으면 그 이름을, 없으면 서버가 알려주는 기본 공동체 이름을 띄운다
     fetch("/api/communities/current")
       .then((r) => (r.ok ? r.json() : null))
-      .then((c) => c && setCommunity(c))
+      .then((c) => {
+        if (!c) return;
+        setCommunity(c);
+        // 지금 보고 있는 공동체를 '지나온 목록'에 남겨 둔다.
+        // 이게 없으면, 다른 공동체로 옮긴 뒤 가입코드를 모를 때 돌아올 길이 없다.
+        saveCommunity({ id: c.id, name: c.name });
+      })
       .catch(() => {});
     fetchUsers();
 
