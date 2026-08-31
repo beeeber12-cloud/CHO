@@ -126,10 +126,11 @@ export default function App() {
 
   /**
    * 지금 보여줄 탭 순서.
-   * 감사칭찬을 묵상나눔보다 앞에 둔다(자리 교체). 챌린지가 돌면 감사 자리에 들어선다.
+   * 감사칭찬은 성경통독 다음, 나의기록 앞에 둔다.
+   * 챌린지가 돌면 그 감사 자리에 들어선다.
    */
   const visibleTabs: TabType[] = React.useMemo(() => {
-    const tabs: TabType[] = ["notice", challengeOn ? "challenge" : "gratitude", "feed", "bible", "my"];
+    const tabs: TabType[] = ["notice", "feed", "bible", challengeOn ? "challenge" : "gratitude", "my"];
     if (SHOW_QNA_TAB) tabs.push("qna");
     tabs.push("settings");
     return tabs;
