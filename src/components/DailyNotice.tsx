@@ -122,10 +122,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           if (data.reference) {
             setVerseTitle(data.reference);
           }
-          // Only auto-fill guide content if currently empty
-          if (data.explanation && !content.trim()) {
-            setContent(`${data.explanation}\n\n💡 오늘의 묵상 가이드:\n${data.meditationGuide || ""}`);
-          }
+          // 가이드 상자를 뺐으므로 해설·묵상 가이드는 채워 넣지 않는다
         } else {
           setError("해당 성경 구절을 찾을 수 없습니다. 직접 입력하시거나 정확한 명칭으로 다시 검색해 주세요.");
         }
@@ -479,16 +476,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-[#6F8377] mb-1">오늘의 메시지 / 묵상 방향 안내 (선택)</label>
-              <textarea
-                rows={3}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="공동체에 전할 따뜻한 권면이나 해설을 적어주세요..."
-                className="w-full text-sm px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
-              />
-            </div>
+            {/* 위 상자를 뺐으므로 입력칸도 함께 뺀다 — 안 보이는 곳에 글을 쓰게 두지 않는다 */}
 
             <div className="flex gap-2 justify-end pt-2">
               <button
@@ -596,14 +584,11 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             </div>
 
 
-            {notice.content && (
-              <div className="bg-[#F5F5F5] rounded-3xl sm:rounded-[32px] p-3.5 sm:p-5">
-                <span className="block text-xs font-black text-[#6F8377] uppercase tracking-[0.1em] mb-1.5 whitespace-nowrap">말씀 가이드 / 소그룹 광고</span>
-                <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line">
-                  {notice.content}
-                </p>
-              </div>
-            )}
+            {/*
+              '말씀 가이드 / 소그룹 광고' 상자를 뺐다 (2026-08-31).
+              말씀 본문에 집중하도록 화면을 비웠다. notice.content 는 그대로 저장되므로
+              다시 보이게 하려면 이 자리에 상자를 되돌리기만 하면 된다.
+            */}
 
             {/* Read/Unread Toggle Checkbox */}
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-[#E3E9E2] mt-2">
