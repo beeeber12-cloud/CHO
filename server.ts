@@ -7,7 +7,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import webpush from "web-push";
-import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community } from "./src/types";
+import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community, ReadingChallenge } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import {
   fetchFromFirestore,
@@ -16,6 +16,13 @@ import {
   saveCommunities,
   DEFAULT_COMMUNITY_ID
 } from "./server/firebaseDb.js";
+import {
+  progressOf,
+  allProgress,
+  shouldFinish,
+  visibleChallenge,
+  challengeAlarmText
+} from "./server/challenge.js";
 import {
   newCommunityId,
   newJoinCode,
@@ -1087,6 +1094,7 @@ async function runAlarmSweep(cid: string = DEFAULT_COMMUNITY_ID): Promise<number
   try {
     const today = getKSTDateString();
     const { day, minutes } = getKSTClock();
+    const runningChallenge = (db.challenges || []).find((c) => c.status === "active") || null;
 
     if (!db.alarmConfigs) db.alarmConfigs = [];
 
@@ -1140,14 +1148,31 @@ async function runAlarmSweep(cid: string = DEFAULT_COMMUNITY_ID): Promise<number
       due.map((cfg) => {
         const name = (db.users || []).find((u) => u.id === cfg.userId)?.name;
         const line = ALARM_MESSAGES[Math.floor(Math.random() * ALARM_MESSAGES.length)];
-        return sendPushToUsers(db, [cfg.userId], {
-          title: todayNotice?.verseTitle
-            ? `📖 오늘의 말씀 · ${todayNotice.verseTitle}`
-            : "📖 아침 묵상 시간이에요",
-          body: name ? `${name} 님, ${line}` : line,
-          url: "/?tab=notice",
-          tag: "alarm-" + today
-        }).catch((e) => console.warn("[알림] 발송 실패:", cfg.userId, e));
+        // 챌린지에 참가 중인 분에게는 오늘의 진행률을 대신 보낸다.
+        // 알림 시간·요일은 각자 정한 그대로 쓰고 내용만 바뀐다.
+        const forChallenge = runningChallenge
+          ? challengeAlarmText(db, runningChallenge, cfg.userId)
+          : null;
+
+        return sendPushToUsers(
+          db,
+          [cfg.userId],
+          forChallenge
+            ? {
+                title: forChallenge.title,
+                body: name ? `${name} 님, ${forChallenge.body}` : forChallenge.body,
+                url: "/?tab=challenge",
+                tag: "alarm-" + today
+              }
+            : {
+                title: todayNotice?.verseTitle
+                  ? `📖 오늘의 말씀 · ${todayNotice.verseTitle}`
+                  : "📖 아침 묵상 시간이에요",
+                body: name ? `${name} 님, ${line}` : line,
+                url: "/?tab=notice",
+                tag: "alarm-" + today
+              }
+        ).catch((e) => console.warn("[알림] 발송 실패:", cfg.userId, e));
       })
     );
 
@@ -1549,6 +1574,181 @@ async function startServer() {
       }
     }
     next();
+  });
+
+  // --- 성경읽기 챌린지 APIs ---
+  //
+  // 진행률은 따로 세지 않고 성경통독의 '읽음' 표시를 그대로 읽는다.
+  // 통독에서 완료를 누르면 여기 진행률에 바로 반영되고, 두 숫자가 어긋날 일이 없다.
+
+  /** 지금 도는 챌린지와 참가자별 진행률. 탭을 그릴지 말지도 여기서 정해진다. */
+  app.get("/api/challenges/current", (req: Request, res: Response) => {
+    const db = dbOf(req);
+    const today = getKSTDateString();
+
+    // 목표일이 지났거나 모두 다 읽었으면 여기서 끝내 준다
+    const active = (db.challenges || []).find((c) => c.status === "active");
+    if (active && shouldFinish(db, active, today)) {
+      active.status = "done";
+      active.completedDate = today;
+      saveDb(db);
+      console.log(`[챌린지] '${active.title}' 을(를) 마쳤습니다.`);
+    }
+
+    const challenge = visibleChallenge(db, today);
+    if (!challenge) return res.json({ challenge: null });
+
+    res.json({
+      challenge,
+      progress: allProgress(db, challenge),
+      daysLeft: Math.max(
+        0,
+        Math.round(
+          (new Date(challenge.endDate + "T00:00:00+09:00").getTime() -
+            new Date(today + "T00:00:00+09:00").getTime()) /
+            86400000
+        )
+      )
+    });
+  });
+
+  /** 챌린지 시작 (관리자) */
+  app.post("/api/challenges", (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+
+    const { book, endDate, participantIds, title, resetProgress } = req.body || {};
+    const info = BIBLE_BOOKS.find((b) => b.name === book);
+    if (!info) return res.status(400).json({ error: "성경 권을 골라주세요." });
+    // 날짜 모양 확인 (YYYY-MM-DD).
+    // ⚠️ 정규식에 백슬래시를 쓰지 않는다 — 스크립트로 코드를 넣을 때 삼켜져
+    //    /^d{4}-d{2}-d{2}$/ 가 되어 아무 날짜도 통과하지 못한 적이 있다.
+    const dateText = String(endDate || "");
+    const dateOk =
+      dateText.length === 10 &&
+      dateText[4] === "-" &&
+      dateText[7] === "-" &&
+      /^[0-9]+$/.test(dateText.replace(/-/g, "")) &&
+      !Number.isNaN(Date.parse(dateText + "T00:00:00+09:00"));
+    if (!dateOk) {
+      return res.status(400).json({ error: "목표일을 정해주세요." });
+    }
+
+    const today = getKSTDateString();
+    if (endDate < today) return res.status(400).json({ error: "목표일이 오늘보다 앞설 수 없습니다." });
+
+    if (!db.challenges) db.challenges = [];
+    if (db.challenges.some((c) => c.status === "active")) {
+      return res.status(400).json({ error: "이미 진행 중인 챌린지가 있습니다. 먼저 마쳐주세요." });
+    }
+
+    const memberIds = new Set((db.users || []).map((u) => u.id));
+    const picked = Array.isArray(participantIds)
+      ? [...new Set(participantIds.filter((id: string) => memberIds.has(id)))]
+      : [];
+
+    // 다 함께 0장부터 출발하도록, 이 권의 기존 읽음 표시를 지울 수 있다.
+    // ⚠️ 다른 권의 통독 기록은 건드리지 않는다.
+    if (resetProgress) {
+      for (const uid of picked) {
+        const prog = db.userBibleProgress?.[uid];
+        if (!prog) continue;
+        prog.completedChapters = prog.completedChapters.filter(
+          (key) => !key.startsWith(info.name + " ")
+        );
+        prog.updatedAt = new Date().toISOString();
+      }
+    }
+
+    const challenge: ReadingChallenge = {
+      id: "ch-" + Math.random().toString(36).substring(2, 11),
+      title: String(title || "").trim() || `${info.name} 함께 읽기`,
+      book: info.name,
+      totalChapters: info.totalChapters,
+      startDate: today,
+      endDate,
+      participantIds: picked,
+      createdBy: me.uid,
+      createdAt: new Date().toISOString(),
+      status: "active"
+    };
+    db.challenges.push(challenge);
+    saveDb(db);
+
+    console.log(`[챌린지] '${challenge.title}' 시작 — ${picked.length}명, ${endDate} 까지`);
+    res.json({ challenge, progress: allProgress(db, challenge) });
+  });
+
+  /** 참가자 바꾸기 (관리자). 중간에 더 넣을 수 있다 */
+  app.post("/api/challenges/:id/participants", (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const challenge = (db.challenges || []).find((c) => c.id === req.params.id);
+    if (!challenge) return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+
+    const memberIds = new Set((db.users || []).map((u) => u.id));
+    const picked = Array.isArray(req.body?.participantIds)
+      ? [...new Set(req.body.participantIds.filter((id: string) => memberIds.has(id)))]
+      : [];
+    challenge.participantIds = picked as string[];
+    saveDb(db);
+    res.json({ challenge, progress: allProgress(db, challenge) });
+  });
+
+  /** 나도 참가 / 그만두기 */
+  app.post("/api/challenges/:id/join", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const challenge = (db.challenges || []).find((c) => c.id === req.params.id);
+    if (!challenge) return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+    if (challenge.status !== "active") return res.status(400).json({ error: "이미 끝난 챌린지입니다." });
+
+    const leaving = req.body?.leave === true;
+    if (leaving) {
+      challenge.participantIds = challenge.participantIds.filter((id) => id !== me.uid);
+    } else if (!challenge.participantIds.includes(me.uid)) {
+      challenge.participantIds.push(me.uid);
+    }
+    saveDb(db);
+    res.json({ challenge, progress: allProgress(db, challenge) });
+  });
+
+  /** 챌린지 마치기 (관리자). 다음 날부터 감사 탭이 돌아온다 */
+  app.post("/api/challenges/:id/finish", (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const challenge = (db.challenges || []).find((c) => c.id === req.params.id);
+    if (!challenge) return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+
+    challenge.status = "done";
+    challenge.completedDate = getKSTDateString();
+    saveDb(db);
+    res.json({ challenge });
+  });
+
+  /** 챌린지 지우기 (관리자). 잘못 만들었을 때 */
+  app.delete("/api/challenges/:id", (req: Request, res: Response) => {
+    const me = requireAdmin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const before = (db.challenges || []).length;
+    db.challenges = (db.challenges || []).filter((c) => c.id !== req.params.id);
+    if (db.challenges.length === before) {
+      return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+    }
+    saveDb(db);
+    res.json({ ok: true });
+  });
+
+  /** 고를 수 있는 성경 권 목록 (챌린지 만들 때) */
+  app.get("/api/challenges/books", (req: Request, res: Response) => {
+    res.json(
+      BIBLE_BOOKS.map((b) => ({ name: b.name, testament: b.testament, totalChapters: b.totalChapters }))
+    );
   });
 
   // --- 공동체 APIs ---

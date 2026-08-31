@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Calendar, Bell, LogOut, UserCheck, MessageSquare, Sparkles, BookMarked, HeartHandshake, HelpCircle, Cross } from "lucide-react";
+import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
 import DailyNotice from "./components/DailyNotice";
@@ -13,6 +13,7 @@ import FontSizeControl from "./components/FontSizeControl";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
+import ChallengeTab from "./components/ChallengeTab";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
 
 interface UserProfile {
@@ -21,9 +22,24 @@ interface UserProfile {
   role: 'admin' | 'member';
 }
 
-type TabType = 'notice' | 'feed' | 'gratitude' | 'bible' | 'my' | 'qna' | 'settings';
+type TabType = 'notice' | 'feed' | 'gratitude' | 'challenge' | 'bible' | 'my' | 'qna' | 'settings';
 
-const TAB_KEYS: TabType[] = ['notice', 'feed', 'gratitude', 'bible', 'my', 'qna', 'settings'];
+const TAB_KEYS: TabType[] = ['notice', 'feed', 'gratitude', 'challenge', 'bible', 'my', 'qna', 'settings'];
+
+/**
+ * 탭 한 곳 정의. PC 탭 바와 모바일 하단 바가 **같은 목록**을 보고 그린다.
+ * 예전에는 두 바에 버튼을 각각 손으로 써 두어, 하나만 고치면 서로 어긋났다.
+ */
+const TAB_DEFS: Record<TabType, { label: string; short: string; icon: typeof BookOpen }> = {
+  notice:    { label: "오늘 말씀",   short: "오늘말씀", icon: BookOpen },
+  gratitude: { label: "감사칭찬",    short: "감사칭찬", icon: HeartHandshake },
+  challenge: { label: "챌린지",      short: "챌린지",   icon: Trophy },
+  feed:      { label: "묵상 나눔",   short: "묵상나눔", icon: MessageSquare },
+  bible:     { label: "성경 읽기방", short: "성경통독", icon: BookMarked },
+  my:        { label: "나의 기록",   short: "나의기록", icon: Calendar },
+  qna:       { label: "성경 Q&A",    short: "성경Q&A",  icon: HelpCircle },
+  settings:  { label: "알림 설정",   short: "알림설정", icon: Bell }
+};
 
 function isTabKey(value: unknown): value is TabType {
   return typeof value === "string" && (TAB_KEYS as string[]).includes(value);
@@ -62,6 +78,19 @@ export default function App() {
    * 기기에 기억해 둔 이름을 먼저 보여주고(깜빡임 없음), 서버 값으로 맞춘다.
    */
   const [communityName, setCommunityName] = useState<string>(() => getCommunity()?.name || "말씀나눔");
+  /**
+   * 성경읽기 챌린지가 도는 중인지.
+   * 도는 동안에는 감사·칭찬 탭 자리에 챌린지 탭이 들어선다.
+   * 챌린지가 끝나면 그 다음 날 감사 탭이 돌아온다 (서버가 날짜로 판정한다).
+   */
+  const [challengeOn, setChallengeOn] = useState<boolean>(false);
+
+  const refreshChallenge = React.useCallback(() => {
+    fetch("/api/challenges/current")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => setChallengeOn(!!c?.challenge))
+      .catch(() => {});
+  }, []);
   const [activeTab, setActiveTab] = useState<TabType>(() => tabFromUrl() || 'notice');
 
   // Prefilled Bible Verse state for writing meditation
@@ -72,6 +101,7 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
     fetchAllUsers();
+    refreshChallenge();
     fetch("/api/communities/mine")
       .then((r) => (r.ok ? r.json() : null))
       .then((c) => {
@@ -81,6 +111,30 @@ export default function App() {
       })
       .catch(() => {});
   }, [currentUser]);
+
+  /**
+   * 지금 보여줄 탭 순서.
+   * 감사칭찬을 묵상나눔보다 앞에 둔다(자리 교체). 챌린지가 돌면 감사 자리에 들어선다.
+   */
+  const visibleTabs: TabType[] = React.useMemo(() => {
+    const tabs: TabType[] = ["notice", challengeOn ? "challenge" : "gratitude", "feed", "bible", "my"];
+    if (SHOW_QNA_TAB) tabs.push("qna");
+    tabs.push("settings");
+    return tabs;
+  }, [challengeOn]);
+
+  const openTab = (tab: TabType) => {
+    setActiveTab(tab);
+    setPrefilledVerse(null);
+    window.scrollTo({ top: 0 });
+  };
+
+  // 지금 안 보이는 탭에 머물러 있으면 (챌린지가 시작/종료된 순간) 첫 탭으로 옮긴다.
+  // 다만 관리자는 챌린지가 없을 때도 그 화면에 들어갈 수 있다 — 거기서 시작하기 때문.
+  useEffect(() => {
+    const allowed = activeTab === "challenge" && currentUser?.role === "admin";
+    if (!visibleTabs.includes(activeTab) && !allowed) setActiveTab("notice");
+  }, [visibleTabs, activeTab, currentUser]);
 
   // Q&A 를 숨긴 상태에서 이전 세션의 활성 탭이 qna 로 남아 빈 화면이 되는 것 방지
   useEffect(() => {
@@ -218,74 +272,29 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-1 sm:px-4 py-2 sm:py-6">
-        {/* PC Desktop Tabs Grid */}
-        <div className={`hidden md:grid ${SHOW_QNA_TAB ? "grid-cols-7" : "grid-cols-6"} gap-1.5 border-b border-[#E3E9E2] bg-[#F5F5F5] p-1 rounded-3xl`}>
-          <button
-            onClick={() => setActiveTab('notice')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'notice' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <BookOpen size={15} />
-            오늘 말씀
-          </button>
-          <button
-            onClick={() => setActiveTab('feed')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'feed' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <MessageSquare size={15} />
-            묵상 나눔
-          </button>
-          <button
-            onClick={() => setActiveTab('gratitude')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'gratitude' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <HeartHandshake size={15} className={activeTab === 'gratitude' ? "text-[#FFFFFF]" : "text-[#4A6B57]"} />
-            감사칭찬
-          </button>
-          <button
-            onClick={() => setActiveTab('bible')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'bible' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <BookMarked size={15} />
-            성경 읽기방
-          </button>
-          <button
-            onClick={() => setActiveTab('my')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'my' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <Calendar size={15} />
-            나의 기록
-          </button>
-          {SHOW_QNA_TAB && (
-            <button
-              onClick={() => setActiveTab('qna')}
-              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-                activeTab === 'qna' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-              }`}
-            >
-              <HelpCircle size={15} />
-              성경 Q&A
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-              activeTab === 'settings' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-            }`}
-          >
-            <Bell size={15} />
-            알림 설정
-          </button>
+        {/* PC 탭 — 아래 모바일 바와 같은 목록(visibleTabs)에서 그린다 */}
+        <div
+          className="hidden md:grid gap-1.5 border-b border-[#E3E9E2] bg-[#F5F5F5] p-1 rounded-3xl"
+          style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
+        >
+          {visibleTabs.map((key) => {
+            const t = TAB_DEFS[key];
+            const on = activeTab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => openTab(key)}
+                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
+                  on ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
+                }`}
+              >
+                <t.icon size={15} />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
+
 
         {/* Selected View Window */}
         <div id="view-portal" className="min-h-[50vh]">
@@ -333,6 +342,27 @@ export default function App() {
                 transition={{ duration: 0.2 }}
               >
                 <DailyGratitude currentUser={currentUser} allUsers={allUsers} />
+              </motion.div>
+            )}
+
+            {activeTab === 'challenge' && (
+              <motion.div
+                key="challenge-tab"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChallengeTab
+                  currentUser={currentUser}
+                  onOpenBible={(query) => {
+                    // 챌린지에서 "○장 읽으러 가기" 를 누르면 통독 탭이 그 장을 펴 준다
+                    setBibleQuery({ query, nonce: Date.now() });
+                    setActiveTab('bible');
+                    window.scrollTo({ top: 0 });
+                  }}
+                  onChanged={refreshChallenge}
+                />
               </motion.div>
             )}
 
@@ -386,6 +416,29 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
               >
+                {currentUser.role === "admin" && !challengeOn && (
+                  <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 mb-3 sm:mb-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
+                          <Trophy size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="block font-bold text-[#14261E] text-sm">성경읽기 챌린지</span>
+                          <p className="text-2xs text-[#6F8377]">
+                            시작하면 탭이 하나 생기고 감사·칭찬은 잠시 접힙니다
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => openTab('challenge')}
+                        className="shrink-0 text-xs font-bold py-2 px-4 rounded-3xl bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#E8A900] transition cursor-pointer"
+                      >
+                        시작하기
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <CommunitySettings currentUser={currentUser} onRenamed={setCommunityName} />
                 <NotificationSettings 
                   currentUser={currentUser} 
@@ -404,94 +457,24 @@ export default function App() {
         </div>
       </main>
 
-      {/* Mobile Sticky Navigation Bar */}
+      {/* 모바일 하단 바 — 위 PC 탭과 같은 목록에서 그린다 */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E3E9E2] shadow-[0_-2px_15px_rgba(0,49,31,0.06)] px-1 pt-1 flex items-center justify-around overflow-x-auto pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-        <button
-          onClick={() => {
-            setActiveTab('notice');
-            setPrefilledVerse(null);
-          }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'notice' ? "text-[#0C3B2E]" : "text-[#6F8377]"
-          }`}
-        >
-          <BookOpen size={17} />
-          <span className="text-2xs font-bold mt-0.5">오늘말씀</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('feed')}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'feed' ? "text-[#0C3B2E]" : "text-[#6F8377]"
-          }`}
-        >
-          <MessageSquare size={17} />
-          <span className="text-2xs font-bold mt-0.5">묵상나눔</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('gratitude')}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'gratitude' ? "text-[#0C3B2E] font-extrabold" : "text-[#6F8377]"
-          }`}
-        >
-          <HeartHandshake size={17} className={activeTab === 'gratitude' ? "text-[#4A6B57]" : ""} />
-          <span className="text-2xs font-bold mt-0.5">감사칭찬</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('bible');
-            setPrefilledVerse(null);
-          }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'bible' ? "text-[#0C3B2E]" : "text-[#6F8377]"
-          }`}
-        >
-          <BookMarked size={17} />
-          <span className="text-2xs font-bold mt-0.5">성경통독</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('my');
-            setPrefilledVerse(null);
-          }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'my' ? "text-[#0C3B2E]" : "text-[#6F8377]"
-          }`}
-        >
-          <Calendar size={17} />
-          <span className="text-2xs font-bold mt-0.5">나의기록</span>
-        </button>
-
-        {SHOW_QNA_TAB && (
-          <button
-            onClick={() => {
-              setActiveTab('qna');
-              setPrefilledVerse(null);
-            }}
-            className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-              activeTab === 'qna' ? "text-[#0C3B2E] font-extrabold" : "text-[#6F8377]"
-            }`}
-          >
-            <HelpCircle size={17} className={activeTab === 'qna' ? "text-[#4A6B57]" : ""} />
-            <span className="text-2xs font-bold mt-0.5">성경Q&A</span>
-          </button>
-        )}
-
-        <button
-          onClick={() => {
-            setActiveTab('settings');
-            setPrefilledVerse(null);
-          }}
-          className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
-            activeTab === 'settings' ? "text-[#0C3B2E]" : "text-[#6F8377]"
-          }`}
-        >
-          <Bell size={17} />
-          <span className="text-2xs font-bold mt-0.5">알림설정</span>
-        </button>
+        {visibleTabs.map((key) => {
+          const t = TAB_DEFS[key];
+          const on = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => openTab(key)}
+              className={`flex flex-col items-center justify-center p-1.5 rounded-3xl transition cursor-pointer min-w-[50px] ${
+                on ? "text-[#0C3B2E]" : "text-[#6F8377]"
+              }`}
+            >
+              <t.icon size={17} className={on ? "text-[#4A6B57]" : ""} />
+              <span className="text-2xs font-bold mt-0.5">{t.short}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

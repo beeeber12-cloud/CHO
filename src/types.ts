@@ -189,6 +189,38 @@ export interface SavedVerse {
 }
 
 /**
+ * 성경읽기 챌린지.
+ *
+ * 관리자가 성경 한 권과 목표일을 정하고 참가자를 고르면 탭이 하나 생긴다.
+ * 진행률은 따로 세지 않고 **성경통독의 '읽음' 표시를 그대로 읽는다** —
+ * 통독에서 완료를 누르면 챌린지 진행률에도 바로 반영된다.
+ *
+ * 챌린지가 도는 동안 감사·칭찬 탭은 잠시 접어 둔다 (탭이 너무 많아지지 않게).
+ * 끝나면 그 다음 날 감사 탭이 돌아온다.
+ */
+export interface ReadingChallenge {
+  id: string;
+  /** "마가복음 함께 읽기" 처럼 화면에 보이는 이름 */
+  title: string;
+  /** 읽을 성경 한 권 (예: "마가복음") */
+  book: string;
+  /** 그 권의 총 장 수 */
+  totalChapters: number;
+  startDate: string; // YYYY-MM-DD (한국 날짜)
+  endDate: string;   // YYYY-MM-DD 목표일
+  /** 참가자. 중간에 더 넣을 수 있다 */
+  participantIds: string[];
+  createdBy: string;
+  createdAt: string;
+  status: "active" | "done";
+  /**
+   * 끝난 날(한국 날짜). 이 날까지는 챌린지 탭이 남아 축하를 보여주고,
+   * **다음 날부터** 감사 탭이 돌아온다.
+   */
+  completedDate?: string;
+}
+
+/**
  * 한 공동체가 담고 있는 것 전부.
  *
  * 이름이 Database 로 시작하지만 실제로는 **공동체 하나치**다.
@@ -208,6 +240,8 @@ export interface DatabaseSchema {
   userBibleProgress?: Record<string, UserBibleProgress>;
   sharingGoals?: Record<string, SharingGoal>;
   savedVerses?: SavedVerse[];
+  /** 성경읽기 챌린지. 도는 것은 한 번에 하나로 둔다 */
+  challenges?: ReadingChallenge[];
   pushSubscriptions?: PushSubscriptionRecord[];
   vapidKeys?: VapidKeys;
   /** 로그인 증표에 서명하는 비밀키. 이게 바뀌면 모두 다시 로그인해야 한다 */

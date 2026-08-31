@@ -4,12 +4,41 @@ import { X } from "lucide-react";
 import { Meditation, GratitudeNote, SharingGoal, UserBibleProgress } from "../types";
 
 /**
- * 앱에 들어올 때마다 띄우는 목표 진행률 요약.
+ * 하루에 한 번, 그날 처음 들어올 때만 띄우는 목표 진행률 요약.
  * "내가 어디까지 왔는지" 상기시키는 용도라 나눔·통독 두 가지만 담는다.
- * 바깥을 누르거나 X 로 닫을 수 있다.
+ *
+ * 예전에는 탭을 옮기거나 새로고침할 때마다 떠서 성가셨다.
+ * 본 날짜를 기기에 적어 두고 그날은 다시 띄우지 않는다.
  */
 
 const WEEKS_PER_MONTH = 4;
+const SEEN_KEY = "bible_med_goal_popup_seen";
+
+/** 한국 날짜 YYYY-MM-DD (자정에 다시 뜨는 기준을 서버와 맞춘다) */
+function todayInKorea(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
+function seenToday(): boolean {
+  try {
+    return localStorage.getItem(SEEN_KEY) === todayInKorea();
+  } catch {
+    return false; // 저장이 막힌 기기에서는 그냥 띄운다
+  }
+}
+
+function markSeen(): void {
+  try {
+    localStorage.setItem(SEEN_KEY, todayInKorea());
+  } catch {
+    // 무시
+  }
+}
 
 interface Props {
   currentUser: { id: string; name: string };
@@ -30,6 +59,7 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
 
   useEffect(() => {
     if (!currentUser?.id) return;
+    if (seenToday()) return; // 오늘 이미 봤으면 불러오지도 않는다
 
     let cancelled = false;
 
@@ -83,6 +113,7 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
         if (!cancelled) {
           setRows(next);
           setOpen(true);
+          markSeen();
         }
       } catch (err) {
         console.error("목표 요약 조회 실패:", err);
