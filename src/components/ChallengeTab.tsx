@@ -338,7 +338,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
     const ot = books.filter((b) => b.testament === "OT");
     return (
       <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
-        <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[88vh] overflow-y-auto text-left">
+        <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[76vh] sm:max-h-[88vh] overflow-y-auto text-left mx-2 sm:mx-0 mb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:mb-0">
           <h3 className="font-bold text-lg text-[#0C3B2E] mb-4">챌린지 시작하기</h3>
 
           <label className="block text-xs font-bold text-[#4A6B57] mb-1.5">읽을 성경</label>
@@ -398,7 +398,8 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
 
           {error && <p className="text-xs text-[#8F1E17] mt-3">{error}</p>}
 
-          <div className="flex gap-2 mt-5">
+          {/* 버튼은 창 아래에 붙여 둔다 — 내용이 길어도 스크롤 없이 늘 보인다 */}
+          <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-6 bg-white border-t border-[#E3E9E2] flex gap-2 mt-5">
             <button
               onClick={() => {
                 setSetupOpen(false);
@@ -464,13 +465,13 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
   function renderMemberPicker() {
     return (
       <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
-        <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto">
+        <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[76vh] sm:max-h-[80vh] overflow-y-auto mx-2 sm:mx-0 mb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:mb-0">
           <h3 className="font-bold text-lg text-[#0C3B2E] mb-1">참가자 바꾸기</h3>
           <p className="text-2xs text-[#6F8377] mb-4">
             중간에 들어오셔도 됩니다. 지금까지 읽은 장은 그대로 반영됩니다.
           </p>
           {renderMemberList()}
-          <div className="flex gap-2 mt-5">
+          <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-6 bg-white border-t border-[#E3E9E2] flex gap-2 mt-5">
             <button
               onClick={() => setEditMembers(false)}
               className="flex-1 py-3 rounded-3xl bg-[#F5F5F5] text-[#4A6B57] text-sm font-bold cursor-pointer"
