@@ -337,8 +337,8 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
     const nt = books.filter((b) => b.testament === "NT");
     const ot = books.filter((b) => b.testament === "OT");
     return (
-      <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
-        <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 max-h-[88vh] overflow-y-auto text-left">
+      <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
+        <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[88vh] overflow-y-auto text-left">
           <h3 className="font-bold text-lg text-[#0C3B2E] mb-4">챌린지 시작하기</h3>
 
           <label className="block text-xs font-bold text-[#4A6B57] mb-1.5">읽을 성경</label>
@@ -463,8 +463,8 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
 
   function renderMemberPicker() {
     return (
-      <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
-        <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 max-h-[80vh] overflow-y-auto">
+      <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
+        <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto">
           <h3 className="font-bold text-lg text-[#0C3B2E] mb-1">참가자 바꾸기</h3>
           <p className="text-2xs text-[#6F8377] mb-4">
             중간에 들어오셔도 됩니다. 지금까지 읽은 장은 그대로 반영됩니다.
