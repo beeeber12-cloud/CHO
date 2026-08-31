@@ -14,6 +14,7 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
 import ChallengeTab from "./components/ChallengeTab";
+import AppGuide, { guideSeen } from "./components/AppGuide";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
 
 interface UserProfile {
@@ -66,6 +67,12 @@ function tabFromUrl(): TabType | null {
  */
 const SHOW_QNA_TAB = false;
 
+/**
+ * 앱 사용 안내를 **관리자에게만** 먼저 보인다.
+ * 목사님이 먼저 써 보시고 괜찮으면 false 로 바꿔 모두에게 연다.
+ */
+const GUIDE_FOR_ADMIN_ONLY = true;
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem("bible_med_user");
@@ -84,6 +91,8 @@ export default function App() {
    * 챌린지가 끝나면 그 다음 날 감사 탭이 돌아온다 (서버가 날짜로 판정한다).
    */
   const [challengeOn, setChallengeOn] = useState<boolean>(false);
+  /** 처음 들어오신 분께 보여드리는 앱 사용 안내 */
+  const [guideOpen, setGuideOpen] = useState<boolean>(false);
 
   const refreshChallenge = React.useCallback(() => {
     fetch("/api/challenges/current")
@@ -102,6 +111,9 @@ export default function App() {
     if (!currentUser) return;
     fetchAllUsers();
     refreshChallenge();
+    // 아직 안 보신 분께 한 번만. (지금은 시험 중이라 관리자에게만)
+    const forMe = !GUIDE_FOR_ADMIN_ONLY || currentUser.role === "admin";
+    if (forMe && !guideSeen()) setGuideOpen(true);
     fetch("/api/communities/mine")
       .then((r) => (r.ok ? r.json() : null))
       .then((c) => {
@@ -231,8 +243,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F0F0F0] text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
       <PWAInstallPrompt />
-      {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다 */}
-      <GoalSummaryPopup currentUser={currentUser} />
+      {/* 처음 오신 분께 탭을 하나씩 소개한다 (건너뛸 수 있다) */}
+      {guideOpen && <AppGuide onClose={() => setGuideOpen(false)} />}
+      {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
+          안내를 보는 동안에는 겹치지 않게 미뤄 둔다 */}
+      {!guideOpen && <GoalSummaryPopup currentUser={currentUser} />}
       {/* Dynamic Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[#E3E9E2] shadow-sm">
         <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-2.5 flex justify-between items-center gap-1.5">
@@ -416,6 +431,27 @@ export default function App() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
               >
+                {/* 안내를 놓치셨거나 다시 보고 싶을 때 */}
+                <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 mb-3 sm:mb-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
+                        <HelpCircle size={18} />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block font-bold text-[#14261E] text-sm">앱 사용법</span>
+                        <p className="text-2xs text-[#6F8377]">각 탭이 무엇을 하는 곳인지 안내해 드립니다</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setGuideOpen(true)}
+                      className="shrink-0 text-xs font-bold py-2 px-4 rounded-3xl bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3] transition cursor-pointer"
+                    >
+                      다시 보기
+                    </button>
+                  </div>
+                </div>
+
                 {currentUser.role === "admin" && !challengeOn && (
                   <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 mb-3 sm:mb-4">
                     <div className="flex items-center justify-between gap-3">
