@@ -396,6 +396,15 @@ async function syncAndRefreshWithFirestore(
       const mergedSokGroups = Array.from(sokMap.values());
 
       // 푸시 구독은 기기 단위(endpoint)로 합친다. 한쪽에만 있는 구독이 사라지면 알림이 끊긴다.
+      // 챌린지·영성일기도 id 로 합친다. (원격이 최신)
+      const challengeMap = new Map<string, ReadingChallenge>();
+      for (const c of localDb.challenges || []) challengeMap.set(c.id, c);
+      for (const c of remoteDb.challenges || []) challengeMap.set(c.id, c);
+
+      const journalMap = new Map<string, JournalEntry>();
+      for (const j of localDb.journals || []) journalMap.set(j.id, j);
+      for (const j of remoteDb.journals || []) journalMap.set(j.id, j);
+
       const subMap = new Map<string, PushSubscriptionRecord>();
       for (const s of localDb.pushSubscriptions || []) subMap.set(s.endpoint, s);
       for (const s of remoteDb.pushSubscriptions || []) subMap.set(s.endpoint, s);
@@ -421,6 +430,8 @@ async function syncAndRefreshWithFirestore(
             [...(localDb.savedVerses || []), ...(remoteDb.savedVerses || [])].map((v) => [v.id, v])
           ).values()
         ),
+        challenges: Array.from(challengeMap.values()),
+        journals: Array.from(journalMap.values()),
         pushSubscriptions: Array.from(subMap.values()),
         updatedAt: new Date().toISOString()
       };
@@ -436,6 +447,22 @@ async function syncAndRefreshWithFirestore(
       const keptVapid = remoteDb.vapidKeys || localDb.vapidKeys;
       if (keptVapid?.publicKey && keptVapid?.privateKey) {
         mergedDb.vapidKeys = keptVapid;
+      }
+
+      /**
+       * 마지막 그물 — 위 목록에 적어 넣는 것을 잊은 항목이 있어도 사라지지 않게 한다.
+       *
+       * 위에서 필드를 하나하나 손으로 적어 합치다 보니, 새 기능을 붙일 때 여기에
+       * 적는 것을 빠뜨리면 서버가 다시 뜰 때마다 그 데이터가 조용히 없어진다.
+       * (푸시 구독에서 한 번, 2026-09-01 에 영성일기·챌린지에서 또 한 번 겪었다.
+       *  교인이 쓴 일기가 다음 날 사라져 있었다.)
+       *
+       * 그래서 이제는 한쪽에만 있는 항목도 무조건 들고 간다.
+       */
+      for (const key of new Set([...Object.keys(localDb || {}), ...Object.keys(remoteDb || {})])) {
+        if ((mergedDb as any)[key] === undefined) {
+          (mergedDb as any)[key] = (remoteDb as any)[key] ?? (localDb as any)[key];
+        }
       }
 
       stripStorableVerseText(mergedDb);
@@ -700,6 +727,8 @@ function getEmptyDb(): DatabaseSchema {
     gratitudes: [],
     bibleQAs: [],
     savedVerses: [],
+    challenges: [],
+    journals: [],
     userBibleProgress: {},
     sharingGoals: {},
     pushSubscriptions: [],
