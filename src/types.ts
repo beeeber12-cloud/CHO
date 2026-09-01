@@ -221,6 +221,30 @@ export interface ReadingChallenge {
 }
 
 /**
+ * 개인 영성일기 — **오직 쓴 사람만 봅니다.**
+ *
+ * 묵상나눔과 달리 공동체에 공유되지 않습니다. 목록을 부르는 API 도
+ * 로그인 증표에 적힌 본인 것만 돌려주고, 남의 것은 서버가 아예 내보내지 않습니다.
+ * 성령님이 주시는 마음·느낌·꿈처럼 남에게 말하기 어려운 것을 쌓아 두는 자리입니다.
+ */
+export interface JournalEntry {
+  id: string;
+  /** 주인. 이 값과 다른 사람에게는 절대 보이지 않는다 */
+  userId: string;
+  date: string; // YYYY-MM-DD
+  /** 함께 붙잡은 말씀 (선택) */
+  verseTitle: string;
+  title: string;
+  content: string;
+  /** 기도제목 (선택) */
+  prayer: string;
+  /** 나만 보는 표시. 나중에 다시 보고 싶은 글에 눌러 둔다 */
+  marks?: Reactions;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+/**
  * 한 공동체가 담고 있는 것 전부.
  *
  * 이름이 Database 로 시작하지만 실제로는 **공동체 하나치**다.
@@ -242,6 +266,8 @@ export interface DatabaseSchema {
   savedVerses?: SavedVerse[];
   /** 성경읽기 챌린지. 도는 것은 한 번에 하나로 둔다 */
   challenges?: ReadingChallenge[];
+  /** 개인 영성일기. 본인 외에는 절대 내보내지 않는다 */
+  journals?: JournalEntry[];
   pushSubscriptions?: PushSubscriptionRecord[];
   vapidKeys?: VapidKeys;
   /** 로그인 증표에 서명하는 비밀키. 이게 바뀌면 모두 다시 로그인해야 한다 */

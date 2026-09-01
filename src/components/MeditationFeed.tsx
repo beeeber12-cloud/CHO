@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Meditation, Comment, SokGroup } from "../types";
-import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Clock, PenTool, X, ShieldAlert, Bell, Radio, CheckCircle, Users, Globe, Settings, UserPlus, Check, Edit3 } from "lucide-react";
+import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Clock, PenTool, X, ShieldAlert, Bell, Radio, CheckCircle, Users, Globe, Settings, UserPlus, Check, Edit3, Lock } from "lucide-react";
+import JournalModal from "./JournalModal";
 import { motion, AnimatePresence } from "motion/react";
 import { enablePush, isPushEnabled } from "../lib/push";
 import ReactionBar from "./ReactionBar";
@@ -24,6 +25,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   const [meditations, setMeditations] = useState<Meditation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showWriteForm, setShowWriteForm] = useState<boolean>(false);
+  /** 나만 보는 영성일기 창 */
+  const [showJournal, setShowJournal] = useState<boolean>(false);
 
   // Sok (Small Group) state
   const [sokGroups, setSokGroups] = useState<SokGroup[]>([]);
@@ -563,8 +566,15 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         )}
       </div>
 
-      {/* 글쓰기 버튼 (식구/날짜 필터는 제거) */}
-      <div className="flex justify-end">
+      {/* 글쓰기 버튼 — 왼쪽은 나만 보는 일기, 오른쪽은 공동체에 나누는 묵상 */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowJournal(true)}
+          className="flex items-center justify-center gap-1.5 bg-white hover:bg-[#F5F5F5] text-[#4A6B57] font-bold text-xs px-3.5 py-2 rounded-3xl shadow-md transition cursor-pointer whitespace-nowrap shrink-0"
+        >
+          <Lock size={14} />
+          개인 영성일기
+        </button>
         <button
           onClick={() => {
             setShowWriteForm(!showWriteForm);
@@ -577,6 +587,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           {showWriteForm ? "닫기" : "내 묵상 글 쓰기"}
         </button>
       </div>
+
+      {showJournal && (
+        <JournalModal currentUser={currentUser} onClose={() => setShowJournal(false)} />
+      )}
 
       {/* Expandable Write/Edit Form */}
       <AnimatePresence>

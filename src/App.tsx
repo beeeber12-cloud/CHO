@@ -16,6 +16,7 @@ import CommunitySettings from "./components/CommunitySettings";
 import ChallengeTab from "./components/ChallengeTab";
 import AppGuide, { guideSeen } from "./components/AppGuide";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
+import { useSwipe } from "./lib/useSwipe";
 
 interface UserProfile {
   id: string;
@@ -35,7 +36,7 @@ const TAB_DEFS: Record<TabType, { label: string; short: string; icon: typeof Boo
   notice:    { label: "오늘 말씀",   short: "오늘말씀", icon: BookOpen },
   gratitude: { label: "감사칭찬",    short: "감사칭찬", icon: HeartHandshake },
   challenge: { label: "챌린지",      short: "챌린지",   icon: Trophy },
-  feed:      { label: "묵상 나눔",   short: "묵상나눔", icon: MessageSquare },
+  feed:      { label: "묵상 일기",   short: "묵상일기", icon: MessageSquare },
   bible:     { label: "성경 읽기방", short: "성경통독", icon: BookMarked },
   my:        { label: "나의 기록",   short: "나의기록", icon: Calendar },
   qna:       { label: "성경 Q&A",    short: "성경Q&A",  icon: HelpCircle },
@@ -140,6 +141,46 @@ export default function App() {
     setActiveTab(tab);
     setPrefilledVerse(null);
     window.scrollTo({ top: 0 });
+  };
+
+  /**
+   * 화면을 좌우로 밀어 옆 탭으로 넘어간다 (성경 본문을 밀어 장을 넘기는 것과 같은 동작).
+   *
+   * ⚠️ 성경통독의 본문 상자는 **스스로** 좌우 밀기를 쓴다(장 넘기기).
+   *    거기서 시작한 손짓까지 여기서 받으면 장도 넘어가고 탭도 넘어간다.
+   *    그래서 data-no-tab-swipe 가 붙은 곳에서 시작한 손짓은 흘려보낸다.
+   */
+  const tabIndex = visibleTabs.indexOf(activeTab);
+  const skipSwipe = React.useRef(false);
+  const rawTabSwipe = useSwipe({
+    onSwipeLeft: () => {
+      if (tabIndex >= 0 && tabIndex < visibleTabs.length - 1) openTab(visibleTabs[tabIndex + 1]);
+    },
+    onSwipeRight: () => {
+      if (tabIndex > 0) openTab(visibleTabs[tabIndex - 1]);
+    },
+    canSwipeLeft: tabIndex >= 0 && tabIndex < visibleTabs.length - 1,
+    canSwipeRight: tabIndex > 0
+  });
+
+  const tabSwipeHandlers = {
+    onTouchStart: (e: React.TouchEvent) => {
+      const el = e.target as HTMLElement | null;
+      skipSwipe.current = !!el?.closest?.("[data-no-tab-swipe]");
+      if (skipSwipe.current) return;
+      rawTabSwipe.swipeHandlers.onTouchStart(e);
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (skipSwipe.current) return;
+      rawTabSwipe.swipeHandlers.onTouchMove(e);
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (skipSwipe.current) {
+        skipSwipe.current = false;
+        return;
+      }
+      rawTabSwipe.swipeHandlers.onTouchEnd(e);
+    }
   };
 
   // 지금 안 보이는 탭에 머물러 있으면 (챌린지가 시작/종료된 순간) 첫 탭으로 옮긴다.
@@ -313,7 +354,13 @@ export default function App() {
 
 
         {/* Selected View Window */}
-        <div id="view-portal" className="min-h-[50vh]">
+        <div
+          id="view-portal"
+          className="min-h-[50vh] overflow-x-hidden"
+          style={{ touchAction: "pan-y" }}
+          {...tabSwipeHandlers}
+        >
+          <div ref={rawTabSwipe.dragRef}>
           <AnimatePresence mode="wait">
             {activeTab === 'notice' && (
               <motion.div
@@ -491,6 +538,7 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
       </main>
 

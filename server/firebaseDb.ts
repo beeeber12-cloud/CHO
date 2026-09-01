@@ -34,7 +34,7 @@ import path from "path";
 import { DatabaseSchema, Community } from "../src/types";
 
 /** 계속 쌓이는 목록 — 낱장으로 보관한다 */
-const SPLIT_KEYS = ["meditations", "notices", "gratitudes", "bibleQAs", "savedVerses"] as const;
+const SPLIT_KEYS = ["meditations", "notices", "gratitudes", "bibleQAs", "savedVerses", "journals"] as const;
 type SplitKey = (typeof SPLIT_KEYS)[number];
 
 /**

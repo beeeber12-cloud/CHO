@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, BookOpen, Sparkles, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, Settings, X, RefreshCw } from "lucide-react";
+import { Search, BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, Settings, X, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
@@ -677,11 +677,14 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   본문이 화면을 가장 넓게 쓰도록 한다 (제목·탭 등 다른 요소 여백은 그대로) */}
               <div
                 ref={verseBoxRef}
+                // 이 상자는 스스로 좌우 밀기를 쓴다(장 넘기기).
+                // 바깥의 탭 넘김이 같이 반응하지 않도록 표시해 둔다.
+                data-no-tab-swipe
                 {...swipeHandlers}
                 // pan-y 로 두면 세로 훑기는 브라우저가 그대로 처리하고,
                 // 가로로 미는 동작만 우리가 받아 장을 넘길 수 있다
                 style={{ touchAction: "pan-y" }}
-                className="scripture-font bg-white shadow-none sm:shadow-sm -mx-1.5 px-1.5 py-3 sm:mx-0 sm:p-6 rounded-none sm:rounded-3xl max-h-[550px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
+                className="scripture-font bg-white shadow-none sm:shadow-sm -mx-1.5 px-1.5 py-3 sm:mx-0 sm:p-6 rounded-none sm:rounded-3xl max-h-[calc(100vh-14rem)] min-h-[560px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
                 {/* 바깥층: 손가락을 따라 밀린다 (놓으면 제자리로 튕겨 돌아온다) */}
                 <div ref={dragRef} style={{ willChange: "transform" }}>
@@ -797,18 +800,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               </div>
             </div>
 
-            {/* Practical Meditation Guide */}
-            {result.meditationGuide && (
-              <div className="bg-[#F5F5F5]/60 rounded-[32px] p-5">
-                <div className="flex items-center gap-1.5 text-[#0C3B2E] mb-2">
-                  <Sparkles size={15} className="text-[#4A6B57]" />
-                  <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#6F8377]">오늘의 통독 실천 제안</span>
-                </div>
-                <p className="text-xs text-[#0C3B2E] leading-relaxed font-bold">
-                  {result.meditationGuide}
-                </p>
-              </div>
-            )}
+            {/* '오늘의 통독 실천 제안' 상자를 뺐다 (2026-08-31).
+                그만큼 위 성경 본문이 더 길게 보인다. */}
           </motion.div>
         )}
       </AnimatePresence>

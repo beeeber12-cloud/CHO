@@ -7,7 +7,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 import dotenv from "dotenv";
 import webpush from "web-push";
-import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community, ReadingChallenge } from "./src/types";
+import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community, ReadingChallenge, JournalEntry } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import {
   fetchFromFirestore,
@@ -1574,6 +1574,108 @@ async function startServer() {
       }
     }
     next();
+  });
+
+  // --- 개인 영성일기 APIs ---
+  //
+  // ⚠️ 이 글들은 **오직 쓴 사람만** 봅니다.
+  //    모든 라우트가 요청 몸통의 userId 를 무시하고 **로그인 증표의 uid** 만 씁니다.
+  //    그러지 않으면 남의 id 를 적어 보내 남의 일기를 읽을 수 있습니다.
+
+  /** 내 일기 목록 (최근 순). 남의 것은 절대 섞이지 않는다 */
+  app.get("/api/journals", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const mine = (db.journals || [])
+      .filter((j) => j.userId === me.uid)
+      .sort((a, b) => (b.date || "").localeCompare(a.date || "") || b.createdAt.localeCompare(a.createdAt));
+    res.json(mine);
+  });
+
+  /** 일기 쓰기 */
+  app.post("/api/journals", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+
+    const title = String(req.body?.title ?? "").trim();
+    const content = String(req.body?.content ?? "").trim();
+    if (!title && !content) {
+      return res.status(400).json({ error: "제목이나 내용을 적어주세요." });
+    }
+
+    const entry: JournalEntry = {
+      id: "jr-" + Math.random().toString(36).substring(2, 11),
+      userId: me.uid, // 몸통의 값을 쓰지 않는다
+      date: String(req.body?.date ?? "").trim() || getKSTDateString(),
+      verseTitle: String(req.body?.verseTitle ?? "").trim(),
+      title: title || "제목 없음",
+      content,
+      prayer: String(req.body?.prayer ?? "").trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    if (!db.journals) db.journals = [];
+    db.journals.unshift(entry);
+    saveDb(db);
+    res.json(entry);
+  });
+
+  /** 일기 고치기 (본인 것만) */
+  app.put("/api/journals/:id", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const entry = (db.journals || []).find((j) => j.id === req.params.id);
+    // 남의 일기는 '없는 것'으로 답한다 — 있는지 없는지도 알려주지 않는다
+    if (!entry || entry.userId !== me.uid) {
+      return res.status(404).json({ error: "일기를 찾을 수 없습니다." });
+    }
+
+    if (req.body?.title !== undefined) entry.title = String(req.body.title).trim() || "제목 없음";
+    if (req.body?.content !== undefined) entry.content = String(req.body.content).trim();
+    if (req.body?.prayer !== undefined) entry.prayer = String(req.body.prayer).trim();
+    if (req.body?.verseTitle !== undefined) entry.verseTitle = String(req.body.verseTitle).trim();
+    if (req.body?.date !== undefined && String(req.body.date).trim()) entry.date = String(req.body.date).trim();
+    entry.updatedAt = new Date().toISOString();
+
+    saveDb(db);
+    res.json(entry);
+  });
+
+  /** 일기 지우기 (본인 것만) */
+  app.delete("/api/journals/:id", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const entry = (db.journals || []).find((j) => j.id === req.params.id);
+    if (!entry || entry.userId !== me.uid) {
+      return res.status(404).json({ error: "일기를 찾을 수 없습니다." });
+    }
+    db.journals = (db.journals || []).filter((j) => j.id !== req.params.id);
+    saveDb(db);
+    res.json({ ok: true });
+  });
+
+  /** 나만 보는 표시 켜고 끄기 (좋아요 · 기도할게요) */
+  app.post("/api/journals/:id/mark", (req: Request, res: Response) => {
+    const me = requireLogin(req, res);
+    if (!me) return;
+    const db = dbOf(req);
+    const entry = (db.journals || []).find((j) => j.id === req.params.id);
+    if (!entry || entry.userId !== me.uid) {
+      return res.status(404).json({ error: "일기를 찾을 수 없습니다." });
+    }
+    const type = String(req.body?.type ?? "");
+    if (!VALID_REACTIONS.includes(type)) {
+      return res.status(400).json({ error: "표시 종류가 올바르지 않습니다." });
+    }
+    if (!entry.marks) entry.marks = {};
+    const on = (entry.marks as any)[type] as string[] | undefined;
+    (entry.marks as any)[type] = on && on.includes(me.uid) ? [] : [me.uid];
+    saveDb(db);
+    res.json(entry);
   });
 
   // --- 성경읽기 챌린지 APIs ---
