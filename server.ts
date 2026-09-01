@@ -1599,10 +1599,9 @@ async function startServer() {
     if (!me) return;
     const db = dbOf(req);
 
-    const title = String(req.body?.title ?? "").trim();
     const content = String(req.body?.content ?? "").trim();
-    if (!title && !content) {
-      return res.status(400).json({ error: "제목이나 내용을 적어주세요." });
+    if (!content) {
+      return res.status(400).json({ error: "내용을 적어주세요." });
     }
 
     const entry: JournalEntry = {
@@ -1610,7 +1609,9 @@ async function startServer() {
       userId: me.uid, // 몸통의 값을 쓰지 않는다
       date: String(req.body?.date ?? "").trim() || getKSTDateString(),
       verseTitle: String(req.body?.verseTitle ?? "").trim(),
-      title: title || "제목 없음",
+      // 제목·붙잡은 말씀·기도제목 칸은 화면에서 뺐다.
+      // 옛 글에는 남아 있을 수 있어 자리는 그대로 둔다.
+      title: String(req.body?.title ?? "").trim(),
       content,
       prayer: String(req.body?.prayer ?? "").trim(),
       createdAt: new Date().toISOString()
@@ -1633,7 +1634,7 @@ async function startServer() {
       return res.status(404).json({ error: "일기를 찾을 수 없습니다." });
     }
 
-    if (req.body?.title !== undefined) entry.title = String(req.body.title).trim() || "제목 없음";
+    if (req.body?.title !== undefined) entry.title = String(req.body.title).trim();
     if (req.body?.content !== undefined) entry.content = String(req.body.content).trim();
     if (req.body?.prayer !== undefined) entry.prayer = String(req.body.prayer).trim();
     if (req.body?.verseTitle !== undefined) entry.verseTitle = String(req.body.verseTitle).trim();

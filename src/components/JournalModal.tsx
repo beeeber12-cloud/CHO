@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
-  Lock, Plus, X, Pencil, Trash2, BookOpen, Heart, HandHeart, ArrowLeft
+  Lock, Plus, X, Pencil, Trash2, Heart, HandHeart, ArrowLeft
 } from "lucide-react";
 import { JournalEntry } from "../types";
 import { possessiveTitle } from "../lib/koreanName";
@@ -66,8 +66,8 @@ export default function JournalModal({ currentUser, onClose }: Props) {
   };
 
   const save = async () => {
-    if (!form.title.trim() && !form.content.trim()) {
-      setError("제목이나 내용을 적어주세요.");
+    if (!form.content.trim()) {
+      setError("내용을 적어주세요.");
       return;
     }
     setBusy(true);
@@ -175,46 +175,12 @@ export default function JournalModal({ currentUser, onClose }: Props) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#4A6B57] mb-1">
-                  <BookOpen size={12} className="inline mr-1" />
-                  붙잡은 말씀 (선택)
-                </label>
-                <input
-                  value={form.verseTitle}
-                  onChange={(e) => setForm({ ...form, verseTitle: e.target.value })}
-                  placeholder="예: 시편 23:1"
-                  className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#4A6B57] mb-1">제목</label>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="오늘 마음에 남은 한 마디"
-                  className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
-                />
-              </div>
-
-              <div>
                 <label className="block text-xs font-bold text-[#4A6B57] mb-1">내용</label>
                 <textarea
-                  rows={8}
+                  rows={14}
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   placeholder="성령님이 주신 마음, 느낌, 꿈, 하나님과 나눈 것들을 자유롭게 적어보세요."
-                  className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#4A6B57] mb-1">기도제목 (선택)</label>
-                <textarea
-                  rows={3}
-                  value={form.prayer}
-                  onChange={(e) => setForm({ ...form, prayer: e.target.value })}
-                  placeholder="이 마음을 두고 드리는 기도를 적어보세요."
                   className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
                 />
               </div>
@@ -240,7 +206,9 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                       {j.date}
                       {j.updatedAt && " · 수정함"}
                     </span>
-                    <h4 className="font-bold text-[#0C3B2E] leading-snug">{j.title}</h4>
+                    {j.title && (
+                      <h4 className="font-bold text-[#0C3B2E] leading-snug">{j.title}</h4>
+                    )}
                   </div>
                   <div className="flex gap-0.5 shrink-0">
                     <button
