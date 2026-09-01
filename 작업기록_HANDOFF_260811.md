@@ -473,3 +473,36 @@ communities/{cid}/meditations/{id}    ← 낱장
 ### 시험
 서버 18항목 통과 (권한·중복 시작 차단·통독 연동·중간 참가·완료 판정·삭제).
 화면 확인: 탭 순서 교체, 챌린지 중 감사 탭 숨김, '읽으러 가기' → 통독 탭 이동.
+
+---
+
+## §12. 영성일기·챌린지가 재시작마다 사라지던 버그 (2026-09-01)
+
+### 증상
+일기를 쓰고 저장하면 그 자리에서는 보이는데, 나중에(배포 후·컨테이너 재시작 후)
+다시 들어가면 목록이 텅 비어 있었다.
+
+### 원인
+`syncAndRefreshWithFirestore()` 가 로컬/원격을 합칠 때 `mergedDb` 를
+**필드를 손으로 하나씩 적어** 만든다. 여기에 `journals` 와 `challenges` 를
+적어 넣지 않아서, 서버가 뜰 때마다 두 항목이 `undefined` 가 되어 메모리에서 사라졌다.
+(같은 실수를 `pushSubscriptions` 에서 이미 한 번 겪었고 주석까지 달아 뒀는데 또 했다.)
+
+### 데이터는 살아 있었다
+`saveList()` 의 안전장치 — "목록이 N건 → 0건이 되면 삭제를 건너뛴다" — 가
+Firestore 의 낱장을 지키고 있었다. 확인 결과 `communities/cho/journals` 에 1건 그대로.
+안전장치가 없었다면 교인이 쓴 글이 실제로 지워졌을 것이다.
+
+### 고친 것
+1. `mergedDb` 에 `challenges`, `journals` 를 id 기준 합치기로 추가.
+2. `getEmptyDb()` 에도 두 칸 추가.
+3. **마지막 그물** — 합치기 목록에 적히지 않은 키가 있어도
+   `remoteDb[key] ?? localDb[key]` 로 무조건 들고 간다.
+   앞으로 `DatabaseSchema` 에 필드를 더해도 조용히 지워지지 않는다.
+
+### 새 필드를 추가할 때
+`DatabaseSchema` 에 목록을 하나 더 붙이면 확인할 곳:
+- `server/firebaseDb.ts` 의 `SPLIT_KEYS` (계속 쌓이는 목록이면)
+- `server.ts` 의 `getEmptyDb()`
+- `server.ts` 의 `mergedDb` (이제는 마지막 그물이 받쳐 주지만, 합치는 규칙이
+  필요하면 여전히 직접 적어야 한다 — 예: id 로 합칠지, 최신 것만 둘지)
