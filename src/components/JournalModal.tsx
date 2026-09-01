@@ -162,7 +162,6 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                   rows={14}
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  placeholder="성령님이 주신 마음, 느낌, 꿈, 하나님과 나눈 것들을 자유롭게 적어보세요."
                   className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
                 />
               </div>
