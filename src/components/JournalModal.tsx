@@ -151,7 +151,8 @@ export default function JournalModal({ currentUser, onClose }: Props) {
 
           {!writing && (
             <p className="text-xs text-[#4A6B57] leading-relaxed mt-3 bg-[#F5F5F5] rounded-2xl p-3">
-              하나님이 주신 마음과 은혜의 순간을 기록하는{" "}
+              하나님이 주신 마음과 은혜의 순간을 기록하는
+              <br />
               <strong className="text-[#0C3B2E]">오직 나만 볼 수 있는 공간</strong>입니다.
               <br />
               하나님과의 친밀함을 하나씩 채워가 보세요.
