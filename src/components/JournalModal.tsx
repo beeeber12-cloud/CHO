@@ -4,6 +4,7 @@ import {
   Lock, Plus, X, Pencil, Trash2, BookOpen, Heart, HandHeart, ArrowLeft
 } from "lucide-react";
 import { JournalEntry } from "../types";
+import { possessiveTitle } from "../lib/koreanName";
 
 /**
  * 개인 영성일기.
@@ -134,7 +135,9 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                 <Lock size={18} />
               </div>
               <div className="min-w-0">
-                <h3 className="font-bold text-[#0C3B2E] text-lg leading-tight">개인 영성일기</h3>
+                <h3 className="font-bold text-[#0C3B2E] text-lg leading-tight">
+                  {possessiveTitle(currentUser.name, "영성일기")}
+                </h3>
                 <p className="text-2xs text-[#6F8377]">나만 보는 방입니다</p>
               </div>
             </div>

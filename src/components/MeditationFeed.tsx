@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Meditation, Comment, SokGroup } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Clock, PenTool, X, ShieldAlert, Bell, Radio, CheckCircle, Users, Globe, Settings, UserPlus, Check, Edit3, Lock } from "lucide-react";
 import JournalModal from "./JournalModal";
+import { possessiveTitle } from "../lib/koreanName";
 import { motion, AnimatePresence } from "motion/react";
 import { enablePush, isPushEnabled } from "../lib/push";
 import ReactionBar from "./ReactionBar";
@@ -573,7 +574,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           className="flex items-center justify-center gap-1.5 bg-white hover:bg-[#F5F5F5] text-[#4A6B57] font-bold text-xs px-3.5 py-2 rounded-3xl shadow-md transition cursor-pointer whitespace-nowrap shrink-0"
         >
           <Lock size={14} />
-          개인 영성일기
+          {possessiveTitle(currentUser.name, "영성일기")}
         </button>
         <button
           onClick={() => {
