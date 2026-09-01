@@ -1659,26 +1659,6 @@ async function startServer() {
     res.json({ ok: true });
   });
 
-  /** 나만 보는 표시 켜고 끄기 (좋아요 · 기도할게요) */
-  app.post("/api/journals/:id/mark", (req: Request, res: Response) => {
-    const me = requireLogin(req, res);
-    if (!me) return;
-    const db = dbOf(req);
-    const entry = (db.journals || []).find((j) => j.id === req.params.id);
-    if (!entry || entry.userId !== me.uid) {
-      return res.status(404).json({ error: "일기를 찾을 수 없습니다." });
-    }
-    const type = String(req.body?.type ?? "");
-    if (!VALID_REACTIONS.includes(type)) {
-      return res.status(400).json({ error: "표시 종류가 올바르지 않습니다." });
-    }
-    if (!entry.marks) entry.marks = {};
-    const on = (entry.marks as any)[type] as string[] | undefined;
-    (entry.marks as any)[type] = on && on.includes(me.uid) ? [] : [me.uid];
-    saveDb(db);
-    res.json(entry);
-  });
-
   // --- 성경읽기 챌린지 APIs ---
   //
   // 진행률은 따로 세지 않고 성경통독의 '읽음' 표시를 그대로 읽는다.

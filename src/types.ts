@@ -238,8 +238,6 @@ export interface JournalEntry {
   content: string;
   /** 기도제목 (선택) */
   prayer: string;
-  /** 나만 보는 표시. 나중에 다시 보고 싶은 글에 눌러 둔다 */
-  marks?: Reactions;
   createdAt: string;
   updatedAt?: string;
 }

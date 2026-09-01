@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
-  Lock, Plus, X, Pencil, Trash2, Heart, HandHeart, ArrowLeft
+  Lock, Plus, X, Pencil, Trash2, ArrowLeft
 } from "lucide-react";
 import { JournalEntry } from "../types";
 import { possessiveTitle } from "../lib/koreanName";
+import CollapsibleText from "./CollapsibleText";
 
 /**
  * 개인 영성일기.
@@ -100,25 +101,6 @@ export default function JournalModal({ currentUser, onClose }: Props) {
       setBusy(false);
     }
   };
-
-  const toggleMark = async (j: JournalEntry, type: "like" | "pray") => {
-    try {
-      const res = await fetch(`/api/journals/${j.id}/mark`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type })
-      });
-      if (res.ok) {
-        const updated: JournalEntry = await res.json();
-        setList((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      }
-    } catch {
-      // 무시
-    }
-  };
-
-  const marked = (j: JournalEntry, type: "like" | "pray") =>
-    (j.marks?.[type] || []).includes(currentUser.id);
 
   return (
     <div className="fixed inset-0 z-[70] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
@@ -233,10 +215,13 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                   <p className="text-xs font-bold text-[#4A6B57] mb-2">📖 {j.verseTitle}</p>
                 )}
 
+                {/* 글은 접어 둔다. 눌러서 펴면 전체가 보인다 */}
                 {j.content && (
-                  <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
-                    {j.content}
-                  </p>
+                  <CollapsibleText collapsedHeight={96} fadeColor="#FFFFFF">
+                    <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
+                      {j.content}
+                    </p>
+                  </CollapsibleText>
                 )}
 
                 {j.prayer && (
@@ -248,32 +233,6 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                   </div>
                 )}
 
-                {/* 나만 보는 표시 */}
-                <div className="flex gap-1.5 mt-3 pt-3 border-t border-[#F0F0F0]">
-                  <button
-                    onClick={() => toggleMark(j, "like")}
-                    className={`flex items-center gap-1 text-2xs font-bold px-3 py-1.5 rounded-3xl transition cursor-pointer ${
-                      marked(j, "like")
-                        ? "bg-[#0C3B2E] text-white"
-                        : "bg-[#F5F5F5] text-[#6F8377] hover:bg-[#D2DDD3]"
-                    }`}
-                  >
-                    <Heart size={12} className={marked(j, "like") ? "fill-current" : ""} />
-                    좋아요
-                  </button>
-                  <button
-                    onClick={() => toggleMark(j, "pray")}
-                    className={`flex items-center gap-1 text-2xs font-bold px-3 py-1.5 rounded-3xl transition cursor-pointer ${
-                      marked(j, "pray")
-                        ? "bg-[#0C3B2E] text-white"
-                        : "bg-[#F5F5F5] text-[#6F8377] hover:bg-[#D2DDD3]"
-                    }`}
-                  >
-                    <HandHeart size={12} />
-                    기도할게요
-                  </button>
-                  <span className="text-2xs text-[#AFC0B2] self-center ml-1">나만 보는 표시</span>
-                </div>
               </div>
             ))
           )}
