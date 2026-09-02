@@ -156,14 +156,14 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   if (!mine) return null;
 
   return (
-    <div className="bg-white rounded-3xl shadow-md p-6 mb-4">
-      <h3 className="text-lg font-bold text-[#0C3B2E] flex items-center mb-1">
+    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 mb-3 sm:mb-4">
+      <h3 className="text-base sm:text-lg font-bold text-[#0C3B2E] flex items-center mb-1">
         <Users2 className="mr-1.5 text-[#4A6B57]" size={20} />
         우리 공동체
       </h3>
 
       {editingName ? (
-        <div className="flex items-center gap-2 mb-5 mt-2">
+        <div className="flex items-center gap-2 mb-3 mt-2">
           <input
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
@@ -186,7 +186,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
           </button>
         </div>
       ) : (
-        <p className="text-sm text-[#6F8377] mb-5 flex items-center gap-1.5">
+        <p className="text-sm text-[#6F8377] mb-3 flex items-center gap-1.5">
           {mine.name} · {mine.memberCount}명
           {isAdmin && (
             <button
@@ -203,15 +203,15 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
         </p>
       )}
 
-      {error && <p className="text-sm text-[#8F1E17] mb-4">{error}</p>}
+      {error && <p className="text-sm text-[#8F1E17] mb-3">{error}</p>}
 
       {isAdmin && mine.joinCode && (
-        <div className="bg-[#F5F5F5] rounded-2xl p-4 mb-5">
+        <div className="bg-[#F5F5F5] rounded-2xl p-3.5 mb-3">
           <p className="text-xs font-semibold text-[#4A6B57] flex items-center mb-2">
             <KeyRound size={14} className="mr-1.5" />
             가입코드
           </p>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-2.5">
             <span className="flex-1 text-2xl font-bold tracking-[0.3em] text-[#0C3B2E]">
               {mine.joinCode}
             </span>
@@ -245,7 +245,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
           </div>
 
           {/* 복사되는 내용을 눈으로 확인하실 수 있게 그대로 보여준다 */}
-          <pre className="mt-3 p-3 bg-white rounded-2xl text-2xs text-[#4A6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
+          <pre className="mt-2.5 p-3 bg-white rounded-2xl text-2xs text-[#4A6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
             {inviteText}
           </pre>
 
