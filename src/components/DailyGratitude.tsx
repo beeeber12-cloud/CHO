@@ -32,7 +32,6 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
   const [error, setError] = useState<string>("");
 
   // Filter
-  const [filterMyOnly, setFilterMyOnly] = useState<boolean>(false);
 
   // Active Comment Drawer State
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
@@ -193,11 +192,8 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
     }
   };
 
-  // Filtered Gratitudes
-  const filteredGratitudes = gratitudes.filter(g => {
-    if (filterMyOnly && g.userId !== currentUser.id) return false;
-    return true;
-  });
+  // 감사글은 모두가 함께 보는 것이라 따로 걸러낼 것이 없다
+  const filteredGratitudes = gratitudes;
 
   return (
     <div className="space-y-5">
@@ -335,25 +331,6 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Filters */}
-      <div className="bg-white rounded-3xl p-3 shadow-sm flex items-center justify-end gap-2.5">
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <button
-            onClick={() => setFilterMyOnly(!filterMyOnly)}
-            className={`px-3 py-1.5 rounded-3xl border text-xs font-semibold transition cursor-pointer ${
-              filterMyOnly
-                ? "bg-[#0C3B2E] text-white border-[#0C3B2E]"
-                : "bg-[#F5F5F5] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
-            }`}
-          >
-            {filterMyOnly ? "✓ 내 감사글만 보기" : "전체 감사글"}
-          </button>
-          <span className="text-2xs font-semibold text-[#6F8377] bg-[#F5F5F5] px-2.5 py-1 rounded-3xl">
-            총 {filteredGratitudes.length}건
-          </span>
-        </div>
-      </div>
 
       {/* Gratitudes Feed List */}
       {loading ? (
