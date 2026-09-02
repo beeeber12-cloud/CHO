@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, Settings, X, RefreshCw } from "lucide-react";
+import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, Settings, X, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
@@ -571,42 +571,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           >
             <span>신약 (27권)</span>
           </button>
-        </div>
-
-        {/* 단어로 구절 찾기 — 한 달에 열 분 남짓 쓰신다(로그 확인). 자리만 줄이고 남겨 둔다. */}
-        <div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setHighlightVerse(null);
-              handleSearchQuery(query);
-            }}
-            className="flex gap-2"
-          >
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="단어로 구절 찾기 (예: 사랑, 요한복음 1장, 로마서 8:28)..."
-                className="w-full pl-3 pr-9 py-2.5 bg-[#F5F5F5] rounded-3xl text-xs font-bold text-[#14261E] focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="absolute right-2 top-2 p-1 text-[#4A6B57] hover:bg-[#D2DDD3] rounded-xl cursor-pointer"
-              >
-                {loading ? <Loader className="animate-spin" size={16} /> : <Search size={16} />}
-              </button>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2.5 bg-[#0C3B2E] hover:bg-[#072A20] text-white text-xs font-bold rounded-3xl transition cursor-pointer shrink-0"
-            >
-              검색
-            </button>
-          </form>
         </div>
       </div>
 
