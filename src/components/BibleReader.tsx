@@ -471,15 +471,13 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     <div className="space-y-4 sm:space-y-6">
       {/* 1. Personal Bible Reading Tracker Header (Personalized per logged-in user) */}
       {currentUser && (
-        <div className="bg-gradient-to-br from-[#0C3B2E] via-[#4A6B57] to-[#4A6B57] rounded-3xl sm:rounded-[32px] p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#0C3B2E] via-[#4A6B57] to-[#4A6B57] rounded-3xl sm:rounded-[32px] p-3.5 sm:p-5 text-white shadow-md relative overflow-hidden">
 
-          <div className="relative z-10 space-y-3 sm:space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 border-b border-white/10 pb-3 sm:pb-4">
-              <div>
-                <h3 className="font-bold text-xl sm:text-2xl flex items-center gap-2">
-                  <span>{currentUser.name}님의 개인 성경 통독방</span>
-                </h3>
-              </div>
+          <div className="relative z-10 space-y-2.5 sm:space-y-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/10 pb-2.5 sm:pb-3">
+              <h3 className="font-bold text-base sm:text-xl">
+                {currentUser.name}님의 개인 성경 통독방
+              </h3>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <button
@@ -501,95 +499,82 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               </div>
             </div>
 
-            {/* Reading Progress Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-              {/* Progress Bar Box */}
-              <div className="md:col-span-2 bg-white/10 p-4 rounded-3xl">
-                <div className="flex justify-between items-center text-xs mb-2">
-                  <span className="font-bold text-[#D2DDD3] flex items-center gap-1.5">
-                    목표: {userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
-                  </span>
-                  <span className="font-bold text-[#FFFFFF] text-sm">
-                    {completedCount}장 / {targetCount}장 ({progressPercent}%)
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="w-full bg-black/20 rounded-full h-3 overflow-hidden p-0.5">
-                  <div
-                    className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.max(2, progressPercent)}%` }}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center text-xs text-[#D2DDD3]/80 mt-2 font-medium">
-                  <span>일일 추천: 하루 {userProgress?.dailyTarget || 3}장씩</span>
-                  <span>남은 분량: {Math.max(0, targetCount - completedCount)}장</span>
-                </div>
+            {/* 진행률. 북마크는 아래 '성경 열기' 상자로 옮겼다 — 말씀이 더 빨리 보이도록 */}
+            <div className="bg-white/10 p-3.5 rounded-3xl">
+              <div className="flex justify-between items-center text-xs mb-2 gap-2">
+                <span className="font-bold text-[#D2DDD3] truncate">
+                  목표: {userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
+                </span>
+                <span className="font-bold text-[#FFFFFF] text-sm shrink-0">
+                  {completedCount}장 / {targetCount}장 ({progressPercent}%)
+                </span>
               </div>
 
-              {/* Today's Bookmark / Last Read Box */}
-              <div className="bg-white/10 p-4 rounded-3xl flex flex-col justify-between">
-                <div>
-                  <span className="text-xs text-[#D2DDD3]/80 font-bold block flex items-center gap-1">
-                    마지막 읽은 본문 북마크
-                  </span>
-                  <strong className="text-base font-bold text-white block mt-1">
-                    {userProgress?.lastReadBook || "창세기"} {userProgress?.lastReadChapter || 1}장
-                  </strong>
-                </div>
+              {/* Progress Bar */}
+              <div className="w-full bg-black/20 rounded-full h-3 overflow-hidden p-0.5">
+                <div
+                  className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(2, progressPercent)}%` }}
+                />
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const book = BIBLE_BOOKS.find(b => b.name === (userProgress?.lastReadBook || "창세기")) || BIBLE_BOOKS[0];
-                    setHighlightVerse(null);
-                    setPendingScroll(true);
-                    handleSelectBookChapter(book, userProgress?.lastReadChapter || 1);
-                  }}
-                  className="mt-2 w-full py-1.5 bg-white hover:bg-[#F5F5F5] text-[#0C3B2E] text-xs font-bold rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                >
-                  <span>이어서 읽기</span>
-                  <ChevronRight size={14} />
-                </button>
+              <div className="flex justify-between items-center text-xs text-[#D2DDD3]/80 mt-2 font-medium">
+                <span>일일 추천: 하루 {userProgress?.dailyTarget || 3}장씩</span>
+                <span>남은 분량: {Math.max(0, targetCount - completedCount)}장</span>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. 원터치 성경 네비게이터 (구약/신약 → 권 → 장 → 절) */}
-      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-4 sm:p-6 space-y-3 sm:space-y-4">
-        <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3">
-          <div>
-            <h4 className="font-bold text-[#0C3B2E] text-base sm:text-base">성경 선택</h4>
-            <p className="text-xs text-[#6F8377] font-medium">구약 · 신약에서 권 · 장 · 절을 눌러 바로 펼쳐 보세요.</p>
-          </div>
-        </div>
+      {/* 2. 성경 열기 — 이어서 읽기 · 권 고르기 · 단어 찾기를 한 상자에 모았다.
+             상단이 길면 말씀을 보려고 한참 내려야 해서, 머리말과 설명 줄은 뺐다. */}
+      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-5 space-y-2.5">
+        {/* 마지막에 읽던 곳 — 상자 전체가 버튼이다 (어르신도 누르기 쉽게) */}
+        {currentUser && (
+          <button
+            type="button"
+            onClick={() => {
+              const book = BIBLE_BOOKS.find(b => b.name === (userProgress?.lastReadBook || "창세기")) || BIBLE_BOOKS[0];
+              setHighlightVerse(null);
+              setPendingScroll(true);
+              handleSelectBookChapter(book, userProgress?.lastReadChapter || 1);
+            }}
+            className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-3xl bg-[#F5F5F5] hover:bg-[#E3E9E2] transition cursor-pointer text-left"
+          >
+            <span className="min-w-0">
+              <span className="block text-2xs font-bold text-[#6F8377]">마지막 읽은 곳</span>
+              <strong className="block text-sm font-bold text-[#0C3B2E] truncate">
+                {userProgress?.lastReadBook || "창세기"} {userProgress?.lastReadChapter || 1}장
+              </strong>
+            </span>
+            <span className="shrink-0 flex items-center gap-0.5 text-xs font-bold text-[#0C3B2E]">
+              이어서 읽기
+              <ChevronRight size={14} />
+            </span>
+          </button>
+        )}
 
-        {/* 구약 / 신약 탭 — 누르면 권·장·절 선택 팝업이 열린다 */}
+        {/* 구약 / 신약 — 누르면 권·장·절 선택 팝업이 열린다 */}
         <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={() => openNavModal('OT')}
-            className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-3xl bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
+            className="flex items-center justify-center gap-2 px-3 py-3 rounded-3xl bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
           >
             <span>구약 (39권)</span>
           </button>
           <button
             type="button"
             onClick={() => openNavModal('NT')}
-            className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-3xl bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
+            className="flex items-center justify-center gap-2 px-3 py-3 rounded-3xl bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold text-sm sm:text-base shadow-sm transition cursor-pointer"
           >
             <span>신약 (27권)</span>
           </button>
         </div>
 
-        {/* Custom Search Input */}
-        <div className="pt-3 border-t border-[#E3E9E2] space-y-1.5">
-          <label className="flex items-center gap-1.5 text-xs font-medium text-[#6F8377]">
-            단어로 구절 찾기
-          </label>
+        {/* 단어로 구절 찾기 — 한 달에 열 분 남짓 쓰신다(로그 확인). 자리만 줄이고 남겨 둔다. */}
+        <div>
           <form
             onSubmit={(e) => {
               e.preventDefault();
