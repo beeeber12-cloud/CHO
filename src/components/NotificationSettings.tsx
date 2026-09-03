@@ -31,22 +31,23 @@ function FontSizeSettingCard() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
+        <div className="p-2 bg-[#F9F9F9] text-[#195C50] rounded-3xl">
           <ZoomIn size={18} />
         </div>
         <h3 className="font-bold text-[#0C3B2E] text-base">글씨 크기</h3>
       </div>
 
-      <div className="grid grid-cols-4 gap-1">
+      {/* 슬라이딩 세그먼트 — 트랙 하나 안에서 눌린 칸만 그라데이션으로 두드러진다 */}
+      <div className="grid grid-cols-4 gap-1 bg-[#F0F0F0] p-1 rounded-3xl">
         {scales.map((s) => (
           <button
             key={s.key}
             type="button"
             onClick={() => setFontScale(s.key)}
-            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl border transition cursor-pointer ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-3xl transition-all duration-200 cursor-pointer ${
               fontScale === s.key
-                ? "bg-[#0C3B2E] text-white border-[#0C3B2E] shadow-sm"
-                : "bg-[#F5F5F5] text-[#4A6B57] border-[#E3E9E2] hover:bg-[#D2DDD3]"
+                ? "grad-forest text-white"
+                : "text-[#4A6B57] hover:bg-white/70"
             }`}
           >
             <span className={`${s.sample} font-bold leading-none`}>가</span>
@@ -131,8 +132,8 @@ function PushNotificationCard({
     <div className="space-y-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
-            <Smartphone size={18} />
+          <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] rounded-full flex items-center justify-center shrink-0">
+            <Smartphone size={16} />
           </div>
           <div className="min-w-0">
             <span className="block font-bold text-[#14261E] text-sm">휴대폰 알림</span>
@@ -147,7 +148,7 @@ function PushNotificationCard({
             disabled={busy}
             className={`shrink-0 text-xs font-bold py-2 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50 ${
               enabled
-                ? "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
+                ? "bg-white text-[#4A6B57] hover:bg-[#F0F0F0]"
                 : "bg-[#FFBA00] text-[#0C3B2E] hover:bg-[#E8A900]"
             }`}
           >
@@ -165,7 +166,7 @@ function PushNotificationCard({
           </p>
         </div>
       ) : support === "unsupported" ? (
-        <div className="bg-[#F5F5F5] rounded-3xl p-3.5 text-xs text-[#6F8377] font-medium">
+        <div className="bg-white rounded-3xl p-3.5 text-xs text-[#6F8377] font-medium">
           이 브라우저는 푸시 알림을 지원하지 않습니다. 크롬 또는 삼성 인터넷을 사용해 주세요.
         </div>
       ) : (
@@ -173,7 +174,7 @@ function PushNotificationCard({
           <button
             onClick={handleTest}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-1.5 bg-[#F5F5F5] hover:bg-[#D2DDD3] text-[#4A6B57] text-xs font-bold py-2.5 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 bg-white hover:bg-[#F0F0F0] text-[#4A6B57] text-xs font-bold py-2.5 px-4 rounded-3xl transition cursor-pointer disabled:opacity-50"
           >
             <Send size={13} />
             테스트 알림 받아보기
@@ -184,7 +185,7 @@ function PushNotificationCard({
       {msg && (
         <p
           className={`text-xs leading-relaxed font-medium whitespace-pre-line rounded-3xl p-3 ${
-            msgTone === "ok" ? "bg-[#F5F5F5] text-[#0C3B2E]" : "bg-[#FDF3F3] text-[#7A1913]"
+            msgTone === "ok" ? "bg-white text-[#0C3B2E]" : "bg-[#FDF3F3] text-[#7A1913]"
           }`}
         >
           {msg}
@@ -229,12 +230,12 @@ function PushStatusCard() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
-            <Users size={18} />
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] rounded-full flex items-center justify-center shrink-0">
+            <Users size={16} />
           </div>
           <div>
-            <h3 className="font-bold text-[#0C3B2E] text-base">지체별 알림 켜짐 현황</h3>
+            <h3 className="font-bold text-[#0C3B2E] text-sm">지체별 알림 켜짐 현황</h3>
             <p className="text-2xs text-[#6F8377]">
               알림은 각자 자기 휴대폰에서 켜야 갑니다. 안 켠 지체에게는 어떤 알림도 가지 않습니다.
             </p>
@@ -243,7 +244,7 @@ function PushStatusCard() {
         <button
           onClick={load}
           disabled={loading}
-          className="text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] px-2 py-1 rounded-xl hover:bg-[#F5F5F5] transition cursor-pointer shrink-0"
+          className="text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] px-2 py-1 rounded-xl hover:bg-white transition cursor-pointer shrink-0"
         >
           새로고침
         </button>
@@ -278,7 +279,7 @@ function PushStatusCard() {
             {off.map((u) => (
               <span
                 key={u.name}
-                className="text-2xs font-medium px-2 py-1 rounded-3xl bg-[#F5F5F5] text-[#6F8377]"
+                className="text-2xs font-medium px-2 py-1 rounded-3xl bg-white text-[#6F8377]"
               >
                 {u.name} 꺼짐
               </span>
@@ -286,7 +287,7 @@ function PushStatusCard() {
           </div>
 
           {off.length > 0 && (
-            <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F5F5F5] rounded-3xl p-3">
+            <p className="text-2xs text-[#6F8377] leading-relaxed bg-white rounded-3xl p-3">
               꺼진 지체에게는 이렇게 안내해 주세요 —
               <strong className="text-[#0C3B2E]"> 알림 설정 → 알림 → 휴대폰 알림 '켜기'</strong>.
               아이폰은 사파리 공유 버튼 → 홈 화면에 추가로 <strong className="text-[#0C3B2E]">앱을 설치한 뒤</strong> 켜야 합니다.
@@ -532,33 +533,27 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
 
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-5">
+    <div className="space-y-4 sm:space-y-5">
+    <div>
+      <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">알림</p>
+      <div className="bg-[#F9F9F9] rounded-3xl px-3.5 space-y-0 divide-y divide-[#F0F0F0]">
       {/*
         알림은 한 박스 안에 모은다.
         예전에는 '아침 묵상 알림' 과 '새 글 알림' 이 따로 떨어져 있고 그 사이에
         시뮬레이터까지 끼어 있어서, 무엇을 먼저 켜야 하는지 한눈에 안 들어왔다.
         순서도 뒤집었다 — **휴대폰 알림이 켜져야 묵상 알림이 의미가 있다.**
       */}
-      <div className="flex items-center gap-2 border-b border-[#E3E9E2] pb-3">
-        <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
-          <Bell size={18} />
-        </div>
-        <div>
-          <h3 className="font-bold text-[#0C3B2E] text-base sm:text-lg">알림</h3>
-          <p className="text-2xs sm:text-xs text-[#6F8377]">휴대폰으로 받을 알림을 정합니다</p>
-        </div>
+      {/* ① 먼저 켜야 하는 것 */}
+      <div className="py-3.5">
+        <PushNotificationCard userId={currentUser.id} onEnabledChange={setPushOn} />
       </div>
 
-      {/* ① 먼저 켜야 하는 것 */}
-      <PushNotificationCard userId={currentUser.id} onEnabledChange={setPushOn} />
-
       {/* ② 아침 묵상 알림 */}
-      <div className="border-t border-[#E3E9E2] pt-4 space-y-3">
+      <div className="py-3.5 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
-              <Clock size={18} />
+            <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] rounded-full flex items-center justify-center shrink-0">
+              <Clock size={16} />
             </div>
             <div className="min-w-0">
               <span className="block font-bold text-[#14261E] text-sm">아침 묵상 알림</span>
@@ -584,7 +579,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="px-3.5 py-2 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold"
+                className="px-3.5 py-2 bg-white rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-sm font-semibold"
               />
             </div>
 
@@ -599,12 +594,12 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
                       key={index}
                       type="button"
                       onClick={() => toggleDay(index)}
-                      className={`w-8 h-8 rounded-2xl text-xs font-bold border transition cursor-pointer flex items-center justify-center ${
+                      className={`w-8 h-8 rounded-2xl text-xs font-bold transition cursor-pointer flex items-center justify-center ${
                         isSelected
-                          ? "bg-[#0C3B2E] border-[#0C3B2E] text-white"
+                          ? "grad-forest text-white"
                           : isWeekend
-                          ? "bg-[#F5F5F5] border-[#E3E9E2] text-[#B3261E] hover:bg-[#D2DDD3]"
-                          : "bg-[#F5F5F5] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#D2DDD3]"
+                          ? "bg-white text-[#B3261E] hover:bg-[#F0F0F0]"
+                          : "bg-white text-[#4A6B57] hover:bg-[#F0F0F0]"
                       }`}
                     >
                       {label}
@@ -629,29 +624,29 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
         </p>
       </div>
 
-    </div>
-
       {/* 누가 켰고 누가 안 켰는지 — 관리자만 */}
       {currentUser.role === "admin" && (
-        <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6">
+        <div className="py-3.5">
           <PushStatusCard />
         </div>
       )}
+      </div>
+    </div>
 
       {/* Font size settings for adults and seniors */}
-      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6">
-        <FontSizeSettingCard />
-      </div>
+      <FontSizeSettingCard />
 
       {/* Profile modification section */}
-      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-4">
+      <div>
+        <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">계정</p>
+        <div className="bg-[#F9F9F9] rounded-3xl px-3.5 py-3.5 space-y-4">
 
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl">
-            <User size={18} />
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] rounded-full flex items-center justify-center shrink-0">
+            <User size={16} />
           </div>
           <div>
-            <h3 className="font-bold text-[#0C3B2E] text-base">내 프로필 및 비밀번호(PIN) 수정</h3>
+            <h3 className="font-bold text-[#0C3B2E] text-sm">내 프로필 및 비밀번호(PIN) 수정</h3>
             <p className="text-2xs text-[#6F8377]">로그인 이름과 4자리 비밀번호(PIN)를 변경할 수 있습니다.</p>
           </div>
         </div>
@@ -701,21 +696,20 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
           <button
             type="submit"
             disabled={profileSaving}
-            className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-[#0C3B2E] hover:bg-[#072A20] px-4 py-2 rounded-3xl shadow-sm transition cursor-pointer"
+            className="grad-forest w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-4 py-2 rounded-3xl transition cursor-pointer hover:brightness-110"
           >
             {profileSaving ? "정보 변경 중..." : "내 정보 및 PIN 비밀번호 변경하기"}
           </button>
         </form>
-      </div>
 
-      {/* Account Deletion and Member List Management section */}
-      <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-3.5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#FDF3F3] text-[#8F1E17] rounded-3xl">
-            <Users size={18} />
+        {/* Account Deletion and Member List Management section */}
+        <div className="pt-4 border-t border-[#F0F0F0] space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-[#FDF3F3] text-[#8F1E17] rounded-full flex items-center justify-center shrink-0">
+            <Users size={16} />
           </div>
           <div>
-            <h3 className="font-bold text-[#0C3B2E] text-base">
+            <h3 className="font-bold text-[#0C3B2E] text-sm">
               {currentUser.role === "admin" ? "지체 계정 관리 (가입 목록 및 삭제)" : "계정 탈퇴 및 이름 삭제"}
             </h3>
             <p className="text-2xs text-[#6F8377]">
@@ -733,7 +727,7 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
             ) : allUsers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {allUsers.map((u) => (
-                  <div key={u.id} className="flex justify-between items-center p-2.5 bg-[#F5F5F5] rounded-3xl">
+                  <div key={u.id} className="flex justify-between items-center p-2.5 bg-white rounded-3xl">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 bg-[#0C3B2E] text-white text-2xs rounded-full flex items-center justify-center font-bold">
                         {u.name.slice(-2)}
@@ -819,6 +813,8 @@ export default function NotificationSettings({ currentUser, onUserUpdate, onAcco
             </button>
           </div>
         )}
+        </div>
+        </div>
       </div>
 
       {/* 앱 버전 — 휴대폰에 옛 화면이 남아 있는지 확인할 때 쓴다 */}

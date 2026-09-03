@@ -1,13 +1,19 @@
 import React, { useState } from "react";
+import { Heart, HandHeart } from "lucide-react";
 import { Reactions, ReactionType } from "../types";
 
 /**
  * 글에 남기는 가벼운 반응.
  * 글쓰기는 부담스러워도 버튼은 누른다 — 참여의 문턱을 가장 낮추는 장치다.
+ * 그림문자(👍🙏) 대신 선 아이콘을 쓴다 — 시안처럼 글 사이에서 튀지 않게.
  */
-const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
-  { type: "like", emoji: "👍", label: "좋아요" },
-  { type: "pray", emoji: "🙏", label: "기도할게요" }
+const REACTIONS: {
+  type: ReactionType;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+}[] = [
+  { type: "like", icon: Heart, label: "좋아요" },
+  { type: "pray", icon: HandHeart, label: "기도할게요" }
 ];
 
 interface ReactionBarProps {
@@ -48,11 +54,12 @@ export default function ReactionBar({
   };
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-4 flex-wrap">
       {visible.map((r) => {
         const list = reactions?.[r.type] || [];
         const mine = list.includes(currentUserId);
         const count = list.length;
+        const Icon = r.icon;
 
         return (
           <button
@@ -61,15 +68,12 @@ export default function ReactionBar({
             onClick={() => handleClick(r.type)}
             disabled={busy !== null}
             title={r.label}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-3xl text-2xs font-bold transition cursor-pointer disabled:opacity-60 whitespace-nowrap ${
-              mine
-                ? // 눌렀을 때는 은은한 연녹색 한 가지로 통일한다.
-                  // (예전 노란색은 글 사이에서 너무 튀어서 눈이 그쪽으로만 갔다)
-                  "bg-[#E8F0E9] text-[#0C3B2E] ring-1 ring-[#C3D6C6]"
-                : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#E8E8E8]"
+            // 시안의 .reaction — 알약 배경 없이 아이콘+글자만. 누르면 초록으로 물든다.
+            className={`flex items-center gap-1 text-2xs font-semibold transition cursor-pointer disabled:opacity-60 whitespace-nowrap ${
+              mine ? "text-[#4A6B57]" : "text-[#6F8377] hover:text-[#4A6B57]"
             }`}
           >
-            <span className="text-xs leading-none">{r.emoji}</span>
+            <Icon size={14} className={mine ? "fill-[#4A6B57]" : ""} />
             <span>{r.label}</span>
             {count > 0 && <span className="tabular-nums">{count}</span>}
           </button>

@@ -15,6 +15,14 @@ import { subscribeToDataChanges } from "../lib/revision";
 
 
 
+/** "2026-09-02" 또는 ISO 시각 → "9월 2일" (시안의 .post-date 형식) */
+const shortDate = (value: string): string => {
+  const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return `${Number(ymd[2])}월 ${Number(ymd[3])}일`;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? value : `${d.getMonth() + 1}월 ${d.getDate()}일`;
+};
+
 interface MeditationFeedProps {
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
   allUsers: { id: string; name: string; role: string }[];
@@ -473,6 +481,12 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
   return (
     <div className="space-y-5">
+      {/* Page title — 다른 탭(오늘의 말씀·감사칭찬)과 같은 자리에 같은 형식으로 둔다 */}
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">묵상 나눔</h2>
+        <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">오늘 받은 은혜를 함께 나눠요</p>
+      </div>
+
       {/* Real-time Toast Popup Banner */}
       <AnimatePresence>
         {realtimeToast && (
@@ -500,93 +514,74 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         )}
       </AnimatePresence>
 
-      {/* 알림 켜기 — 아직 허용 전일 때만 노출 (실시간 동기화 안내 배너는 제거) */}
-      {notiPermission !== "granted" && (
-        <div className="flex justify-end">
-          <button
-            onClick={requestNotificationPermission}
-            className="flex items-center gap-1.5 text-2xs font-bold text-[#4A6B57] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-3 py-1.5 rounded-3xl transition cursor-pointer"
-          >
-            <Bell size={12} />
-            새 묵상 알림 켜기
-          </button>
-        </div>
-      )}
+      {/* '새 묵상 알림 켜기' 버튼은 뺐다 (2026-09-04) — 알림은 설정 → 알림에서 켠다 */}
 
-      {/* Sok Group Navigation Tabs & Manage Button */}
-      <div className="bg-[#F5F5F5] p-2 rounded-3xl flex flex-wrap items-center justify-between gap-2 shadow-xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 max-w-full">
-          {/* Public All Tab */}
-          <button
-            onClick={() => setSelectedSokTab("all")}
-            className={`px-3 py-1.5 rounded-3xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              selectedSokTab === "all"
-                ? "bg-[#0C3B2E] text-white shadow-xs"
-                : "bg-white text-[#4A6B57] hover:bg-[#E3E9E2]"
-            }`}
-          >
-            <Globe size={13} />
-            <span>전체 공유</span>
-          </button>
-
-          {/* User's Soks */}
-          {accessibleSoks.map((sok) => {
-            const isSelected = selectedSokTab === sok.id;
-            return (
-              <button
-                key={sok.id}
-                onClick={() => setSelectedSokTab(sok.id)}
-                className={`px-3 py-1.5 rounded-3xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? "bg-[#4A6B57] text-white shadow-xs"
-                    : "bg-white text-[#0C3B2E] hover:bg-[#F5F5F5]"
-                }`}
-              >
-                <Users size={13} />
-                <span>{sok.name}</span>
-                {sok.memberUserIds?.length > 0 && (
-                  <span className={`text-2xs px-1.5 py-0.2 rounded-full ${isSelected ? "bg-white/20 text-white" : "bg-[#F5F5F5] text-[#4A6B57]"}`}>
-                    {sok.memberUserIds.length}명
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Admin / Sok Manage Button */}
-        {currentUser.role === 'admin' && (
-          <button
-            onClick={() => setShowSokManageModal(true)}
-            className="px-3 py-1.5 bg-[#0C3B2E] hover:bg-[#072A20] text-white rounded-3xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shrink-0 shadow-xs"
-            title="속(소그룹) 추가, 이름 변경 및 구성원 관리"
-          >
-            <Settings size={13} />
-            <span>속 관리</span>
-          </button>
-        )}
-      </div>
-
-      {/* 글쓰기 버튼 — 왼쪽은 나만 보는 일기, 오른쪽은 공동체에 나누는 묵상 */}
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={() => setShowJournal(true)}
-          className="flex items-center justify-center gap-1.5 bg-white hover:bg-[#F5F5F5] text-[#4A6B57] font-bold text-xs px-3.5 py-2 rounded-3xl shadow-md transition cursor-pointer whitespace-nowrap shrink-0"
-        >
-          <Lock size={14} />
-          {possessiveTitle(currentUser.name, "영성일기")}
-        </button>
+      {/* 글쓰기 버튼 — 왼쪽은 공동체에 나누는 묵상(신약/진초록 톤), 오른쪽은 나만 보는 일기(구약/청록 톤).
+          시안처럼 두 버튼이 같은 너비로 한 줄 전체를 나눠 쓴다 */}
+      <div className="flex gap-2">
         <button
           onClick={() => {
             setShowWriteForm(!showWriteForm);
             setEditingId(null);
             setFormError("");
           }}
-          className="flex items-center justify-center gap-1.5 bg-[#4A6B57] hover:bg-[#072A20] text-white font-bold text-xs px-3.5 py-2 rounded-3xl shadow-md transition cursor-pointer whitespace-nowrap shrink-0"
+          className="grad-forest flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-xs px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
         >
           {showWriteForm ? <X size={14} /> : <Plus size={14} />}
-          {showWriteForm ? "닫기" : "내 묵상 글 쓰기"}
+          {showWriteForm ? "닫기" : "묵상 나누기"}
         </button>
+        <button
+          onClick={() => setShowJournal(true)}
+          className="grad-teal flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-xs px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
+        >
+          <Lock size={14} />
+          {possessiveTitle(currentUser.name, "영성일기")}
+        </button>
+      </div>
+
+      {/* 방 고르기 — 시안의 .room-filter: 감싸는 상자 없이 작은 알약만 한 줄로 */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        {/* Public All Tab */}
+        <button
+          onClick={() => setSelectedSokTab("all")}
+          className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition whitespace-nowrap cursor-pointer ${
+            selectedSokTab === "all"
+              ? "grad-forest text-white"
+              : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+          }`}
+        >
+          전체
+        </button>
+
+        {/* User's Soks */}
+        {accessibleSoks.map((sok) => {
+          const isSelected = selectedSokTab === sok.id;
+          return (
+            <button
+              key={sok.id}
+              onClick={() => setSelectedSokTab(sok.id)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition whitespace-nowrap cursor-pointer ${
+                isSelected
+                  ? "grad-forest text-white"
+                  : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+              }`}
+            >
+              {sok.name}
+            </button>
+          );
+        })}
+
+        {/* Admin / Sok Manage Button */}
+        {currentUser.role === 'admin' && (
+          <button
+            onClick={() => setShowSokManageModal(true)}
+            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-2xs font-bold text-[#6F8377] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition cursor-pointer"
+            title="속(소그룹) 추가, 이름 변경 및 구성원 관리"
+          >
+            <Settings size={12} />
+            <span>속 관리</span>
+          </button>
+        )}
       </div>
 
       {showJournal && (
@@ -722,49 +717,41 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[32px] shadow-sm p-5 space-y-4 hover:border-[#4A6B57]/50 hover:shadow-md transition-all duration-300"
+                className="bg-[#F9F9F9] rounded-[22px] p-5 space-y-3 transition-all duration-300"
               >
-                {/* Header info */}
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-bold text-[#0C3B2E] text-sm bg-[#FFBA00] px-2 py-0.5 rounded-lg">{med.userName}</span>
-                        <span className="text-2xs bg-[#F5F5F5] text-[#4A6B57] px-2 py-0.5 rounded-full font-bold">
-                          {med.verseTitle}
+                {/* Header — 이름 / 날짜 · 방 배지 (시안의 .post-head) */}
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <span className="block text-xs font-bold text-[#14261E] leading-[1.3]">
+                      {med.userName}
+                    </span>
+                    <span className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-2xs text-[#6F8377]">{shortDate(med.date || med.createdAt)}</span>
+                      {med.sokId ? (
+                        <span className="text-2xs font-bold text-[#4A6B57] bg-[#D2DDD3] px-[7px] py-0.5 rounded-full">
+                          {sokGroups.find(s => s.id === med.sokId)?.name || "속 나눔"}
                         </span>
-                        {med.sokId ? (
-                          <span className="text-2xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                            <Users size={11} />
-                            {sokGroups.find(s => s.id === med.sokId)?.name || "속 나눔"}
-                          </span>
-                        ) : (
-                          <span className="text-2xs bg-[#F5F5F5] text-[#6F8377] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                            <Globe size={11} />
-                            전체 공유
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 text-2xs text-[#6F8377] font-medium">
-                        <Clock size={10} />
-                        <span>{new Date(med.createdAt).toLocaleString()}</span>
-                      </div>
-                    </div>
+                      ) : (
+                        <span className="text-2xs font-bold text-[#4A6B57] bg-[#D2DDD3] px-[7px] py-0.5 rounded-full">
+                          전체
+                        </span>
+                      )}
+                    </span>
                   </div>
 
                   {/* Actions for owner */}
                   {isMyMed && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleEditClick(med)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-white rounded-xl transition cursor-pointer"
                         title="수정"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(med.id)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-white rounded-xl transition cursor-pointer"
                         title="삭제"
                       >
                         <Trash2 size={14} />
@@ -773,34 +760,37 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   )}
                 </div>
 
-                {/* Content body (제목 없이 본문만) — 상자는 하나 그대로 두고,
-                    앞머리의 골라 온 성경 구절만 굵고 진하게 해서 내 묵상과 구별한다.
+                {/* 성경 구절 — 시안의 .post-verse (본문 위에 한 줄로) */}
+                {med.verseTitle && (
+                  <p className="text-xs font-bold text-[#4A6B57]">{med.verseTitle}</p>
+                )}
+
+                {/* Content body (제목 없이 본문만) — 앞머리의 골라 온 성경 구절만
+                    굵고 진하게 해서 내 묵상과 구별한다. 카드 배경 위에 그대로 놓는다.
                     긴 글은 접어 둔다 — 안 그러면 다음 지체 묵상까지 한참 내려가야 한다. */}
-                <div className="bg-[#F0F0F0] p-4 rounded-3xl">
-                  <CollapsibleText fadeColor="#F0F0F0">
-                    {medQuote && (
-                      <p className="text-sm font-bold text-[#0C3B2E] leading-relaxed whitespace-pre-line">
-                        {medQuote}
-                      </p>
-                    )}
-                    {medBody && (
-                      <MentionText
-                        text={medBody}
-                        names={memberNames}
-                        className={`text-sm text-[#4A6B57] leading-relaxed whitespace-pre-line ${
-                          medQuote ? "mt-2.5" : ""
-                        }`}
-                      />
-                    )}
-                  </CollapsibleText>
-                </div>
+                <CollapsibleText fadeColor="#F9F9F9">
+                  {medQuote && (
+                    <p className="text-xs font-bold text-[#0C3B2E] leading-[1.6] whitespace-pre-line">
+                      {medQuote}
+                    </p>
+                  )}
+                  {medBody && (
+                    <MentionText
+                      text={medBody}
+                      names={memberNames}
+                      className={`text-sm text-[#14261E] leading-[1.6] whitespace-pre-line ${
+                        medQuote ? "mt-2" : ""
+                      }`}
+                    />
+                  )}
+                </CollapsibleText>
 
 
                 {/* 기도제목 */}
                 {med.prayer && (
-                  <div className="bg-[#F5F5F5] rounded-3xl p-4 text-xs space-y-2">
-                    <span className="font-bold text-[#0C3B2E] block">🙏 이번 주 동역자 기도제목</span>
-                    <CollapsibleText collapsedHeight={110} fadeColor="#F5F5F5">
+                  <div className="bg-white rounded-3xl p-4 text-xs space-y-2">
+                    <span className="font-bold text-[#0C3B2E] block">기도제목</span>
+                    <CollapsibleText collapsedHeight={110} fadeColor="#FFFFFF">
                       <MentionText
                         text={`"${med.prayer}"`}
                         names={memberNames}
@@ -818,7 +808,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 )}
 
                 {/* 반응 + 댓글 (같은 줄에 나란히) */}
-                <div className="flex items-center gap-1.5 border-t border-[#E3E9E2] pt-3 flex-wrap">
+                <div className="flex items-center gap-4 pt-1 flex-wrap">
                   <ReactionBar
                     reactions={med.reactions}
                     currentUserId={currentUser.id}
@@ -830,10 +820,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                   <button
                     onClick={() => toggleCommentsExpanded(med.id)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-3xl text-2xs font-bold transition cursor-pointer whitespace-nowrap ${
-                      commentsOpen
-                        ? "bg-[#0C3B2E] text-white"
-                        : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#E8E8E8]"
+                    className={`flex items-center gap-1 text-2xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                      commentsOpen ? "text-[#4A6B57]" : "text-[#6F8377] hover:text-[#4A6B57]"
                     }`}
                   >
                     <MessageSquare size={13} />
@@ -846,7 +834,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* Comments Thread Section */}
                 {commentsOpen && (
-                  <div className="bg-[#F5F5F5]/60 bg-[#F5F5F5] rounded-3xl p-4 space-y-3 mt-2">
+                  <div className="bg-white rounded-3xl p-4 space-y-3 mt-2">
                     {/* List existing comments */}
                     {med.comments.length > 0 ? (
                       <div className="space-y-2.5">
@@ -856,7 +844,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                             <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-3xl">
                               <div className="text-xs">
                                 <div className="flex items-center gap-1.5 mb-1">
-                                  <strong className="font-bold text-[#0C3B2E] bg-[#FFBA00] px-1.5 py-0.5 rounded-lg">{comment.userName}</strong>
+                                  <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
                                   <span className="text-2xs text-[#6F8377]">
                                     {new Date(comment.createdAt).toLocaleDateString()}
                                   </span>
@@ -1112,10 +1100,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                                   <div
                                     key={u.id}
                                     onClick={() => handleToggleSokMember(sok.id, u.id)}
-                                    className={`flex items-center gap-2 p-2 rounded-3xl text-xs font-semibold border cursor-pointer select-none transition ${
+                                    className={`flex items-center gap-2 p-2 rounded-3xl text-xs font-semibold cursor-pointer select-none transition ${
                                       isMember
-                                        ? "bg-white border-[#4A6B57] text-[#0C3B2E] shadow-xs"
-                                        : "bg-white/50 border-[#E3E9E2] text-[#6F8377] hover:bg-white"
+                                        ? "bg-white text-[#0C3B2E] shadow-xs"
+                                        : "bg-white/50 text-[#6F8377] hover:bg-white"
                                     }`}
                                   >
                                     <div

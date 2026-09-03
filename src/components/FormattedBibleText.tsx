@@ -83,7 +83,7 @@ export default function FormattedBibleText({
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시
               isPicked
-                ? "bg-[#FFF6DC]"
+                ? "bg-[#FFFBEE]"
                 : isNavHighlight
                 ? "bg-[#F5F5F5]"
                 : canPick
@@ -94,7 +94,7 @@ export default function FormattedBibleText({
             {/* 절 번호는 왼쪽 칸에 두고, 줄이 넘어가도 본문이 번호 아래로 내려오지 않게 한다 */}
             <div className="flex gap-1.5">
               <span
-                className={`font-sans font-normal text-xs sm:text-sm w-[18px] sm:w-6 shrink-0 text-right pt-[3px] select-none ${
+                className={`font-sans font-normal text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
                   isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
                 }`}
               >

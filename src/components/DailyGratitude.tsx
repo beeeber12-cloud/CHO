@@ -197,37 +197,25 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
 
   return (
     <div className="space-y-5">
-      {/* Real-time sync banner & header */}
-      <div className="bg-gradient-to-r from-[#0C3B2E] to-[#072A20] text-white rounded-[32px] p-5 shadow-sm relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="p-1.5 bg-[#4A6B57]/20 text-[#FFFFFF] rounded-3xl">
-                <Sparkles size={18} />
-              </span>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">감사&칭찬 나눔터</h2>
-            </div>
-            <p className="text-xs text-[#D2DDD3]/80 leading-relaxed max-w-xl">
-              범사에 감사하라 이것이 그리스도 예수 안에서 너희를 향하신 하나님의 뜻이니라 (살전 5:18).<br />
-              오늘 하루 발견한 작고 소중한 감사를 한 줄로 나눠보세요.
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setEditingId(null);
-              setContent("");
-              setIsAnonymous(false);
-              setError("");
-            }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#FFBA00] hover:bg-[#E8A900] text-[#0C3B2E] font-bold rounded-3xl shadow-md transition cursor-pointer text-xs shrink-0"
-          >
-            {showForm ? <X size={16} /> : <Plus size={16} />}
-            {showForm ? "작성 창 닫기" : "감사·칭찬 나누기"}
-          </button>
-        </div>
+      {/* Page title — 다른 탭과 같은 자리, 같은 형식 */}
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">감사와 칭찬</h2>
+        <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">작은 것도 나누면 커집니다</p>
       </div>
+
+      <button
+        onClick={() => {
+          setShowForm(!showForm);
+          setEditingId(null);
+          setContent("");
+          setIsAnonymous(false);
+          setError("");
+        }}
+        className="grad-forest w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-bold rounded-3xl transition cursor-pointer text-xs hover:brightness-110"
+      >
+        {showForm ? <X size={16} /> : <Plus size={16} />}
+        {showForm ? "작성 창 닫기" : "감사 나누기"}
+      </button>
 
       {/* Write Gratitude Form */}
       <AnimatePresence>
@@ -279,10 +267,10 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                   <button
                     type="button"
                     onClick={() => setIsAnonymous(!isAnonymous)}
-                    className={`w-full py-2 px-3 rounded-3xl border text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                    className={`w-full py-2 px-3 rounded-3xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
                       isAnonymous
-                        ? "bg-[#F5F5F5] border-[#C7D8C9] text-[#0C3B2E]"
-                        : "bg-[#F5F5F5] border-[#E3E9E2] text-[#4A6B57] hover:bg-[#E3E9E2]"
+                        ? "bg-[#EDF2EE] text-[#0C3B2E]"
+                        : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#EDEDED]"
                     }`}
                   >
                     <span>{isAnonymous ? "🔒 익명으로 올려요" : `👤 실명으로 올려요 (${currentUser.name})`}</span>
@@ -321,7 +309,7 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#4A6B57] hover:bg-[#072A20] text-white text-xs font-bold rounded-3xl shadow transition cursor-pointer flex items-center gap-1.5"
+                  className="grad-forest px-5 py-2 text-white text-xs font-bold rounded-3xl transition cursor-pointer flex items-center gap-1.5 hover:brightness-110"
                 >
                   <Sparkles size={14} />
                   {submitting ? "저장 중..." : editingId ? "수정 완료" : "감사 나누기"}
@@ -354,7 +342,7 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
               setShowForm(true);
               setEditingId(null);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4A6B57] text-white font-bold text-xs rounded-3xl shadow hover:bg-[#072A20] transition cursor-pointer"
+            className="grad-forest inline-flex items-center gap-1.5 px-4 py-2 text-white font-bold text-xs rounded-3xl transition cursor-pointer hover:brightness-110"
           >
             <Plus size={14} />
             첫 감사 고백 남기기
@@ -374,14 +362,14 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-4 sm:p-5 transition hover:border-[#4A6B57]/40"
+                className="bg-[#F9F9F9] rounded-[22px] p-4 sm:p-5 transition space-y-2.5"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-[#0C3B2E] bg-[#FFBA00] px-2 py-0.5 rounded-lg">
+                        <span className="text-xs font-bold text-[#0C3B2E]">
                           {grat.isAnonymous ? "익명 (감사 지체)" : grat.userName}
                         </span>
                         {isAuthor && (
@@ -408,14 +396,16 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                   )}
                 </div>
 
-                {/* Content */}
-                <div className="bg-[#F5F5F5] rounded-3xl p-3.5 mb-3 text-xs sm:text-sm text-[#0C3B2E] font-medium leading-relaxed shadow-inner">
-                  <MentionText text={`“${grat.content}”`} names={memberNames} className="whitespace-pre-line" />
-                </div>
+                {/* Content — 시안처럼 박스 없이 카드 배경 위에 그대로 놓는다 */}
+                <MentionText
+                  text={grat.content}
+                  names={memberNames}
+                  className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line"
+                />
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#F5F5F5] text-xs flex-wrap">
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center justify-between gap-2 pt-1 text-xs flex-wrap">
+                  <div className="flex items-center gap-4 flex-wrap">
                     <ReactionBar
                       reactions={grat.reactions}
                       currentUserId={currentUser.id}
@@ -428,10 +418,8 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
 
                     <button
                       onClick={() => setActiveCommentId(isCommentOpen ? null : grat.id)}
-                      className={`flex items-center gap-1 px-2 py-1.5 rounded-3xl text-2xs font-bold transition cursor-pointer whitespace-nowrap ${
-                        isCommentOpen
-                          ? "bg-[#0C3B2E] text-white"
-                          : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#E8E8E8]"
+                      className={`flex items-center gap-1 text-2xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                        isCommentOpen ? "text-[#4A6B57]" : "text-[#6F8377] hover:text-[#4A6B57]"
                       }`}
                     >
                       <MessageSquare size={13} />
@@ -441,10 +429,6 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                       )}
                     </button>
                   </div>
-
-                  <span className="text-2xs text-[#6F8377]">
-                    {new Date(grat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
                 </div>
 
                 {/* Expandable Comments Drawer */}
@@ -462,10 +446,10 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                           {grat.comments.map((comment) => {
                             const canDeleteComment = comment.userId === currentUser.id || currentUser.role === "admin";
                             return (
-                              <div key={comment.id} className="bg-[#F5F5F5]/70 rounded-3xl p-2.5 text-xs flex justify-between items-start gap-2">
+                              <div key={comment.id} className="bg-white rounded-3xl p-2.5 text-xs flex justify-between items-start gap-2">
                                 <div>
                                   <div className="flex items-center gap-1.5 mb-0.5">
-                                    <span className="font-bold text-[#0C3B2E] bg-[#FFBA00] px-1.5 py-0.5 rounded-lg">{comment.userName}</span>
+                                    <span className="font-bold text-[#0C3B2E]">{comment.userName}</span>
                                     <span className="text-2xs text-[#6F8377]">
                                       {new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>

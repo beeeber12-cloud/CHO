@@ -87,7 +87,7 @@ export default function DualBibleText({
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시
               isPicked
-                ? "bg-[#FFF6DC]"
+                ? "bg-[#FFFBEE]"
                 : isHighlighted
                 ? "bg-[#F5F5F5]"
                 : canPick
@@ -99,7 +99,7 @@ export default function DualBibleText({
                 대조할 때 두 번째 번역본도 같은 칸에 맞춰 왼쪽 선이 일치한다. */}
             <div className="flex gap-1.5">
               <span
-                className={`font-sans font-normal text-xs sm:text-sm w-[18px] sm:w-6 shrink-0 text-right pt-[3px] select-none ${
+                className={`font-sans font-normal text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
                   isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
                 }`}
               >

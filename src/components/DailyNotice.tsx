@@ -8,6 +8,14 @@ import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
 
+/** "2026-09-04" → "9월 4일 금요일" (저장된 형식이 그대로 화면에 노출되지 않도록) */
+const formatKoreanDate = (iso: string): string => {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return `${Number(m[2])}월 ${Number(m[3])}일 ${weekdays[d.getDay()]}요일`;
+};
 
 interface DailyNoticeProps {
   /** 고른 구절을 묵상 쓰기로 넘긴다 */
@@ -98,6 +106,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
 
   const [loading, setLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [showReaders, setShowReaders] = useState<boolean>(false);
 
   // Form states for Admin
   const [verseTitle, setVerseTitle] = useState<string>("");
@@ -292,27 +301,35 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     .join(", ") || "";
 
   return (
-    <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm px-1.5 py-3.5 sm:p-6 overflow-hidden">
-      <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3 mb-3.5">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 sm:p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-3xl shrink-0">
-            <BookOpen size={18} />
-          </div>
-          <div>
-            <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl whitespace-nowrap">오늘의 말씀 공지</h3>
-            <p className="text-2xs sm:text-xs text-[#6F8377]">매일 아침 새 말씀이 공지됩니다</p>
-          </div>
+    <div>
+      <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
+        <div className="min-w-0">
+          <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl">오늘의 말씀</h3>
+          <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">
+            {notice ? `${notice.verseTitle} · ${formatKoreanDate(notice.date)}` : "매일 아침 새 말씀이 공지됩니다"}
+          </p>
         </div>
 
-        {currentUser.role === "admin" && !isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#4A6B57] bg-[#F5F5F5] px-3 py-1.5 rounded-xl hover:bg-[#D2DDD3] transition cursor-pointer"
-          >
-            {notice ? <Edit3 size={14} /> : <Plus size={14} />}
-            {notice ? "말씀 수정" : "새 말씀 공지"}
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onVerseSelect && notice && (
+            <button
+              onClick={() => onVerseSelect(notice.verseTitle)}
+              className="flex items-center gap-1 text-xs text-[#0C3B2E] bg-[#F9F9F9] hover:bg-[#F0F0F0] px-2.5 py-1.5 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap"
+            >
+              <BookOpen size={13} className="text-[#195C50]" />
+              <span>성경통독에서 보기</span>
+            </button>
+          )}
+          {currentUser.role === "admin" && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#4A6B57] bg-[#F5F5F5] px-3 py-1.5 rounded-xl hover:bg-[#EDEDED] transition cursor-pointer whitespace-nowrap"
+            >
+              {notice ? <Edit3 size={14} /> : <Plus size={14} />}
+              <span>{notice ? "말씀 수정" : "새 말씀 공지"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bible Auto Notice Planner Section for Admins */}
@@ -504,36 +521,14 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           >
             {/* 말씀 카드 — 바깥 카드와 같은 흰색이라, 모바일에서는 좌우 여백을 없애
                 본문이 화면을 최대한 넓게 쓰도록 한다 (겹쳐 있던 안쪽 여백 제거) */}
-            <div className="scripture-font bg-white rounded-none sm:rounded-[32px] py-3.5 sm:p-6 md:p-8 shadow-none sm:shadow-sm">
-              <div className="flex justify-between items-center gap-2 mb-3">
-                <span className="pl-[10px] sm:pl-[16px] text-xs sm:text-sm font-black text-[#6F8377] uppercase tracking-widest whitespace-nowrap shrink-0">
-                  {notice.date}
-                </span>
-                {onVerseSelect && (
-                  <button
-                    onClick={() => onVerseSelect(notice.verseTitle)}
-                    className="flex items-center gap-1 text-xs sm:text-sm text-[#0C3B2E] bg-[#F5F5F5] hover:bg-[#E8E8E8] px-2.5 py-1 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap shrink-0"
-                  >
-                    <BookOpen size={13} className="text-[#4A6B57]" />
-                    <span>성경통독에서 보기</span>
-                  </button>
-                )}
-              </div>
-
-              {/* 번역본 고르기(왼쪽)와 구절명(오른쪽)을 한 줄에 둔다.
-                  구절명이 본문 아래에 있으면 스크롤을 끝까지 내려야 어느 장인지 보였다. */}
-              <div className="flex items-end justify-between gap-2 mb-2.5">
-                <div className="pl-[10px] sm:pl-[16px]">
-                  <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
-                </div>
-                <p className="text-[#4A6B57] font-bold text-xs sm:text-sm md:text-base shrink-0">
-                  {notice.verseTitle}
-                </p>
+            <div className="scripture-font py-3.5">
+              <div className="mb-2.5">
+                <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
               </div>
 
               {/* 화면 높이에 맞춰 본문을 길게 보여준다. 예전에는 288px 로 고정이라
                   몇 줄 못 보고 계속 스크롤해야 했다. */}
-              <div className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden -mx-1.5 px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}
@@ -544,7 +539,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
               {onSelectVerseForMeditation && (
                 <div className="mt-4 pt-3 border-t border-[#E3E9E2] flex items-center justify-between gap-2 flex-wrap">
-                  <span className="pl-[10px] sm:pl-[16px] text-xs sm:text-sm text-[#6F8377] font-medium">
+                  <span className="text-xs sm:text-sm text-[#6F8377] font-medium">
                     {pickedVerses.size > 0
                       ? `${pickedVerses.size}개 구절을 골랐어요`
                       : "마음에 닿은 구절을 눌러보세요"}
@@ -571,7 +566,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                           picked || (noticePanes[0]?.text || notice.verseText).slice(0, 200)
                         );
                       }}
-                      className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap"
+                      className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={13} />
                       {pickedVerses.size > 0
@@ -594,31 +589,33 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-[#E3E9E2] mt-2">
               <button
                 onClick={handleToggleRead}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-3xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer text-white whitespace-nowrap ${
-                  hasRead
-                    ? "bg-[#0C3B2E] hover:bg-[#051E17]"
-                    : "bg-[#4A6B57] hover:bg-[#072A20]"
+                className={`grad-forest flex items-center justify-center gap-2 px-4 py-2.5 rounded-3xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-white whitespace-nowrap ${
+                  hasRead ? "brightness-90" : "hover:brightness-110"
                 }`}
               >
                 <Check size={18} className={hasRead ? "stroke-[3px]" : ""} />
                 {hasRead ? "오늘 말씀 읽기 완료!" : "오늘 말씀 읽었습니다"}
               </button>
 
-              <div className="flex items-center gap-1.5 text-xs text-[#6F8377] whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => setShowReaders((v) => !v)}
+                className="flex items-center gap-1.5 text-xs text-[#6F8377] whitespace-nowrap cursor-pointer hover:text-[#195C50] transition"
+              >
                 <UserCheck size={16} className="text-[#4A6B57] shrink-0" />
                 <span>
                   읽음 체크: <strong className="text-[#14261E] font-bold">{notice.readBy.length}명</strong>
                 </span>
-              </div>
+              </button>
             </div>
 
-            {/* List of readers */}
-            {notice.readBy.length > 0 && (
-              <div className="bg-[#F5F5F5]/60 rounded-3xl p-3 sm:p-4 text-xs">
-                <span className="font-bold text-[#0C3B2E] block mb-1 whitespace-nowrap">
+            {/* List of readers — 기본은 접어두고, 눌러야 이름이 보인다 */}
+            {notice.readBy.length > 0 && showReaders && (
+              <div className="bg-[#F9F9F9] rounded-2xl px-3 py-2 text-2xs">
+                <span className="font-bold text-[#0C3B2E] block mb-0.5 whitespace-nowrap">
                   체크인 한 동역자들 ({notice.readBy.length}명 / {allUsers.length}명 읽음)
                 </span>
-                <p className="text-[#4A6B57] leading-relaxed font-medium">
+                <p className="text-[#6F8377] leading-relaxed">
                   {readersNames}
                 </p>
               </div>

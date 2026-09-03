@@ -37,6 +37,21 @@
 
   /* 성경 본문 전용: 진한 그레이 */
   --color-scripture: #333333;
+
+  /* 새 디자인: 그라데이션 헤더/버튼 톤 (구약=청록, 신약=진초록) */
+  --color-mist: #F9F9F9;
+  --color-mist-hover: #F0F0F0;
+  --color-teal: #2B8577;
+  --color-teal-deep: #195C50;
+}
+
+/* 헤더와 통일된 진초록 그라데이션 — "신약", 기본 행동 버튼에 사용 */
+.grad-forest {
+  background-image: linear-gradient(135deg, #2F7358, #153A2B);
+}
+/* 청록 그라데이션 — "구약", 보조 행동 버튼에 사용 */
+.grad-teal {
+  background-image: linear-gradient(135deg, #2B8577, #195C50);
 }
 
 html {

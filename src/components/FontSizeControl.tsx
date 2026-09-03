@@ -19,20 +19,10 @@ export default function FontSizeControl() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F5F5F5] hover:bg-[#C7D8C9] rounded-3xl text-xs font-bold text-[#0C3B2E] transition cursor-pointer shadow-xs whitespace-nowrap"
+        className="flex items-center gap-1.5 w-8 h-8 justify-center bg-white/15 hover:bg-white/25 rounded-full text-white transition cursor-pointer"
         title="글씨 크기 조절"
       >
-        <Type size={14} className="text-[#4A6B57]" />
-        <span>글씨크기</span>
-        <span className="text-2xs bg-[#0C3B2E] text-white px-1.5 py-0.5 rounded-lg font-semibold">
-          {fontScale === "small"
-            ? "작게"
-            : fontScale === "normal"
-            ? "보통"
-            : fontScale === "large"
-            ? "크게"
-            : "특대"}
-        </span>
+        <Type size={16} />
       </button>
 
       <AnimatePresence>

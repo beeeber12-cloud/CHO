@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Meditation, GratitudeNote, SharingGoal, SavedVerse } from "../types";
-import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Loader, HeartHandshake, Sparkles, Settings } from "lucide-react";
+import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Calendar, X, Loader, HeartHandshake, Sparkles, Settings, Check, Target, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { subscribeToDataChanges } from "../lib/revision";
 import { splitLeadingVerses } from "../lib/verseRef";
@@ -450,74 +450,50 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* User Stats Card */}
-      <div className="bg-gradient-to-br from-[#0C3B2E] to-[#4A6B57] rounded-3xl sm:rounded-[32px] p-4 sm:p-6 text-white shadow-md relative overflow-hidden">
+      {/* Page title — 다른 탭과 같은 자리, 같은 형식 */}
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">나의 기록</h2>
+        <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">{currentUser.name}님의 나눔 발자취</p>
+      </div>
 
-        <div className="relative z-10 space-y-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h3 className="font-bold text-xl sm:text-2xl">{currentUser.name}님의 나눔 발자취</h3>
-            <button
-              type="button"
-              onClick={() => setShowGoalModal(true)}
-              className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 bg-white/15 hover:bg-white/25 rounded-3xl transition cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <Settings size={14} />
-              <span>목표 설정</span>
-            </button>
-          </div>
+      {/* 말씀 체크리스트 · 내 나눔 목표 — 시안의 .nav-card (플레인 행 두 개, 아이콘+글+꺾쇠) */}
+      <div className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] px-3 sm:px-4">
+        <button
+          type="button"
+          onClick={openSavedVerses}
+          className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer"
+        >
+          <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+            <Check size={17} />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-bold text-[#0C3B2E]">말씀 체크리스트</span>
+            <span className="block text-2xs text-[#6F8377] mt-0.5">읽다가 체크해 둔 구절 {savedVerses.length}개</span>
+          </span>
+          <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+        </button>
 
-          {/* 이번 달 진행률 — 성경통독과 같은 형태 */}
-          <div className="bg-white/10 p-4 rounded-3xl space-y-3.5">
-            <div className="flex justify-between items-center text-xs">
-              <span className="font-bold text-[#D2DDD3]">
-                {now.getMonth() + 1}월 목표 (주 {goal?.weeklyMeditations ?? 3}·{goal?.weeklyGratitudes ?? 3}회 기준)
-              </span>
-            </div>
-
-            {/* 묵상 나눔 */}
-            <div>
-              <div className="flex justify-between items-center text-xs mb-1.5">
-                <span className="font-bold text-[#D2DDD3]">묵상 나눔</span>
-                <span className="font-bold text-white">
-                  {monthMeditations} / {medTarget}회 ({medPct}%)
-                </span>
-              </div>
-              <div className="w-full bg-black/20 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2.5 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(2, medPct)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* 감사·칭찬 */}
-            <div>
-              <div className="flex justify-between items-center text-xs mb-1.5">
-                <span className="font-bold text-[#D2DDD3]">감사·칭찬</span>
-                <span className="font-bold text-white">
-                  {monthGratitudes} / {gratTarget}회 ({gratPct}%)
-                </span>
-              </div>
-              <div className="w-full bg-black/20 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2.5 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(2, gratPct)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* 지난달 결과 — 달이 막 바뀌어 0으로 보일 때 기록이 남아 있음을 알려준다 */}
-            {hasPrevMonth && (
-              <p className="text-2xs text-[#D2DDD3] font-semibold pt-0.5">
-                지난달({prevMonthDate.getMonth() + 1}월)에는 묵상 {prevMonthMeditations}회 · 감사·칭찬 {prevMonthGratitudes}회 나누셨어요
-              </p>
-            )}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowGoalModal(true)}
+          className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer border-t border-[#F0F0F0]"
+        >
+          <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+            <Target size={16} />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-bold text-[#0C3B2E]">내 나눔 목표</span>
+            <span className="block text-2xs text-[#6F8377] mt-0.5">
+              이번 달 묵상 {monthMeditations}/{medTarget}회 · 감사 {monthGratitudes}/{gratTarget}회
+              {hasPrevMonth ? ` (지난달 묵상 ${prevMonthMeditations}회·감사 ${prevMonthGratitudes}회)` : ""}
+            </span>
+          </span>
+          <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+        </button>
       </div>
 
       {/* Filter and Search controls */}
-      <div className="bg-white rounded-[32px] shadow-sm p-4 space-y-3">
+      <div className="bg-[#F9F9F9] rounded-[32px] p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Keyword Search */}
           <div className="relative flex-1">
@@ -527,20 +503,20 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="내 기록 내용 및 구절 검색..."
-              className="w-full pl-9 pr-4 py-2.5 bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-xs font-semibold"
+              className="w-full pl-9 pr-4 py-2.5 bg-white rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-xs font-semibold"
             />
           </div>
 
         </div>
 
         {/* Record Type Category Pills — 좁은 화면에서도 세 칩이 한 줄에 들어가야 한다 */}
-        <div className="flex gap-1 border-t border-[#E3E9E2] pt-3 text-xs font-bold">
+        <div className="flex gap-1 border-t border-[#F0F0F0] pt-3 text-xs font-bold">
           <button
             onClick={() => setRecordTypeFilter('meditation')}
             className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${
               recordTypeFilter === 'meditation'
-                ? "bg-[#0C3B2E] text-white shadow-sm"
-                : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#0C3B2E]"
+                ? "grad-forest text-white"
+                : "bg-white text-[#6F8377] hover:text-[#0C3B2E]"
             }`}
           >
             <span className="whitespace-nowrap">말씀 묵상</span>
@@ -550,23 +526,12 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             onClick={() => setRecordTypeFilter('gratitude')}
             className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${
               recordTypeFilter === 'gratitude'
-                ? "bg-[#0C3B2E] text-white shadow-sm"
-                : "bg-[#F5F5F5] text-[#6F8377] hover:text-[#072A20]"
+                ? "grad-forest text-white"
+                : "bg-white text-[#6F8377] hover:text-[#072A20]"
             }`}
           >
             <span className="whitespace-nowrap">감사 칭찬</span>
             <span className="text-2xs bg-white/20 px-1.5 py-0.2 rounded-full">{totalGratitudes}</span>
-          </button>
-
-          {/* 성경 읽다 체크해 둔 구절 모아보기 */}
-          <button
-            onClick={openSavedVerses}
-            className="flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 bg-[#FFF6DC] text-[#0C3B2E] hover:bg-[#FFEFC4]"
-          >
-            <span className="whitespace-nowrap">말씀 체크</span>
-            {savedVerses.length > 0 && (
-              <span className="text-2xs bg-[#FFBA00] px-1.5 py-0.2 rounded-full">{savedVerses.length}</span>
-            )}
           </button>
         </div>
       </div>
@@ -660,7 +625,9 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
       )}
 
       {/* Unified Records List */}
-      <div className="space-y-4">
+      <div>
+        <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">내가 쓴 글</p>
+        <div className="space-y-3">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader className="animate-spin text-[#4A6B57] mb-2" size={24} />
@@ -679,20 +646,15 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-[32px] shadow-sm p-5 space-y-4 hover:border-[#C7D8C9] transition-colors"
+                  className="bg-[#F9F9F9] rounded-[22px] p-5 space-y-2.5 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-[#0C3B2E] text-white font-bold rounded-full flex items-center justify-center text-xs shadow-sm">
-                        {currentUser.name.slice(-2)}
+                      <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] font-bold rounded-full flex items-center justify-center text-xs shrink-0">
+                        {currentUser.name.slice(-1)}
                       </div>
                       <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-[#0C3B2E] text-xs">{currentUser.name}</span>
-                          <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                            {med.verseTitle}
-                          </span>
-                        </div>
+                        <span className="font-bold text-[#0C3B2E] text-xs block">{currentUser.name}</span>
                         <div className="flex items-center gap-1 text-2xs text-[#6F8377] mt-0.5 font-medium">
                           <Clock size={10} />
                           <span>{med.date} {new Date(med.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -703,14 +665,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditClick(med)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-white rounded-xl transition cursor-pointer"
                         title="수정"
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
                         onClick={() => handleDeleteMeditation(med.id)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#F5F5F5] rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-white rounded-xl transition cursor-pointer"
                         title="삭제"
                       >
                         <Trash2 size={13} />
@@ -718,42 +680,39 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-[#4A6B57]">{med.verseTitle}</p>
                     <h4 className="text-sm font-bold text-[#0C3B2E]">{med.title}</h4>
                     {(() => {
-                      // 상자는 하나 그대로 두고, 앞머리의 골라 온 성경 구절만 굵게
+                      // 앞머리의 골라 온 성경 구절만 굵게, 박스 없이 카드 배경 위에 그대로
                       const { quote, body } = splitLeadingVerses(med.content);
                       return (
-                        <div className="bg-[#F0F0F0] p-4 rounded-3xl">
+                        <>
                           {quote && (
                             <p className="text-xs font-bold text-[#0C3B2E] leading-relaxed whitespace-pre-line">
                               {quote}
                             </p>
                           )}
                           {body && (
-                            <p
-                              className={`text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line ${
-                                quote ? "mt-2.5" : ""
-                              }`}
-                            >
+                            <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
                               {body}
                             </p>
                           )}
-                        </div>
+                        </>
                       );
                     })()}
                   </div>
 
                   {med.prayer && (
-                    <div className="bg-[#F5F5F5]/40 bg-[#F5F5F5] rounded-3xl p-4 text-2xs">
-                      <span className="font-bold text-[#0C3B2E] block mb-1">🙏 이번 주 동역자 기도제목</span>
+                    <div className="bg-white rounded-3xl p-4 text-2xs">
+                      <span className="font-bold text-[#0C3B2E] block mb-1">기도제목</span>
                       <p className="text-[#4A6B57] leading-relaxed font-medium italic">
                         "{med.prayer}"
                       </p>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between border-t border-[#E3E9E2] pt-3">
+                  <div className="flex items-center justify-between border-t border-[#EDEDED] pt-3">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeToggle(med.id, false)}
@@ -784,13 +743,13 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   </div>
 
                   {commentsOpen && (
-                    <div className="bg-[#F5F5F5]/60 bg-[#F5F5F5] rounded-3xl p-4 space-y-3 mt-2">
+                    <div className="bg-white rounded-3xl p-4 space-y-3 mt-2">
                       {med.comments.length > 0 ? (
                         <div className="space-y-2">
                           {med.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-3xl">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] p-3 rounded-3xl">
                                 <div className="text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
@@ -832,7 +791,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                         />
                         <button
                           onClick={() => handleAddComment(med.id, false)}
-                          className="px-3 bg-[#4A6B57] hover:bg-[#072A20] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
+                          className="grad-forest px-3 text-white rounded-xl transition flex items-center justify-center cursor-pointer hover:brightness-110"
                         >
                           <Send size={11} />
                         </button>
@@ -853,23 +812,23 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#F5F5F5]/40 rounded-[32px] shadow-sm p-5 space-y-4 hover:border-[#C7D8C9] transition-colors"
+                  className="bg-[#F9F9F9] rounded-[32px] p-5 space-y-4 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-[#0C3B2E] text-white font-bold rounded-full flex items-center justify-center text-xs shadow-sm">
-                        <HeartHandshake size={18} />
+                      <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] font-bold rounded-full flex items-center justify-center text-xs shrink-0">
+                        <HeartHandshake size={16} />
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-[#0C3B2E] text-xs">
                             {grat.isAnonymous ? "익명 (감사 지체)" : currentUser.name}
                           </span>
-                          <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="bg-white text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
                             <Sparkles size={10} className="text-[#4A6B57]" /> 감사칭찬
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-2xs text-[#0C3B2E]/70 mt-0.5 font-medium">
+                        <div className="flex items-center gap-1 text-2xs text-[#6F8377] mt-0.5 font-medium">
                           <Clock size={10} />
                           <span>{grat.date} {new Date(grat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -885,16 +844,16 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </button>
                   </div>
 
-                  <p className="text-xs text-[#14261E] leading-relaxed whitespace-pre-line bg-white/90 p-4 rounded-3xl font-medium">
+                  <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
                     {grat.content}
                   </p>
 
-                  <div className="flex items-center justify-between border-t border-[#E3E9E2]/60 pt-3">
+                  <div className="flex items-center justify-between border-t border-[#EDEDED] pt-3">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeToggle(grat.id, true)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          hasLiked ? "text-[#B3261E]" : "text-[#0C3B2E]/70 hover:text-[#B3261E]"
+                          hasLiked ? "text-[#B3261E]" : "text-[#6F8377] hover:text-[#B3261E]"
                         }`}
                       >
                         <Heart size={14} className={hasLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
@@ -904,7 +863,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                       <button
                         onClick={() => toggleCommentsExpanded(grat.id)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          commentsOpen ? "text-[#0C3B2E]" : "text-[#0C3B2E]/70 hover:text-[#0C3B2E]"
+                          commentsOpen ? "text-[#0C3B2E]" : "text-[#6F8377] hover:text-[#0C3B2E]"
                         }`}
                       >
                         <MessageSquare size={14} />
@@ -913,20 +872,20 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </div>
 
                     {grat.likes.length > 0 && (
-                      <div className="text-2xs text-[#0C3B2E]/70 font-medium">
+                      <div className="text-2xs text-[#6F8377] font-medium">
                         {grat.likes.length}명이 이 감사에 함께하고 있습니다
                       </div>
                     )}
                   </div>
 
                   {commentsOpen && (
-                    <div className="bg-[#F5F5F5]/50 rounded-3xl p-4 space-y-3 mt-2">
+                    <div className="bg-white rounded-3xl p-4 space-y-3 mt-2">
                       {grat.comments.length > 0 ? (
                         <div className="space-y-2">
                           {grat.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/90 p-3 rounded-3xl">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] p-3 rounded-3xl">
                                 <div className="text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     <strong className="font-bold text-[#14261E]">{comment.userName}</strong>
@@ -968,7 +927,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                         />
                         <button
                           onClick={() => handleAddComment(grat.id, true)}
-                          className="px-3 bg-[#0C3B2E] hover:bg-[#072A20] text-white rounded-xl transition flex items-center justify-center cursor-pointer"
+                          className="grad-teal px-3 text-white rounded-xl transition flex items-center justify-center cursor-pointer hover:brightness-110"
                         >
                           <Send size={11} />
                         </button>
@@ -980,7 +939,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }
           })
         ) : (
-          <div className="bg-[#F5F5F5]/50 rounded-[32px] p-12 text-center text-[#6F8377]">
+          <div className="bg-[#F9F9F9] rounded-[32px] p-12 text-center text-[#6F8377]">
             <BookOpen className="mx-auto text-[#6F8377] mb-2" size={32} />
             <p className="text-xs font-semibold text-[#4A6B57]">기록된 영성 발자취가 없습니다.</p>
             <p className="text-2xs text-[#6F8377] mt-1">
@@ -988,6 +947,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             </p>
           </div>
         )}
+        </div>
       </div>
 
       {/* 말씀 체크리스트 — 성경 읽다 눌러 체크해 둔 구절 모음 */}
@@ -1129,7 +1089,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   <button
                     type="submit"
                     disabled={savingGoal}
-                    className="px-5 py-2 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold rounded-3xl transition cursor-pointer disabled:opacity-60"
+                    className="grad-forest px-5 py-2 text-white font-bold rounded-3xl transition cursor-pointer disabled:opacity-60 hover:brightness-110"
                   >
                     {savingGoal ? "저장 중..." : "목표 저장"}
                   </button>
