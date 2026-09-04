@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Notice, User } from "../types";
 import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -107,6 +107,25 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
   const [loading, setLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showReaders, setShowReaders] = useState<boolean>(false);
+
+  /**
+   * 이 화면 어디를 누르든 화면을 말씀 본문에 딱 맞춰 준다 (성경통독과 같은 동작).
+   *
+   * 두 가지는 건드리지 않는다.
+   *  ① 버튼·입력칸을 누른 경우 — 읽음 체크나 수정을 방해하지 않는다
+   *  ② 팝업(.fixed) 안을 누른 경우 — 뒤쪽 화면이 움직이면 안 된다
+   * 이미 맞아 있으면 움직이지 않는다 — 절을 고를 때마다 화면이 흔들리면 성가시다.
+   */
+  const readerRef = useRef<HTMLDivElement>(null);
+  const alignReader = (e?: React.MouseEvent) => {
+    const hit = e?.target as HTMLElement | undefined;
+    if (hit?.closest?.("button, a, input, select, textarea, label, .fixed")) return;
+    const el = readerRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (top >= -6 && top <= 28) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   // Form states for Admin
   const [verseTitle, setVerseTitle] = useState<string>("");
@@ -301,7 +320,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     .join(", ") || "";
 
   return (
-    <div>
+    // 화면 어디를 눌러도 말씀이 화면에 맞춰진다 (버튼·팝업은 제외 — alignReader 참고)
+    <div onClick={alignReader}>
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
         <div className="min-w-0">
           <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl">오늘의 말씀</h3>
@@ -521,6 +541,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           >
             {/* 말씀 카드 — 바깥 카드와 같은 흰색이라, 모바일에서는 좌우 여백을 없애
                 본문이 화면을 최대한 넓게 쓰도록 한다 (겹쳐 있던 안쪽 여백 제거) */}
+            {/* 화면을 맞출 기준점 — 여기가 화면 맨 위로 오면 말씀이 가장 넓게 보인다 */}
+            <div ref={readerRef} className="scroll-mt-4" />
+
             <div className="scripture-font py-3.5">
               <div className="mb-2.5">
                 <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />

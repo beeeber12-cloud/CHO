@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { User } from "../types";
-import { Users, Lock, UserPlus, ShieldAlert, CheckCircle2, UserCheck } from "lucide-react";
+import { Lock, UserPlus, ShieldAlert, CheckCircle2, ChevronDown } from "lucide-react";
 import { motion } from "motion/react";
+import BrandMark from "./BrandMark";
 import { saveToken, getCommunity, saveCommunity, clearToken, StoredCommunity } from "../lib/session";
 import CommunityGate from "./CommunityGate";
 
@@ -66,7 +67,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const loginIdentifier = loginMode === 'select' ? selectedUser : directName.trim();
 
     if (!loginIdentifier) {
@@ -177,267 +178,263 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     );
   }
 
+  /** 입력칸 한 벌 — 앱 안쪽 화면과 같은 옅은 회색 바탕에 둥근 모서리 */
+  const fieldClass =
+    "w-full px-4 py-3.5 bg-[#F9F9F9] rounded-2xl text-[#14261E] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4A6B57] placeholder:text-[#A8B3A9] placeholder:font-medium";
+
   return (
-    <div id="login-container" className="min-h-screen bg-[#F0F0F0] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center justify-center p-3.5 bg-[#F5F5F5] rounded-3xl shadow-md mb-4 text-[#0C3B2E]"
-        >
-          <UserCheck size={36} />
-        </motion.div>
-        <h2 className="text-3xl font-bold text-[#0C3B2E] tracking-tight">{community?.name || "말씀나눔"}</h2>
-        <p className="mt-2 text-sm text-[#6F8377]">
-          우리 공동체를 위한 매일 말씀 묵상과 따뜻한 은혜 나눔터
-        </p>
-      </div>
+    <div id="login-container" className="min-h-screen bg-white flex flex-col">
+      {/* 머리 — 앱 안쪽과 같은 초록 그라데이션. 빛이 아주 천천히 지나간다 */}
+      <header className="grad-forest-sheen relative z-0 text-white">
+        <div className="relative z-10 max-w-md mx-auto px-[22px] pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-14 text-center">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.45 }}
+            className="inline-flex items-center justify-center w-16 h-16 rounded-[22px] bg-white/15 text-[#F2F6F3] mb-4"
+          >
+            <BrandMark size={34} />
+          </motion.div>
+          <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F2F6F3]">
+            {community?.name || "말씀나눔"}
+          </h1>
+          <p className="mt-2 text-xs text-white/70 leading-relaxed">
+            매일의 말씀 묵상과 따뜻한 은혜 나눔터
+          </p>
+        </div>
+      </header>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow-md rounded-3xl sm:px-10">
-          {error && (
-            <div className="mb-4 bg-[#FDF3F3] border-l-4 border-[#B3261E] p-3 text-sm text-[#8F1E17] flex items-center rounded-r-lg">
-              <ShieldAlert className="mr-2 flex-shrink-0" size={18} />
-              <span>{error}</span>
-            </div>
-          )}
+      {/* 흰 시트 — 머리말 위로 살짝 올라온다 (앱 안쪽 화면과 같은 짜임) */}
+      <main className="relative z-10 -mt-[22px] flex-1 bg-white rounded-t-[26px] w-full max-w-md mx-auto px-[22px] pt-7 pb-10">
+        {error && (
+          <div className="mb-4 bg-[#FDF3F3] p-3.5 rounded-2xl text-xs font-semibold text-[#8F1E17] flex items-start gap-2">
+            <ShieldAlert className="shrink-0 mt-px" size={15} />
+            <span className="leading-relaxed">{error}</span>
+          </div>
+        )}
 
-          {regSuccess && (
-            <div className="mb-4 bg-[#F5F5F5] border-l-4 border-[#4A6B57] p-3 text-sm text-[#0C3B2E] flex items-center rounded-r-lg">
-              <CheckCircle2 className="mr-2 flex-shrink-0" size={18} />
-              <span>{regSuccess}</span>
-            </div>
-          )}
+        {regSuccess && (
+          <div className="mb-4 bg-[#E8F0E9] p-3.5 rounded-2xl text-xs font-semibold text-[#0C3B2E] flex items-center gap-2">
+            <CheckCircle2 className="shrink-0" size={15} />
+            <span>{regSuccess}</span>
+          </div>
+        )}
 
-          {!isRegistering ? (
-            <form onSubmit={handleLogin} className="space-y-5">
-              {/* Login Mode Toggle Tabs */}
-              <div className="flex bg-[#F5F5F5] p-1 rounded-3xl">
+        {!isRegistering ? (
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* 이름을 고를지 직접 칠지 — 시안의 세그먼트 */}
+            <div className="relative grid grid-cols-2 bg-[#F9F9F9] rounded-2xl p-1">
+              <div
+                className="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white rounded-xl shadow-[0_2px_6px_rgba(47,115,88,0.14)] transition-transform duration-300 ease-out"
+                style={{ transform: `translateX(${loginMode === "select" ? 0 : 100}%)` }}
+              />
+              {([
+                { key: "select", label: "목록에서 고르기" },
+                { key: "type", label: "이름 직접 입력" }
+              ] as const).map((m) => (
                 <button
+                  key={m.key}
                   type="button"
                   onClick={() => {
-                    setLoginMode('select');
+                    setLoginMode(m.key);
                     setError("");
                   }}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
-                    loginMode === 'select' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
+                  className={`relative z-10 py-2.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
+                    loginMode === m.key ? "text-[#14261E]" : "text-[#6F8377]"
                   }`}
                 >
-                  목록에서 선택
+                  {m.label}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginMode('type');
-                    setError("");
-                  }}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
-                    loginMode === 'type' ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#6F8377] hover:text-[#0C3B2E]"
-                  }`}
-                >
-                  이름 직접 입력
-                </button>
-              </div>
+              ))}
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#4A6B57] mb-1 flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Users size={15} className="mr-1.5 text-[#4A6B57]" />
-                    {loginMode === 'select' ? "묵상 지체 선택" : "성함 직접 입력"}
-                  </span>
-                  {loginMode === 'type' && (
-                    <span className="text-2xs text-[#4A6B57] font-bold">실명 및 닉네임</span>
-                  )}
-                </label>
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                {loginMode === 'select' ? "이름" : "성함 직접 입력"}
+              </label>
 
-                {loginMode === 'select' ? (
-                  <div className="relative">
-                    <select
-                      value={selectedUser}
-                      onChange={(e) => {
-                        setSelectedUser(e.target.value);
-                        setError("");
-                      }}
-                      className="w-full pl-3 pr-10 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-xs font-semibold appearance-none cursor-pointer shadow-sm"
-                    >
-                      <option value="">-- 목록에서 이름을 선택하세요 --</option>
-                      {users.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#6F8377]">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                      </svg>
-                    </div>
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={directName}
+              {loginMode === 'select' ? (
+                <div className="relative">
+                  <select
+                    value={selectedUser}
                     onChange={(e) => {
-                      setDirectName(e.target.value);
+                      setSelectedUser(e.target.value);
                       setError("");
                     }}
-                    placeholder="성함을 입력하세요 (예: 조재영)"
-                    className="w-full px-3 py-2.5 text-[#14261E] font-semibold bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-xs shadow-sm bg-white"
+                    className={`${fieldClass} appearance-none pr-11 cursor-pointer`}
+                  >
+                    <option value="">이름을 골라주세요</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={18}
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6F8377]"
                   />
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#4A6B57] mb-1 flex items-center">
-                  <Lock size={15} className="mr-1.5 text-[#4A6B57]" />
-                  4자리 비밀번호 (PIN)
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  value={pin}
-                  onChange={(e) => {
-                    setPin(e.target.value.replace(/[^0-9]/g, ""));
-                    setError("");
-                  }}
-                  placeholder="숫자 4자리 비밀번호 입력"
-                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-xs tracking-widest text-center font-bold shadow-sm"
-                />
-                <div className="mt-2 bg-[#F5F5F5]/70 p-2.5 rounded-3xl text-2xs text-[#4A6B57] leading-relaxed space-y-1">
-                  <p className="font-bold text-[#0C3B2E] flex items-center gap-1">
-                    🔒 자동 로그인 안내
-                  </p>
-                  <p className="text-2xs text-[#6F8377]">
-                    한 번 로그인하시면 로그아웃 버튼을 누르기 전까지 오랫동안 재접속해도 <strong>자동 로그인 상태가 안전하게 유지</strong>됩니다.
-                  </p>
                 </div>
-              </div>
-
-              <div className="flex flex-col gap-2.5 pt-1">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 rounded-3xl shadow-md text-xs font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A6B57] transition cursor-pointer"
-                >
-                  {loading ? "로그인 확인 중..." : "나눔방 들어가기"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRegistering(true);
+              ) : (
+                <input
+                  type="text"
+                  value={directName}
+                  onChange={(e) => {
+                    setDirectName(e.target.value);
                     setError("");
                   }}
-                  className="w-full flex items-center justify-center py-2.5 px-4 bg-[#F5F5F5] rounded-3xl text-xs font-semibold text-[#4A6B57] bg-[#F5F5F5] hover:bg-[#D2DDD3] transition cursor-pointer"
-                >
-                  <UserPlus size={15} className="mr-1.5 text-[#4A6B57]" />
-                  처음 오셨나요? 새 식구 등록하기
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="space-y-6">
-              <h3 className="text-lg font-bold text-[#0C3B2E] flex items-center">
-                <UserPlus className="mr-1.5 text-[#4A6B57]" size={20} />
-                새로운 묵상 식구 등록
-              </h3>
+                  placeholder="성함을 입력하세요"
+                  className={fieldClass}
+                />
+              )}
+            </div>
 
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                비밀번호 4자리
+              </label>
+              <input
+                type="password"
+                maxLength={4}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => {
+                  setPin(e.target.value.replace(/[^0-9]/g, ""));
+                  setError("");
+                }}
+                placeholder="••••"
+                className={`${fieldClass} text-center text-lg tracking-[0.5em] font-bold`}
+              />
+              <p className="mt-2 ml-1.5 text-2xs text-[#6F8377] leading-relaxed flex items-start gap-1.5">
+                <Lock size={13} className="shrink-0 mt-px text-[#4A6B57]" />
+                한 번 들어오시면 로그아웃을 누르기 전까지 계속 로그인된 채로 유지됩니다.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2.5 pt-1">
+              <button
+                type="submit"
+                disabled={loading}
+                className="grad-forest w-full py-3.5 rounded-2xl text-sm font-bold text-white transition cursor-pointer hover:brightness-110 disabled:opacity-60"
+              >
+                {loading ? "확인 중..." : "들어가기"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistering(true);
+                  setError("");
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-[#F9F9F9] hover:bg-[#F0F0F0] text-xs font-bold text-[#4A6B57] transition cursor-pointer"
+              >
+                <UserPlus size={15} />
+                처음 오셨나요? 새 식구 등록하기
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-[#0C3B2E]">새 식구 등록</h2>
+              <p className="text-xs text-[#6F8377] mt-1">
+                {community?.name || "우리 공동체"}에 처음 오신 분이 이름을 만드는 곳입니다.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                성함
+              </label>
+              <input
+                type="text"
+                required
+                value={regName}
+                onChange={(e) => setRegName(e.target.value)}
+                placeholder="실명을 써주시면 좋습니다"
+                className={fieldClass}
+              />
+            </div>
+
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                비밀번호 4자리
+              </label>
+              <input
+                type="password"
+                maxLength={4}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                required
+                value={regPin}
+                onChange={(e) => setRegPin(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="••••"
+                className={`${fieldClass} text-center text-lg tracking-[0.5em] font-bold`}
+              />
+            </div>
+
+            {/*
+              예전에는 여기서 '관리자'를 스스로 고를 수 있었다.
+              주소만 알면 누구나 관리자가 되어 공지를 올리고 남의 계정을 지울 수 있었다.
+              이제 가입은 언제나 일반 지체이고, 관리자는 기존 관리자가 세운다.
+            */}
+            {community?.requiresJoinCode && (
               <div>
-                <label className="block text-sm font-semibold text-[#4A6B57] mb-1">
-                  성함 (실명을 사용해주시면 좋습니다)
+                <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                  가입코드
                 </label>
                 <input
                   type="text"
                   required
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  placeholder="예: 김성경"
-                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm shadow-sm"
+                  maxLength={12}
+                  value={regCode}
+                  onChange={(e) => setRegCode(e.target.value.toUpperCase())}
+                  placeholder="관리자에게 받으신 코드"
+                  className={`${fieldClass} text-center tracking-[0.3em] uppercase`}
                 />
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-semibold text-[#4A6B57] mb-1">
-                  비밀번호 4자리 (PIN)
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  required
-                  value={regPin}
-                  onChange={(e) => setRegPin(e.target.value.replace(/[^0-9]/g, "")) }
-                  placeholder="로그인에 사용할 숫자 4자리"
-                  className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm text-center tracking-widest shadow-sm"
-                />
-              </div>
+            <div className="flex gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegistering(false);
+                  setError("");
+                }}
+                className="w-1/2 py-3.5 rounded-2xl bg-[#F9F9F9] hover:bg-[#F0F0F0] text-sm font-bold text-[#4A6B57] transition cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="grad-forest w-1/2 py-3.5 rounded-2xl text-sm font-bold text-white transition cursor-pointer hover:brightness-110 disabled:opacity-60"
+              >
+                {loading ? "등록 중..." : "등록 완료"}
+              </button>
+            </div>
+          </form>
+        )}
 
-              {/*
-                예전에는 여기서 '관리자'를 스스로 고를 수 있었다.
-                주소만 알면 누구나 관리자가 되어 공지를 올리고 남의 계정을 지울 수 있었다.
-                이제 가입은 언제나 일반 지체이고, 관리자는 기존 관리자가 세운다.
-              */}
-              {community?.requiresJoinCode && (
-                <div>
-                  <label className="block text-sm font-semibold text-[#4A6B57] mb-1">
-                    가입코드 6자리
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={12}
-                    value={regCode}
-                    onChange={(e) => setRegCode(e.target.value.toUpperCase())}
-                    placeholder="공동체 관리자에게 받으신 코드"
-                    className="w-full px-3 py-2.5 text-[#14261E] bg-[#F5F5F5] rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] focus:border-[#4A6B57] text-sm text-center tracking-widest shadow-sm uppercase"
-                  />
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsRegistering(false);
-                    setError("");
-                  }}
-                  className="w-1/2 py-2.5 px-4 bg-[#F5F5F5] rounded-3xl text-sm font-semibold text-[#4A6B57] bg-white hover:bg-[#F5F5F5] focus:outline-none transition cursor-pointer"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-1/2 py-2.5 px-4 rounded-3xl shadow-md text-sm font-bold text-white bg-[#4A6B57] hover:bg-[#072A20] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A6B57] transition cursor-pointer"
-                >
-                  {loading ? "등록 중..." : "등록 완료"}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/*
-            다른 교회 지체가 이 주소로 들어왔을 때의 문.
-            평소에는 눈에 잘 띄지 않게 두어, 우리 교인들이 헷갈리지 않게 한다.
-          */}
-          <div className="mt-6 pt-4 border-t border-[#EAEAEA] text-center">
-            <button
-              type="button"
-              onClick={() => {
-                clearToken();
-                setShowGate(true);
-              }}
-              className="text-xs text-[#6F8377] hover:text-[#0C3B2E] underline underline-offset-2 cursor-pointer"
-            >
-              다른 공동체로 들어가기 · 새 공동체 만들기
-            </button>
-          </div>
+        {/*
+          다른 교회 지체가 이 주소로 들어왔을 때의 문.
+          평소에는 눈에 잘 띄지 않게 두어, 우리 교인들이 헷갈리지 않게 한다.
+        */}
+        <div className="mt-7 pt-4 border-t border-[#F0F0F0] text-center">
+          <button
+            type="button"
+            onClick={() => {
+              clearToken();
+              setShowGate(true);
+            }}
+            className="text-2xs text-[#6F8377] hover:text-[#0C3B2E] underline underline-offset-2 cursor-pointer"
+          >
+            다른 공동체로 들어가기 · 새 공동체 만들기
+          </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -74,6 +74,71 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   const [formError, setFormError] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
 
+  /**
+   * 쓰다 만 글을 기기에 남겨 둔다.
+   *
+   * 묵상을 쓰다가 실수로 다른 탭으로 넘어가면 이 화면은 통째로 사라진다(React 가 지운다).
+   * 그때 쓰던 글도 같이 날아가서, 처음부터 다시 쓰셔야 했다.
+   * 이제는 글자를 칠 때마다 기기에 적어 두었다가, 다시 들어오면 그대로 되살린다.
+   * 올리고 나면(또는 '취소'를 누르면) 지운다.
+   */
+  const DRAFT_KEY = `cho_med_draft_${currentUser.id}`;
+  const [hasDraft, setHasDraft] = useState<boolean>(false);
+  const draftReady = useRef<boolean>(false);
+
+  const clearDraft = () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* 저장 공간이 막힌 기기 — 그냥 넘어간다 */
+    }
+    setHasDraft(false);
+  };
+
+  // 들어오자마자 쓰던 글이 있으면 되살린다 (창은 열지 않는다 — 누르면 그 안에 그대로 있다)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        const filled = [d?.verseTitle, d?.content, d?.prayer].some(
+          (v) => typeof v === "string" && v.trim()
+        );
+        if (filled) {
+          setVerseTitle(d.verseTitle || "");
+          setContent(d.content || "");
+          setPrayer(d.prayer || "");
+          setSokIdForForm(d.sokId ?? null);
+          setEditingId(d.editingId ?? null);
+          setHasDraft(true);
+        }
+      }
+    } catch {
+      /* 남은 글이 깨져 있으면 없는 셈 친다 */
+    }
+    draftReady.current = true;
+  }, []);
+
+  // 글자를 칠 때마다 기기에 적어 둔다
+  useEffect(() => {
+    if (!draftReady.current) return;
+    const filled = [verseTitle, content, prayer].some((v) => v.trim());
+    try {
+      if (filled) {
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ verseTitle, content, prayer, sokId: sokIdForForm, editingId })
+        );
+        setHasDraft(true);
+      } else {
+        localStorage.removeItem(DRAFT_KEY);
+        setHasDraft(false);
+      }
+    } catch {
+      /* 저장 공간이 막힌 기기 — 화면은 그대로 쓰신다 */
+    }
+  }, [verseTitle, content, prayer, sokIdForForm, editingId]);
+
   // Comments state - maps meditationId to its current comment input string
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
@@ -128,7 +193,11 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
       setTitle(`${prefilledVerse.title} 말씀을 묵상하며`);
       // 고른 구절을 먼저 넣고 한 줄 띄워, 그 아래에 묵상을 이어 쓰게 한다.
       // (보여줄 때 앞머리의 구절만 굵게 표시한다)
-      setContent(`${prefilledVerse.text}\n\n`);
+      // 쓰다 만 글이 있으면 지우지 않고 그 위에 구절만 얹는다 — 쓴 글을 잃지 않도록.
+      setContent((prev) => {
+        const head = `${prefilledVerse.text}\n\n`;
+        return prev.trim() ? head + prev : head;
+      });
       setShowWriteForm(true);
       setEditingId(null);
       if (onClearPrefilledVerse) {
@@ -354,6 +423,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         setSokIdForForm(null);
         setEditingId(null);
         setShowWriteForm(false);
+        clearDraft(); // 올렸으니 기기에 남겨 둔 초안도 지운다
         // Refresh feed
         await fetchMeditations();
       } else {
@@ -525,16 +595,17 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             setEditingId(null);
             setFormError("");
           }}
-          className="grad-forest flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-xs px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
+          className="grad-forest flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
         >
-          {showWriteForm ? <X size={14} /> : <Plus size={14} />}
-          {showWriteForm ? "닫기" : "묵상 나누기"}
+          {showWriteForm ? <X size={15} /> : <Plus size={15} />}
+          {/* 쓰다 만 글이 남아 있으면 '이어쓰기'라고 알려 준다 */}
+          {showWriteForm ? "닫기" : hasDraft ? "묵상 이어쓰기" : "묵상 나누기"}
         </button>
         <button
           onClick={() => setShowJournal(true)}
-          className="grad-teal flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-xs px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
+          className="grad-teal flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
         >
-          <Lock size={14} />
+          <Lock size={15} />
           {possessiveTitle(currentUser.name, "영성일기")}
         </button>
       </div>
@@ -544,7 +615,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         {/* Public All Tab */}
         <button
           onClick={() => setSelectedSokTab("all")}
-          className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition whitespace-nowrap cursor-pointer ${
+          className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
             selectedSokTab === "all"
               ? "grad-forest text-white"
               : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
@@ -560,7 +631,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             <button
               key={sok.id}
               onClick={() => setSelectedSokTab(sok.id)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition whitespace-nowrap cursor-pointer ${
+              className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 isSelected
                   ? "grad-forest text-white"
                   : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
@@ -575,7 +646,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         {currentUser.role === 'admin' && (
           <button
             onClick={() => setShowSokManageModal(true)}
-            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-2xs font-bold text-[#6F8377] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition cursor-pointer"
+            className="shrink-0 flex items-center gap-1 px-3.5 py-2 rounded-full text-xs font-bold text-[#6F8377] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition cursor-pointer"
             title="속(소그룹) 추가, 이름 변경 및 구성원 관리"
           >
             <Settings size={12} />
@@ -619,7 +690,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     value={verseTitle}
                     onChange={(e) => setVerseTitle(e.target.value)}
                     placeholder="예: 이사야 41:10 (또는 위 공지 클릭)"
-                    className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
+                    className="w-full text-sm px-3.5 py-3 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-semibold"
                   />
                 </div>
 
@@ -633,7 +704,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="말씀을 묵상하며 깨달은 생각, 삶의 적용, 소그룹 식구들과 나누고픈 은혜를 정성스럽게 적어보세요..."
-                  className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                  className="w-full text-sm px-3.5 py-3 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
                 />
                 <MentionPicker
                   names={otherMemberNames}
@@ -649,7 +720,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   value={prayer}
                   onChange={(e) => setPrayer(e.target.value)}
                   placeholder="소그룹 지체들과 함께 기도하고 싶은 주간 기도제목을 기입해주세요..."
-                  className="w-full text-xs px-3 py-2.5 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                  className="w-full text-sm px-3.5 py-3 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
                 />
               </div>
 
@@ -660,7 +731,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 <select
                   value={sokIdForForm || ""}
                   onChange={(e) => setSokIdForForm(e.target.value || null)}
-                  className="w-full text-xs px-3 py-2.5 bg-white border-2 border-[#0C3B2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold cursor-pointer"
+                  className="w-full text-sm px-3.5 py-3 bg-white border-2 border-[#0C3B2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold cursor-pointer"
                 >
                   <option value="">🌐 전체 공유 (우리 공동체 모두와 나눔)</option>
                   {accessibleSoks.map((sok) => (
@@ -675,18 +746,29 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 <button
                   type="button"
                   onClick={() => {
+                    // '취소'는 쓰던 글을 버리겠다는 뜻이다 — 되돌릴 수 없으니 한 번 여쭙는다.
+                    // (그냥 접어두고 싶으실 때는 위의 '닫기'를 누르시면 글이 그대로 남는다)
+                    const filled = [verseTitle, content, prayer].some((v) => v.trim());
+                    if (filled && !confirm("쓰시던 글을 지우고 닫을까요?\n(그냥 접어두시려면 위의 '닫기'를 눌러 주세요 — 글은 그대로 남습니다)")) {
+                      return;
+                    }
+                    setVerseTitle("");
+                    setContent("");
+                    setPrayer("");
+                    setSokIdForForm(null);
                     setShowWriteForm(false);
                     setEditingId(null);
                     setFormError("");
+                    clearDraft();
                   }}
-                  className="px-4 py-2 text-xs font-semibold rounded-3xl text-[#4A6B57] bg-white hover:bg-[#F5F5F5] transition cursor-pointer"
+                  className="px-4 py-2 text-sm font-semibold rounded-3xl text-[#4A6B57] bg-white hover:bg-[#F5F5F5] transition cursor-pointer"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 text-xs font-bold rounded-3xl text-white bg-[#4A6B57] hover:bg-[#072A20] shadow-md transition cursor-pointer"
+                  className="px-5 py-2.5 text-sm font-bold rounded-3xl text-white bg-[#4A6B57] hover:bg-[#072A20] shadow-md transition cursor-pointer"
                 >
                   {submitting ? "등록 중..." : editingId ? "묵상 수정 완료" : "내 묵상 공유하기"}
                 </button>
@@ -722,17 +804,18 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 {/* Header — 이름 / 날짜 · 방 배지 (시안의 .post-head) */}
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
-                    <span className="block text-xs font-bold text-[#14261E] leading-[1.3]">
+                    {/* 이름은 카드에서 가장 먼저 읽히는 것 — 넉넉히 크게 */}
+                    <span className="block text-base sm:text-lg font-bold text-[#14261E] leading-[1.25]">
                       {med.userName}
                     </span>
-                    <span className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-2xs text-[#6F8377]">{shortDate(med.date || med.createdAt)}</span>
+                    <span className="flex items-center gap-1.5 mt-1">
+                      <span className="text-xs text-[#6F8377]">{shortDate(med.date || med.createdAt)}</span>
                       {med.sokId ? (
-                        <span className="text-2xs font-bold text-[#4A6B57] bg-[#D2DDD3] px-[7px] py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-[#4A6B57] bg-[#D2DDD3] px-2 py-0.5 rounded-full">
                           {sokGroups.find(s => s.id === med.sokId)?.name || "속 나눔"}
                         </span>
                       ) : (
-                        <span className="text-2xs font-bold text-[#4A6B57] bg-[#D2DDD3] px-[7px] py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-[#4A6B57] bg-[#D2DDD3] px-2 py-0.5 rounded-full">
                           전체
                         </span>
                       )}
@@ -762,7 +845,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* 성경 구절 — 시안의 .post-verse (본문 위에 한 줄로) */}
                 {med.verseTitle && (
-                  <p className="text-xs font-bold text-[#4A6B57]">{med.verseTitle}</p>
+                  <p className="text-sm font-bold text-[#4A6B57]">{med.verseTitle}</p>
                 )}
 
                 {/* Content body (제목 없이 본문만) — 앞머리의 골라 온 성경 구절만
@@ -770,7 +853,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     긴 글은 접어 둔다 — 안 그러면 다음 지체 묵상까지 한참 내려가야 한다. */}
                 <CollapsibleText fadeColor="#F9F9F9">
                   {medQuote && (
-                    <p className="text-xs font-bold text-[#0C3B2E] leading-[1.6] whitespace-pre-line">
+                    <p className="text-sm font-bold text-[#0C3B2E] leading-[1.6] whitespace-pre-line">
                       {medQuote}
                     </p>
                   )}
@@ -778,7 +861,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     <MentionText
                       text={medBody}
                       names={memberNames}
-                      className={`text-sm text-[#14261E] leading-[1.6] whitespace-pre-line ${
+                      className={`text-base text-[#14261E] leading-[1.65] whitespace-pre-line ${
                         medQuote ? "mt-2" : ""
                       }`}
                     />
@@ -788,7 +871,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* 기도제목 */}
                 {med.prayer && (
-                  <div className="bg-white rounded-3xl p-4 text-xs space-y-2">
+                  <div className="bg-white rounded-3xl p-4 text-sm space-y-2">
                     <span className="font-bold text-[#0C3B2E] block">기도제목</span>
                     <CollapsibleText collapsedHeight={110} fadeColor="#FFFFFF">
                       <MentionText
@@ -820,11 +903,11 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                   <button
                     onClick={() => toggleCommentsExpanded(med.id)}
-                    className={`flex items-center gap-1 text-2xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                    className={`flex items-center gap-1 text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
                       commentsOpen ? "text-[#4A6B57]" : "text-[#6F8377] hover:text-[#4A6B57]"
                     }`}
                   >
-                    <MessageSquare size={13} />
+                    <MessageSquare size={16} />
                     <span>댓글</span>
                     {med.comments.length > 0 && (
                       <span className="tabular-nums">{med.comments.length}</span>
@@ -842,10 +925,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                           const isMyComment = comment.userId === currentUser.id;
                           return (
                             <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-3xl">
-                              <div className="text-xs">
+                              <div className="text-sm">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
-                                  <span className="text-2xs text-[#6F8377]">
+                                  <span className="text-xs text-[#6F8377]">
                                     {new Date(comment.createdAt).toLocaleDateString()}
                                   </span>
                                 </div>
@@ -883,7 +966,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                           value={commentInputs[med.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
                           placeholder="은혜로운 지지와 나눔의 말을 기입하세요..."
-                          className="flex-1 text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                          className="flex-1 text-sm px-3.5 py-2.5 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
                         />
                         <button
                           onClick={() => handleAddComment(med.id)}

@@ -11,9 +11,13 @@ const REACTIONS: {
   type: ReactionType;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
+  /** 내가 눌렀을 때의 색 — 아이콘을 그 색으로 채워 한눈에 보이게 한다 */
+  onColor: string;
+  onFill: string;
 }[] = [
-  { type: "like", icon: Heart, label: "좋아요" },
-  { type: "pray", icon: HandHeart, label: "기도할게요" }
+  // 좋아요는 붉은 하트, 기도는 초록 — 눌렀는지 색으로 바로 알 수 있다
+  { type: "like", icon: Heart, label: "좋아요", onColor: "text-[#E0455A]", onFill: "fill-[#E0455A]" },
+  { type: "pray", icon: HandHeart, label: "기도할게요", onColor: "text-[#2B8577]", onFill: "fill-[#2B8577]" }
 ];
 
 interface ReactionBarProps {
@@ -68,12 +72,16 @@ export default function ReactionBar({
             onClick={() => handleClick(r.type)}
             disabled={busy !== null}
             title={r.label}
-            // 시안의 .reaction — 알약 배경 없이 아이콘+글자만. 누르면 초록으로 물든다.
-            className={`flex items-center gap-1 text-2xs font-semibold transition cursor-pointer disabled:opacity-60 whitespace-nowrap ${
-              mine ? "text-[#4A6B57]" : "text-[#6F8377] hover:text-[#4A6B57]"
-            }`}
+            // 시안의 .reaction — 알약 배경 없이 아이콘+글자만.
+            // 글씨는 늘 같은 색으로 두고, **아이콘 색만** 바뀌어 눌렀는지 알려준다.
+            className="flex items-center gap-1 text-xs font-semibold transition cursor-pointer disabled:opacity-60 whitespace-nowrap text-[#6F8377] hover:text-[#4A6B57]"
           >
-            <Icon size={14} className={mine ? "fill-[#4A6B57]" : ""} />
+            <Icon
+              size={16}
+              className={`transition-transform duration-200 ${
+                mine ? `${r.onColor} ${r.onFill} scale-110` : ""
+              }`}
+            />
             <span>{r.label}</span>
             {count > 0 && <span className="tabular-nums">{count}</span>}
           </button>

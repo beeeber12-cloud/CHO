@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, Settings, X, RefreshCw } from "lucide-react";
+import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw } from "lucide-react";
+import { SettingModal } from "./SettingsUI";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
@@ -45,6 +46,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [progressLoading, setProgressLoading] = useState<boolean>(false);
   const [showGoalModal, setShowGoalModal] = useState<boolean>(false);
   const [showChecklistModal, setShowChecklistModal] = useState<boolean>(false);
+  /** 진행률 · 통독 설정 팝업 (본문 위 상자를 버튼 하나로 줄이고 내용은 여기로 옮겼다) */
+  const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
 
   // Goal Form state
   const [goalTitle, setGoalTitle] = useState<string>("1년 1독 (매일 3장)");
@@ -219,15 +222,17 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   };
 
   /**
-   * @param keepPrevious 새 본문이 도착할 때까지 지금 보던 본문을 그대로 둘지.
-   *   장을 넘길 때 화면을 비우면 카드가 사라졌다 나타나면서 깜빡인다.
+   * 새 본문을 불러온다.
+   *
+   * **보던 본문은 절대 지우지 않는다.** 예전에는 '이어서 읽기'나 장 선택을 누르는 순간
+   * 화면의 성경이 통째로 사라졌다가 새로 나타나서, 껐다 켜진 것처럼 보였다.
+   * 새 본문이 도착하면 그때 갈아 끼우고, 실패하면 보던 본문을 그대로 둔 채 알림만 띄운다.
    */
-  const handleSearchQuery = async (searchStr: string, keepPrevious = false) => {
+  const handleSearchQuery = async (searchStr: string) => {
     if (!searchStr.trim()) return;
 
     setLoading(true);
     setError("");
-    if (!keepPrevious) setResult(null);
     setPickedVerses(new Map()); // 다른 본문으로 넘어가면 고른 구절도 초기화
 
     try {
@@ -238,11 +243,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setResult(data);
         syncSelectionFromReference(data.reference);
       } else {
-        setResult(null);
         setError(data.error || "성경 본문을 불러오는데 실패했습니다.");
       }
     } catch (err) {
-      setResult(null);
       setError("서버와의 연결이 원활하지 않습니다.");
     } finally {
       setLoading(false);
@@ -319,13 +322,12 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const handleSelectBookChapter = (
     book: BibleBookInfo,
     chapter: number,
-    verseNum: string = "",
-    keepPrevious = false
+    verseNum: string = ""
   ) => {
     setSelectedBook(book);
     setSelectedChapter(chapter);
     const searchTarget = verseNum ? `${book.name} ${chapter}:${verseNum}` : `${book.name} ${chapter}장`;
-    handleSearchQuery(searchTarget, keepPrevious);
+    handleSearchQuery(searchTarget);
 
     // Save as last read location for current user
     if (currentUser?.id) {
@@ -441,8 +443,29 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     setHighlightVerse(null);
     setPickedVerses(new Map());
     setSlideDir(dir);
+    // 장을 넘기면 '이어서 읽기'를 누른 것처럼 본문을 화면에 맞춰 주고 1절부터 보여준다.
+    // (본문 상자의 스크롤은 아래 result.reference 효과가 맨 위로 되돌린다)
+    setPendingScroll(true);
     // 새 본문이 도착할 때까지 지금 본문을 그대로 둔다 (화면이 깜빡이지 않게)
-    handleSelectBookChapter(target.book, target.chapter, "", true);
+    handleSelectBookChapter(target.book, target.chapter);
+  };
+
+  /**
+   * 이 화면 어디를 누르든 '이어서 읽기'를 누른 것처럼 화면을 성경 본문에 딱 맞춘다.
+   *
+   * 두 가지는 건드리지 않는다.
+   *  ① 버튼·입력칸을 누른 경우 — 그 버튼이 할 일을 방해하지 않는다
+   *  ② 팝업(.fixed) 안을 누른 경우 — 뒤쪽 화면이 움직이면 안 된다
+   * 이미 맞아 있으면 아무것도 하지 않는다 (절을 고를 때마다 화면이 움직이면 성가시다).
+   */
+  const alignReader = (e?: React.MouseEvent) => {
+    const hit = e?.target as HTMLElement | undefined;
+    if (hit?.closest?.("button, a, input, select, textarea, label, .fixed")) return;
+    const el = readerRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (top >= -6 && top <= 28) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const { swipeHandlers, justSwiped, dragRef } = useSwipe({
@@ -468,7 +491,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const progressPercent = Math.min(100, Math.round((completedCount / targetCount) * 100));
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    // 화면 어디를 눌러도 성경이 화면에 맞춰진다 (버튼·팝업은 제외 — alignReader 참고)
+    <div className="space-y-4 sm:space-y-6" onClick={alignReader}>
       {/* Page title — 다른 탭과 같은 자리, 같은 형식 */}
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">성경 통독</h2>
@@ -479,49 +503,33 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
       {/* 진행률 + 마지막 읽은 곳 + 구약/신약을 한 상자로 묶었다 (시안의 .nav-card) */}
       <div className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] p-4 sm:p-5 space-y-4">
+        {/* 진행률 · 통독 설정 — 한 줄 버튼으로 줄이고, 자세한 내용은 팝업에서 본다.
+            (예전에는 진행률·목표·체크리스트가 여기 다 펼쳐져 있어 본문이 한참 아래 있었다) */}
         {currentUser && (
-          <div>
-            <div className="flex justify-between items-center gap-2 mb-2">
-              <span className="text-xs font-bold text-[#6F8377] truncate">
-                목표: {userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
+          <button
+            type="button"
+            onClick={() => setShowProgressModal(true)}
+            className="w-full flex items-center gap-3 text-left cursor-pointer"
+          >
+            <span className="w-[34px] h-[34px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+              <Target size={17} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-bold text-[#14261E]">
+                통독 진행률 {progressPercent}%
               </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowGoalModal(true)}
-                  className="p-1.5 text-[#6F8377] hover:text-[#0C3B2E] hover:bg-[#F0F0F0] rounded-xl transition cursor-pointer"
-                  title="목표 설정"
-                >
-                  <Settings size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowChecklistModal(true)}
-                  className="p-1.5 text-[#6F8377] hover:text-[#0C3B2E] hover:bg-[#F0F0F0] rounded-xl transition cursor-pointer"
-                  title="통독 체크리스트"
-                >
-                  <ListChecks size={15} />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center text-xs mb-1.5 gap-2">
-              <strong className="text-[#0C3B2E] text-sm">
-                {completedCount}장 / {targetCount}장
-              </strong>
-              <span className="text-[#6F8377] font-bold shrink-0">{progressPercent}%</span>
-            </div>
-            <div className="w-full bg-[#E8E8E8] rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.max(2, progressPercent)}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-2xs text-[#6F8377] mt-2 font-medium">
-              <span>일일 추천 하루 {userProgress?.dailyTarget || 3}장</span>
-              <span>남은 분량 {Math.max(0, targetCount - completedCount)}장</span>
-            </div>
-          </div>
+              <span className="block text-2xs text-[#6F8377] mt-0.5 truncate">
+                {completedCount}장 / {targetCount}장 · 하루 {userProgress?.dailyTarget || 3}장
+              </span>
+              <span className="block w-full bg-[#E4E4E4] rounded-full h-1 overflow-hidden mt-1.5">
+                <span
+                  className="block bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(2, progressPercent)}%` }}
+                />
+              </span>
+            </span>
+            <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+          </button>
         )}
 
         {/* 마지막에 읽던 곳 — 카드 배경과 이어지도록 자체 배경 없이 구분선만 */}
@@ -605,8 +613,15 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             {/* Chapter Content — 시안의 .scripture-block: 제목은 상자 밖, 본문은 위 nav-card와
                 떨어뜨려 "여기부터는 본문"임을 구별한다. 별도 흰 카드로 감싸지 않는다. */}
             <div className="space-y-2.5 sm:space-y-4 mt-3.5">
-              <h3 className="text-base sm:text-lg font-bold text-[#0C3B2E]">
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3B2E] flex items-center gap-2">
                 {result.reference}
+                {/* 새 장을 받아오는 동안에도 보던 본문은 그대로 두고, 여기서만 알려준다 */}
+                {loading && (
+                  <span className="flex items-center gap-1 text-2xs font-bold text-[#6F8377]">
+                    <Loader className="animate-spin" size={12} />
+                    불러오는 중
+                  </span>
+                )}
               </h3>
 
               {/* 번역본 고르기 — 최대 두 개까지 대조 */}
@@ -899,6 +914,60 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         )}
       </AnimatePresence>
+
+      {/* 진행률 · 통독 설정 팝업 */}
+      <SettingModal
+        open={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+        title="통독 진행률"
+        sub={userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
+      >
+        <div className="space-y-4">
+          <div className="bg-[#F9F9F9] rounded-2xl p-4">
+            <div className="flex justify-between items-end gap-2 mb-2">
+              <strong className="text-[#0C3B2E] text-lg">
+                {completedCount}장 <span className="text-[#6F8377] text-sm font-bold">/ {targetCount}장</span>
+              </strong>
+              <span className="text-[#195C50] font-bold text-lg shrink-0">{progressPercent}%</span>
+            </div>
+            <div className="w-full bg-[#E4E4E4] rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.max(2, progressPercent)}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-2xs text-[#6F8377] mt-2.5 font-medium">
+              <span>하루 권장 {userProgress?.dailyTarget || 3}장</span>
+              <span>남은 분량 {Math.max(0, targetCount - completedCount)}장</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowProgressModal(false);
+                setShowGoalModal(true);
+              }}
+              className="grad-forest flex items-center justify-center gap-1.5 py-3 rounded-2xl text-white text-sm font-bold transition cursor-pointer hover:brightness-110"
+            >
+              <Target size={15} />
+              목표 설정
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowProgressModal(false);
+                setShowChecklistModal(true);
+              }}
+              className="grad-teal flex items-center justify-center gap-1.5 py-3 rounded-2xl text-white text-sm font-bold transition cursor-pointer hover:brightness-110"
+            >
+              <ListChecks size={15} />
+              통독 체크리스트
+            </button>
+          </div>
+        </div>
+      </SettingModal>
 
       {/* Goal Setup Modal */}
       <AnimatePresence>

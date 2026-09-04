@@ -70,19 +70,40 @@ export default function DualBibleText({
     });
   }
 
+  /** 이 절이 골라져 있는지 (앞뒤 절과 이어 붙일지 판단하는 데 쓴다) */
+  const picked = (i: number) => {
+    const n = baseVerses[i]?.num;
+    return !!(n && selectedVerses?.has(n));
+  };
+
   return (
-    <div className={`space-y-[11px] ${className}`}>
+    <div className={className}>
       {baseVerses.map((v, idx) => {
         const second = comparing && v.num ? secondMap.get(v.num) : undefined;
         const isHighlighted = highlightVerse != null && v.num != null && Number(v.num) === highlightVerse;
-        const isPicked = !!(v.num && selectedVerses?.has(v.num));
+        const isPicked = picked(idx);
         const canPick = !!(onToggleVerse && v.num);
+
+        // 이어진 구절을 고르면 한 덩어리로 보이게 한다.
+        // 위아래가 같이 골라져 있으면 그 사이의 틈과 모서리를 없앤다.
+        const joinTop = isPicked && picked(idx - 1);
+        const joinBottom = isPicked && picked(idx + 1);
+        const corners = joinTop && joinBottom
+          ? "rounded-none"
+          : joinTop
+          ? "rounded-t-none rounded-b-2xl"
+          : joinBottom
+          ? "rounded-t-2xl rounded-b-none"
+          : "rounded-2xl";
+
         return (
           <div
             key={idx}
             data-verse={v.num}
             onClick={canPick ? () => onToggleVerse!(v.num!, v.body) : undefined}
-            className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-1.5 px-1.5 py-[7px] ${
+            // 아래 절과 이어 붙는 경우에는 틈을 주지 않는다 (한 상자처럼 보이도록)
+            style={{ marginBottom: joinBottom ? 0 : 11 }}
+            className={`group scroll-mt-4 transition-colors duration-300 -mx-1.5 px-1.5 py-[7px] ${corners} ${
               canPick ? "cursor-pointer" : ""
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시

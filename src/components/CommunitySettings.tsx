@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
-  Users2, KeyRound, RefreshCw, ShieldCheck, Shield, Copy, Check, Share2, Pencil, ChevronRight, ChevronDown, UserCog
+  Users2, KeyRound, RefreshCw, ShieldCheck, Shield, Copy, Check, Share2, UserCog
 } from "lucide-react";
 import { saveCommunity } from "../lib/session";
+import { SectionLabel, RowGroup, Row, SettingModal } from "./SettingsUI";
 
 /**
  * 우리 공동체 관리.
@@ -39,7 +40,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
-  const [editingName, setEditingName] = useState(false);
+  const [showRename, setShowRename] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [showJoinCode, setShowJoinCode] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
@@ -74,7 +75,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   const rename = async () => {
     const name = draftName.trim();
     if (!name || name === mine?.name) {
-      setEditingName(false);
+      setShowRename(false);
       return;
     }
     setBusy(true);
@@ -93,7 +94,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
       setMine((m) => (m ? { ...m, name: data.name } : m));
       saveCommunity({ id: data.id, name: data.name });
       onRenamed?.(data.name);
-      setEditingName(false);
+      setShowRename(false);
     } finally {
       setBusy(false);
     }
@@ -159,185 +160,159 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
 
   return (
     <div>
-      <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">우리 공동체</p>
-      <div className="bg-[#F9F9F9] rounded-3xl px-3.5">
-        {/* 공동체 이름 — 누구나 보고, 관리자만 고칠 수 있다 */}
-        {editingName ? (
-          <div className="flex items-center gap-2 py-3.5">
-            <input
-              value={draftName}
-              onChange={(e) => setDraftName(e.target.value)}
-              maxLength={40}
-              autoFocus
-              className="flex-1 px-3 py-2 text-[#14261E] bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-sm"
-            />
+      <SectionLabel>우리 공동체</SectionLabel>
+      <RowGroup>
+        <Row
+          icon={<Users2 size={17} />}
+          title={mine.name}
+          sub={`지체 ${mine.memberCount}명${isAdmin ? " · 눌러서 이름 바꾸기" : ""}`}
+          onClick={
+            isAdmin
+              ? () => {
+                  setDraftName(mine.name);
+                  setShowRename(true);
+                }
+              : undefined
+          }
+        />
+
+        {isAdmin && mine.joinCode && (
+          <Row
+            icon={<KeyRound size={17} />}
+            title="가입코드 · 초대하기"
+            sub="새 지체를 부를 때 알려주는 6자리"
+            badge="관리자"
+            onClick={() => setShowJoinCode(true)}
+          />
+        )}
+
+        {isAdmin && (
+          <Row
+            icon={<UserCog size={17} />}
+            title="지체 권한 관리"
+            sub={`관리자 ${members.filter((m) => m.role === "admin").length}명`}
+            badge="관리자"
+            onClick={() => setShowMembers(true)}
+          />
+        )}
+      </RowGroup>
+
+      {error && <p className="text-xs text-[#8F1E17] mt-2 ml-1.5">{error}</p>}
+
+      {/* 공동체 이름 바꾸기 */}
+      <SettingModal
+        open={showRename}
+        onClose={() => setShowRename(false)}
+        title="공동체 이름"
+        sub="앱 맨 위에 보이는 이름입니다."
+      >
+        <div className="space-y-3">
+          <input
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            maxLength={40}
+            autoFocus
+            className="w-full px-4 py-3 text-[#14261E] bg-[#F9F9F9] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-sm font-semibold"
+          />
+          <button
+            onClick={rename}
+            disabled={busy}
+            className="grad-forest w-full py-3 rounded-2xl text-white text-sm font-bold disabled:opacity-40 cursor-pointer hover:brightness-110"
+          >
+            저장하기
+          </button>
+        </div>
+      </SettingModal>
+
+      {/* 가입코드 · 초대하기 */}
+      <SettingModal
+        open={showJoinCode}
+        onClose={() => setShowJoinCode(false)}
+        title="가입코드 · 초대하기"
+        sub="주소와 코드가 함께 복사됩니다. 새어나갔다 싶으면 새로 발급하시면 됩니다 — 그 순간 옛 코드는 통하지 않습니다."
+      >
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 bg-[#F9F9F9] rounded-2xl px-4 py-3">
+            <span className="flex-1 text-2xl font-bold tracking-[0.3em] text-[#0C3B2E]">
+              {mine.joinCode}
+            </span>
             <button
-              onClick={rename}
+              onClick={regenerate}
               disabled={busy}
-              className="grad-forest px-4 py-2 rounded-2xl text-white text-sm font-semibold disabled:opacity-40 cursor-pointer hover:brightness-110"
+              className="p-2.5 rounded-2xl bg-white text-[#4A6B57] hover:bg-[#EAEAEA] transition cursor-pointer disabled:opacity-40 shrink-0"
+              title="새로 발급"
             >
-              저장
-            </button>
-            <button
-              onClick={() => setEditingName(false)}
-              className="px-3 py-2 rounded-2xl bg-white text-[#4A6B57] text-sm cursor-pointer"
-            >
-              취소
+              <RefreshCw size={18} className={busy ? "animate-spin" : ""} />
             </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-3 py-3.5">
-            <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-              <Users2 size={16} />
-            </span>
-            <span className="flex-1 min-w-0 text-sm font-bold text-[#0C3B2E] truncate">
-              {mine.name} · {mine.memberCount}명
-            </span>
-            {isAdmin && (
+
+          <div className="flex gap-2">
+            <button
+              onClick={copyInvite}
+              className="grad-forest flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl text-white text-sm font-bold transition cursor-pointer hover:brightness-110"
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? "복사했습니다" : "초대 문구 복사"}
+            </button>
+            {canShare && (
               <button
-                onClick={() => {
-                  setDraftName(mine.name);
-                  setEditingName(true);
-                }}
-                className="p-1.5 text-[#6F8377] hover:text-[#0C3B2E] hover:bg-white rounded-xl transition cursor-pointer shrink-0"
-                title="공동체 이름 바꾸기"
+                onClick={shareInvite}
+                className="px-4 py-3 rounded-2xl bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0] transition cursor-pointer"
+                title="보내기"
               >
-                <Pencil size={14} />
+                <Share2 size={16} />
               </button>
             )}
           </div>
-        )}
 
-        {error && <p className="text-xs text-[#8F1E17] pb-3">{error}</p>}
+          {/* 복사되는 내용을 눈으로 확인하실 수 있게 그대로 보여준다 */}
+          <pre className="p-3.5 bg-[#F9F9F9] rounded-2xl text-2xs text-[#4A6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
+            {inviteText}
+          </pre>
+        </div>
+      </SettingModal>
 
-        {/* 가입코드 · 초대하기 — 눌러야 펼쳐진다 (시안의 row) */}
-        {isAdmin && mine.joinCode && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowJoinCode((v) => !v)}
-              className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer border-t border-[#F0F0F0]"
-            >
-              <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                <KeyRound size={16} />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-sm font-bold text-[#0C3B2E]">가입코드 · 초대하기</span>
-                <span className="block text-2xs text-[#6F8377] mt-0.5">지체 {mine.memberCount}명</span>
-              </span>
-              {showJoinCode ? (
-                <ChevronDown size={17} className="text-[#6F8377] shrink-0" />
-              ) : (
-                <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
-              )}
-            </button>
-
-            {showJoinCode && (
-              <div className="pb-4">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <span className="flex-1 text-2xl font-bold tracking-[0.3em] text-[#0C3B2E]">
-                    {mine.joinCode}
-                  </span>
-                  <button
-                    onClick={regenerate}
-                    disabled={busy}
-                    className="p-2.5 rounded-2xl bg-white text-[#4A6B57] hover:bg-[#EAEAEA] transition cursor-pointer disabled:opacity-40"
-                    title="새로 발급"
-                  >
-                    <RefreshCw size={18} className={busy ? "animate-spin" : ""} />
-                  </button>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={copyInvite}
-                    className="grad-forest flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-white text-sm font-semibold transition cursor-pointer hover:brightness-110"
-                  >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                    {copied ? "복사했습니다" : "초대 문구 복사"}
-                  </button>
-                  {canShare && (
-                    <button
-                      onClick={shareInvite}
-                      className="px-4 py-2.5 rounded-2xl bg-white text-[#4A6B57] hover:bg-[#EAEAEA] transition cursor-pointer"
-                      title="보내기"
-                    >
-                      <Share2 size={16} />
-                    </button>
+      {/* 지체 권한 관리 */}
+      <SettingModal
+        open={showMembers}
+        onClose={() => setShowMembers(false)}
+        title="지체 권한 관리"
+        sub="관리자는 말씀 공지·속 관리·챌린지 시작을 할 수 있습니다."
+      >
+        <div className="space-y-2">
+          {members.map((m) => {
+            const admin = m.role === "admin";
+            return (
+              <div
+                key={m.id}
+                className="flex items-center justify-between gap-2 py-2.5 px-3.5 rounded-2xl bg-[#F9F9F9]"
+              >
+                <span className="flex items-center text-sm font-semibold text-[#14261E] min-w-0">
+                  {admin ? (
+                    <ShieldCheck size={15} className="mr-1.5 text-[#4A6B57] shrink-0" />
+                  ) : (
+                    <Shield size={15} className="mr-1.5 text-[#AFC0B2] shrink-0" />
                   )}
-                </div>
-
-                {/* 복사되는 내용을 눈으로 확인하실 수 있게 그대로 보여준다 */}
-                <pre className="mt-2.5 p-3 bg-white rounded-2xl text-2xs text-[#4A6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
-                  {inviteText}
-                </pre>
-
-                <p className="text-xs text-[#6F8377] mt-2 leading-relaxed">
-                  주소와 코드가 함께 복사됩니다. 새어나갔다 싶으면 새로 발급하시면 됩니다 —
-                  그 순간 옛 코드는 통하지 않습니다.
-                </p>
+                  <span className="truncate">{m.name}</span>
+                  {m.id === currentUser.id && (
+                    <span className="ml-1.5 text-2xs text-[#6F8377] shrink-0">(나)</span>
+                  )}
+                </span>
+                {m.id !== currentUser.id && (
+                  <button
+                    onClick={() => changeRole(m, admin ? "member" : "admin")}
+                    disabled={busy}
+                    className="text-2xs font-bold px-3 py-1.5 rounded-full bg-white text-[#4A6B57] hover:bg-[#F0F0F0] transition cursor-pointer disabled:opacity-40 shrink-0"
+                  >
+                    {admin ? "관리자 내리기" : "관리자로"}
+                  </button>
+                )}
               </div>
-            )}
-          </>
-        )}
-
-        {/* 지체 권한 관리 — 눌러야 펼쳐진다 */}
-        {isAdmin && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowMembers((v) => !v)}
-              className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer border-t border-[#F0F0F0]"
-            >
-              <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                <UserCog size={16} />
-              </span>
-              <span className="flex-1 min-w-0 text-sm font-bold text-[#0C3B2E]">지체 권한 관리</span>
-              <span className="text-2xs font-bold text-[#4A3600] bg-[#FFBA00] px-2 py-0.5 rounded-full shrink-0">관리자</span>
-              {showMembers ? (
-                <ChevronDown size={17} className="text-[#6F8377] shrink-0" />
-              ) : (
-                <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
-              )}
-            </button>
-
-            {showMembers && (
-              <div className="pb-3.5 space-y-1.5">
-                {members.map((m) => {
-                  const admin = m.role === "admin";
-                  return (
-                    <div
-                      key={m.id}
-                      className="flex items-center justify-between py-2 px-3 rounded-2xl bg-white"
-                    >
-                      <span className="flex items-center text-sm text-[#14261E]">
-                        {admin ? (
-                          <ShieldCheck size={15} className="mr-1.5 text-[#4A6B57]" />
-                        ) : (
-                          <Shield size={15} className="mr-1.5 text-[#AFC0B2]" />
-                        )}
-                        {m.name}
-                        {m.id === currentUser.id && (
-                          <span className="ml-1.5 text-xs text-[#6F8377]">(나)</span>
-                        )}
-                      </span>
-                      {m.id !== currentUser.id && (
-                        <button
-                          onClick={() => changeRole(m, admin ? "member" : "admin")}
-                          disabled={busy}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-3xl bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0] transition cursor-pointer disabled:opacity-40"
-                        >
-                          {admin ? "관리자 내리기" : "관리자로"}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      </SettingModal>
     </div>
   );
 }
+

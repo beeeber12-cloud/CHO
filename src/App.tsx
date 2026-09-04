@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User } from "lucide-react";
+import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog } from "lucide-react";
 import BrandMark from "./components/BrandMark";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
@@ -13,6 +13,9 @@ import MyMeditations from "./components/MyMeditations";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
+import AccountSettings from "./components/AccountSettings";
+import ProfileModal from "./components/ProfileModal";
+import { SectionLabel, RowGroup, Row } from "./components/SettingsUI";
 import ChallengeTab from "./components/ChallengeTab";
 import AppGuide, { guideSeen } from "./components/AppGuide";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
@@ -121,6 +124,10 @@ export default function App() {
    * (하단 탭에서 빼서 '나의 기록'과 분리 — 실제 화면 목적이 다르다)
    */
   const [showSettings, setShowSettings] = useState<boolean>(() => urlTabRef.current === 'settings');
+  /** 머리말 오른쪽 이름 단추를 누르면 열리는 작은 차림표 */
+  const [showAccountMenu, setShowAccountMenu] = useState<boolean>(false);
+  /** 내 프로필 · 비밀번호 창 (차림표에서 연다) */
+  const [profileMode, setProfileMode] = useState<"profile" | "pin" | null>(null);
 
   // Prefilled Bible Verse state for writing meditation
   const [prefilledVerse, setPrefilledVerse] = useState<{ title: string; text: string } | null>(null);
@@ -155,11 +162,30 @@ export default function App() {
     return tabs;
   }, [challengeOn]);
 
-  const openTab = (tab: TabType) => {
+  /**
+   * 탭이 바뀔 때 새 화면이 어느 쪽에서 들어올지.
+   * 1 = 오른쪽에서(다음 탭), -1 = 왼쪽에서(이전 탭), 0 = 눌러서 곧장 (그 자리에서 살짝만)
+   */
+  const [tabDir, setTabDir] = useState<1 | -1 | 0>(0);
+
+  const openTab = (tab: TabType, dir: 1 | -1 | 0 = 0) => {
+    setTabDir(dir);
     setActiveTab(tab);
     setPrefilledVerse(null);
     setShowSettings(false); // 설정 화면에서 다른 탭으로 넘어가면 설정은 닫는다
     window.scrollTo({ top: 0 });
+  };
+
+  /**
+   * 탭이 넘어갈 때의 움직임 — 위아래로 튀지 않고 옆으로만 미끄러진다.
+   * 예전에는 y 로 15px 씩 오르내려서, 넘길 때마다 화면이 출렁였다.
+   */
+  const tabMotion = {
+    initial: { opacity: 0, x: tabDir === 0 ? 0 : tabDir * 34 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: tabDir === 0 ? 0 : tabDir * -26 },
+    transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    style: { willChange: "transform, opacity" }
   };
 
   /**
@@ -173,10 +199,10 @@ export default function App() {
   const skipSwipe = React.useRef(false);
   const rawTabSwipe = useSwipe({
     onSwipeLeft: () => {
-      if (tabIndex >= 0 && tabIndex < visibleTabs.length - 1) openTab(visibleTabs[tabIndex + 1]);
+      if (tabIndex >= 0 && tabIndex < visibleTabs.length - 1) openTab(visibleTabs[tabIndex + 1], 1);
     },
     onSwipeRight: () => {
-      if (tabIndex > 0) openTab(visibleTabs[tabIndex - 1]);
+      if (tabIndex > 0) openTab(visibleTabs[tabIndex - 1], -1);
     },
     canSwipeLeft: tabIndex >= 0 && tabIndex < visibleTabs.length - 1,
     canSwipeRight: tabIndex > 0
@@ -284,6 +310,24 @@ export default function App() {
     }
   };
 
+  /**
+   * 다른 이름으로 로그인.
+   * 한 기기를 부부가 함께 쓰시는 경우가 있어, 로그아웃과 따로 둔다
+   * (같은 동작이지만 "나간다"가 아니라 "바꾼다"로 읽히도록).
+   */
+  const handleSwitchAccount = () => {
+    if (confirm("다른 이름으로 로그인하시겠습니까?")) {
+      clearToken();
+      setCurrentUser(null);
+      localStorage.removeItem("bible_med_user");
+    }
+  };
+
+  const handleUserUpdated = (updated: UserProfile) => {
+    setCurrentUser(updated);
+    localStorage.setItem("bible_med_user", JSON.stringify(updated));
+  };
+
   const handleSelectVerseForMeditation = (verseTitle: string, verseText: string) => {
     setPrefilledVerse({ title: verseTitle, text: verseText });
     setActiveTab('feed'); // Transition back to meditation feed/form
@@ -317,11 +361,13 @@ export default function App() {
       {/* Dynamic Header — 공동체 이름만 담백하게, 계정 관련은 톱니(설정)로 옮겼다.
           시안처럼 아래 흰 시트가 이 머리말 위로 겹쳐 올라와야 하므로 sticky 를 쓰지 않는다
           (sticky + z-40 이면 머리말이 시트 위에 그려져 겹침이 안 보인다) */}
-      <header className="relative z-0 bg-gradient-to-br from-[#2F7358] to-[#153A2B] text-white">
-        <div className="max-w-4xl mx-auto px-[18px] pt-11 pb-8 flex justify-between items-center gap-2">
+      <header className="grad-forest-sheen relative z-0 text-white">
+        {/* 위 여백 — 아이폰·갤럭시처럼 위쪽이 가려지는 기기에서는 그 높이(env)만큼
+            자동으로 더 준다. 기종마다 값이 달라서 숫자를 못박지 않는다. */}
+        <div className="relative z-10 max-w-4xl mx-auto px-[18px] pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-8 flex justify-between items-center gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <BrandMark size={16} className="shrink-0 text-[#F2F6F3]/85" />
-            <h1 className="text-xs font-semibold tracking-[0.02em] truncate text-[#F2F6F3]/90">
+            <BrandMark size={19} className="shrink-0 text-[#F2F6F3]" />
+            <h1 className="text-sm sm:text-base font-bold tracking-[0.01em] truncate text-[#F2F6F3]">
               {brandTitle}
             </h1>
           </div>
@@ -329,24 +375,119 @@ export default function App() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => setShowSettings(true)}
+              onClick={() => {
+                setShowAccountMenu(false);
+                setShowSettings(true);
+              }}
               className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition cursor-pointer shrink-0"
               title="설정"
             >
               <Settings size={16} />
             </button>
 
-            <div className="w-8 h-8 rounded-full bg-[#FFBA00] text-[#4A3600] font-bold text-xs flex items-center justify-center shrink-0">
+            {/* 이름 단추 — 누르면 계정 차림표가 열린다.
+                차림표 자체는 머리말 밖(아래)에 그린다 — 머리말은 넘치는 부분을 잘라내므로
+                여기 안에 두면 차림표가 잘려 보이지 않는다. */}
+            <button
+              type="button"
+              onClick={() => setShowAccountMenu((v) => !v)}
+              className="w-8 h-8 rounded-full bg-[#FFBA00] text-[#4A3600] font-bold text-xs flex items-center justify-center cursor-pointer hover:brightness-105 transition shrink-0"
+              title={`${currentUser.name} 계정`}
+              aria-haspopup="menu"
+              aria-expanded={showAccountMenu}
+            >
               {currentUser.name.slice(0, 1)}
-            </div>
+            </button>
           </div>
         </div>
       </header>
 
+      {/* 계정 차림표 — 머리말 오른쪽 이름 단추 바로 아래에 뜬다 */}
+      <AnimatePresence>
+        {showAccountMenu && (
+          <>
+            {/* 바깥을 누르면 닫힌다 */}
+            <div className="fixed inset-0 z-[60]" onClick={() => setShowAccountMenu(false)} />
+            <div className="fixed left-0 right-0 z-[61] top-[calc(env(safe-area-inset-top)+3.75rem)] pointer-events-none">
+              <div className="max-w-4xl mx-auto px-[18px] flex justify-end">
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.14 }}
+                  className="pointer-events-auto w-60 bg-white rounded-[20px] shadow-2xl overflow-hidden py-1.5"
+                  role="menu"
+                >
+                  <div className="px-4 py-2.5">
+                    <p className="text-sm font-bold text-[#14261E] truncate">{currentUser.name}</p>
+                    <p className="text-2xs text-[#6F8377] mt-0.5 truncate">
+                      {currentUser.role === "admin" ? "관리자" : "성도님"} · {communityName}
+                    </p>
+                  </div>
+
+                  {[
+                    {
+                      key: "profile",
+                      icon: <User size={16} />,
+                      label: "내 프로필",
+                      run: () => setProfileMode("profile")
+                    },
+                    {
+                      key: "pin",
+                      icon: <Lock size={16} />,
+                      label: "비밀번호 변경",
+                      run: () => setProfileMode("pin")
+                    },
+                    {
+                      key: "switch",
+                      icon: <UserCog size={16} />,
+                      label: "다른 이름으로 로그인",
+                      run: handleSwitchAccount
+                    },
+                    {
+                      key: "logout",
+                      icon: <LogOut size={16} />,
+                      label: "로그아웃",
+                      run: handleLogout
+                    }
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setShowAccountMenu(false);
+                        item.run();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-[#14261E] hover:bg-[#F9F9F9] transition cursor-pointer border-t border-[#F2F2F2]"
+                    >
+                      <span className="text-[#4A6B57] shrink-0">{item.icon}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </motion.div>
+              </div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 이름 단추에서 여는 내 프로필 · 비밀번호 창 */}
+      <ProfileModal
+        open={profileMode !== null}
+        mode={profileMode || "profile"}
+        onClose={() => setProfileMode(null)}
+        currentUser={currentUser}
+        onUserUpdate={handleUserUpdated}
+      />
+
       {/* Main Container — 머리말 위로 살짝 겹쳐 올라오는 흰 시트 (시안의 .sheet).
           안쪽 여백은 시안 값 그대로(22px 18px 30px) — 이 하나로 모든 글의 왼쪽 선을 맞춘다.
           각 화면이 따로 좌우 여백을 더하지 않아야 제목·본문·버튼이 같은 선에서 시작한다. */}
-      <main className="relative z-10 -mt-[18px] bg-white rounded-t-[22px] max-w-4xl mx-auto px-[18px] pt-[22px] pb-[30px]">
+      {/* z-index 를 일부러 주지 않는다.
+          숫자를 주면 이 안에서 여는 팝업이 아무리 높은 값을 써도 이 층을 넘지 못해
+          하단 탭 바(z-50) 아래에 깔린다. 겹침(머리말 위로 올라오는 것)은 DOM 순서만으로도 된다. */}
+      <main className="relative -mt-[18px] bg-white rounded-t-[22px] max-w-4xl mx-auto px-[18px] pt-[22px] pb-[30px]">
         {showSettings ? (
           <div className="space-y-4 sm:space-y-5">
             <div className="flex items-center gap-3">
@@ -364,78 +505,47 @@ export default function App() {
               </div>
             </div>
 
-            {/* 계정 — 이름·역할, 로그아웃 (예전엔 머리말에 있던 것) */}
-            <div>
-              <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">계정</p>
-              <div className="bg-[#F9F9F9] rounded-3xl px-3.5">
-                <div className="flex items-center gap-3 py-3.5">
-                  <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0 font-bold text-xs">
-                    {currentUser.name.slice(-1)}
-                  </span>
-                  <span className="flex-1 min-w-0 text-sm font-bold text-[#14261E] truncate">
-                    {currentUser.name} {currentUser.role === 'admin' ? '(관리자)' : '성도님'}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="shrink-0 flex items-center gap-1.5 text-xs font-bold py-2 px-3.5 rounded-3xl bg-white text-[#6F8377] hover:text-[#0C3B2E] hover:bg-[#F0F0F0] transition cursor-pointer"
-                  >
-                    <LogOut size={14} />
-                    로그아웃
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 안내 */}
-            <div>
-              <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">안내</p>
-              <div className="bg-[#F9F9F9] rounded-3xl px-3.5">
-                <button
-                  onClick={() => setGuideOpen(true)}
-                  className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer"
-                >
-                  <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                    <HelpCircle size={17} />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block font-bold text-[#14261E] text-sm">앱 사용법 다시 보기</span>
-                    <span className="block text-2xs text-[#6F8377] mt-0.5">각 탭이 무엇을 하는 곳인지 안내해 드립니다</span>
-                  </span>
-                  <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
-                </button>
-
-                {currentUser.role === "admin" && !challengeOn && (
-                  <button
-                    onClick={() => openTab('challenge')}
-                    className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer border-t border-[#F0F0F0]"
-                  >
-                    <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                      <Trophy size={16} />
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block font-bold text-[#14261E] text-sm">성경읽기 챌린지 시작하기</span>
-                      <span className="block text-2xs text-[#6F8377] mt-0.5">
-                        시작하면 탭이 하나 생기고 감사·칭찬은 잠시 접힙니다
-                      </span>
-                    </span>
-                    <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
-                  </button>
-                )}
-              </div>
-            </div>
+            <NotificationSettings currentUser={currentUser} />
 
             <CommunitySettings currentUser={currentUser} onRenamed={setCommunityName} />
-            <NotificationSettings
+
+            <AccountSettings
               currentUser={currentUser}
-              onUserUpdate={(updatedUser) => {
-                setCurrentUser(updatedUser);
-                localStorage.setItem("bible_med_user", JSON.stringify(updatedUser));
-              }}
+              onUserUpdate={handleUserUpdated}
               onAccountDeleted={() => {
                 setCurrentUser(null);
                 localStorage.removeItem("bible_med_user");
               }}
+              onLogout={handleLogout}
             />
+
+            {/* 안내 */}
+            <div>
+              <SectionLabel>안내</SectionLabel>
+              <RowGroup>
+                <Row
+                  icon={<HelpCircle size={17} />}
+                  title="앱 사용법 다시 보기"
+                  sub="각 탭이 무엇을 하는 곳인지 안내해 드립니다"
+                  onClick={() => {
+                    setShowSettings(false);
+                    setGuideOpen(true);
+                  }}
+                />
+                {currentUser.role === "admin" && !challengeOn && (
+                  <Row
+                    icon={<Trophy size={16} />}
+                    title="성경읽기 챌린지 시작하기"
+                    sub="시작하면 탭이 하나 생기고 감사·칭찬은 잠시 접힙니다"
+                    badge="관리자"
+                    onClick={() => openTab('challenge')}
+                  />
+                )}
+              </RowGroup>
+            </div>
+
+            {/* 앱 버전 — 휴대폰에 옛 화면이 남아 있는지 확인할 때 쓴다 */}
+            <p className="text-2xs text-[#A8B3A9] text-center pt-1">앱 버전 {__BUILD_TIME__}</p>
           </div>
         ) : (
         <>
@@ -475,10 +585,7 @@ export default function App() {
             {activeTab === 'notice' && (
               <motion.div
                 key="notice-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <DailyNotice 
                   currentUser={currentUser} 
@@ -492,10 +599,7 @@ export default function App() {
             {activeTab === 'feed' && (
               <motion.div
                 key="feed-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <MeditationFeed 
                   currentUser={currentUser} 
@@ -509,10 +613,7 @@ export default function App() {
             {activeTab === 'gratitude' && (
               <motion.div
                 key="gratitude-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <DailyGratitude currentUser={currentUser} allUsers={allUsers} />
               </motion.div>
@@ -521,10 +622,7 @@ export default function App() {
             {activeTab === 'challenge' && (
               <motion.div
                 key="challenge-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <ChallengeTab
                   currentUser={currentUser}
@@ -542,10 +640,7 @@ export default function App() {
             {activeTab === 'bible' && (
               <motion.div
                 key="bible-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <BibleReader
                   currentUser={currentUser}
@@ -560,10 +655,7 @@ export default function App() {
             {activeTab === 'my' && (
               <motion.div
                 key="my-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <MyMeditations currentUser={currentUser} />
               </motion.div>
@@ -572,10 +664,7 @@ export default function App() {
             {SHOW_QNA_TAB && activeTab === 'qna' && (
               <motion.div
                 key="qna-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.2 }}
+                {...tabMotion}
               >
                 <BibleQnA currentUser={currentUser} />
               </motion.div>

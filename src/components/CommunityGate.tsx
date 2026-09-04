@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { KeyRound, Church, ArrowLeft, Loader2, Home, X } from "lucide-react";
+import { KeyRound, Church, ArrowLeft, Loader2, Home, X, ChevronRight } from "lucide-react";
+import BrandMark from "./BrandMark";
 import {
   saveCommunity,
   saveToken,
@@ -108,171 +109,228 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
     else setMode("menu");
   };
 
+  /** 입력칸 한 벌 — 로그인 화면과 같은 옅은 회색 바탕 */
+  const fieldClass =
+    "w-full px-4 py-3.5 bg-[#F9F9F9] rounded-2xl text-[#14261E] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4A6B57] placeholder:text-[#A8B3A9] placeholder:font-medium";
+
+  const title =
+    mode === "menu" ? "공동체 선택" : mode === "join" ? "가입코드 입력" : "새 공동체 만들기";
+  const sub =
+    mode === "menu"
+      ? "우리 공동체끼리만 묵상과 감사를 나눕니다"
+      : mode === "join"
+      ? "관리자에게 받으신 코드를 넣어주세요"
+      : "만드신 분이 첫 관리자가 됩니다";
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center p-5">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* 머리 — 앱 안쪽·로그인 화면과 같은 초록 그라데이션 */}
+      <header className="grad-forest-sheen relative z-0 text-white">
+        <div className="relative z-10 max-w-md mx-auto px-[22px] pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-14">
+          <button
+            onClick={back}
+            className="flex items-center gap-1.5 text-white/80 hover:text-white text-xs font-bold mb-7 cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+            뒤로
+          </button>
+
+          <div className="flex items-center gap-2.5 mb-3">
+            <BrandMark size={26} className="text-[#F2F6F3] shrink-0" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F2F6F3]">{title}</h1>
+          <p className="mt-2 text-xs text-white/70 leading-relaxed">{sub}</p>
+        </div>
+      </header>
+
+      <motion.main
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white rounded-3xl shadow-xl p-7"
+        className="relative z-10 -mt-[22px] flex-1 bg-white rounded-t-[26px] w-full max-w-md mx-auto px-[22px] pt-7 pb-10"
       >
-        <button
-          onClick={back}
-          className="flex items-center gap-1 text-slate-500 hover:text-slate-700 mb-5 text-base"
-        >
-          <ArrowLeft size={20} />
-          뒤로
-        </button>
+        {error && (
+          <p className="mb-4 bg-[#FDF3F3] p-3.5 rounded-2xl text-xs font-semibold text-[#8F1E17] leading-relaxed">
+            {error}
+          </p>
+        )}
 
         {mode === "menu" && (
-          <>
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">공동체 선택</h1>
-            <p className="text-slate-500 mb-7 leading-relaxed">
-              우리 공동체끼리만 묵상과 감사를 나눕니다.
-              <br />
-              다른 공동체의 글은 보이지 않습니다.
-            </p>
-
+          <div className="space-y-5">
             {/*
               지나온 공동체로 한 번에 돌아가기.
               이게 없어서, 다른 공동체로 옮기고 나면 원래 있던 곳의 가입코드를
               모르면 돌아올 수가 없었다. 실제로 그 일이 있었다.
             */}
             {history.length > 0 && (
-              <div className="mb-6">
-                <p className="text-sm font-semibold text-slate-500 mb-2">
+              <div>
+                <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2.5 ml-1.5">
                   전에 들어갔던 공동체
                 </p>
-                {history.map((h) => (
-                  <div key={h.id} className="flex items-center gap-2 mb-2">
-                    <button
-                      onClick={() => {
-                        saveCommunity(h);
-                        onReady(h);
-                      }}
-                      className="flex-1 flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 hover:border-emerald-400 transition text-left"
-                    >
-                      <Home className="text-emerald-600 shrink-0" size={22} />
-                      <span className="font-semibold text-slate-800">{h.name}</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const msg = `목록에서 '${h.name}' 을(를) 지울까요?
-(공동체가 없어지는 것은 아닙니다)`;
-                        if (!confirm(msg)) return;
-                        forgetCommunity(h.id);
-                        setHistory(getCommunityHistory().filter((c) => c.id !== here));
-                      }}
-                      className="p-3 rounded-2xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-                      title="목록에서 지우기"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                ))}
+                <div className="flex flex-col gap-2">
+                  {history.map((h) => (
+                    <div key={h.id} className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          saveCommunity(h);
+                          onReady(h);
+                        }}
+                        className="flex-1 flex items-center gap-3 p-3 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
+                      >
+                        <span className="w-[34px] h-[34px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                          <Home size={17} />
+                        </span>
+                        <span className="flex-1 min-w-0 text-sm font-semibold text-[#14261E] truncate">
+                          {h.name}
+                        </span>
+                        <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const msg = `목록에서 '${h.name}' 을(를) 지울까요?\n(공동체가 없어지는 것은 아닙니다)`;
+                          if (!confirm(msg)) return;
+                          forgetCommunity(h.id);
+                          setHistory(getCommunityHistory().filter((c) => c.id !== here));
+                        }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-[#A8B3A9] hover:text-[#0C3B2E] hover:bg-[#F9F9F9] transition cursor-pointer shrink-0"
+                        title="목록에서 지우기"
+                      >
+                        <X size={17} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            <button
-              onClick={() => setMode("join")}
-              className="w-full flex items-center gap-4 p-5 mb-3 rounded-2xl border-2 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 transition text-left"
-            >
-              <KeyRound className="text-emerald-600 shrink-0" size={28} />
-              <span>
-                <span className="block font-semibold text-lg text-slate-800">가입코드로 들어가기</span>
-                <span className="block text-slate-500">
-                  공동체 관리자에게 받은 6자리를 넣습니다
-                </span>
-              </span>
-            </button>
+            <div>
+              <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2.5 ml-1.5">
+                들어가기
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => setMode("join")}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
+                >
+                  <span className="w-[38px] h-[38px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                    <KeyRound size={19} />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-bold text-[#14261E]">가입코드로 들어가기</span>
+                    <span className="block text-2xs text-[#6F8377] mt-0.5">
+                      관리자에게 받은 6자리를 넣습니다
+                    </span>
+                  </span>
+                  <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                </button>
 
-            <button
-              onClick={() => setMode("create")}
-              className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition text-left"
-            >
-              <Church className="text-slate-600 shrink-0" size={28} />
-              <span>
-                <span className="block font-semibold text-lg text-slate-800">새 공동체 만들기</span>
-                <span className="block text-slate-500">만드신 분이 첫 관리자가 됩니다</span>
-              </span>
-            </button>
-          </>
+                <button
+                  onClick={() => setMode("create")}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
+                >
+                  <span className="w-[38px] h-[38px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                    <Church size={19} />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-bold text-[#14261E]">새 공동체 만들기</span>
+                    <span className="block text-2xs text-[#6F8377] mt-0.5">
+                      만드신 분이 첫 관리자가 됩니다
+                    </span>
+                  </span>
+                  <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                </button>
+              </div>
+            </div>
+
+            <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F9F9F9] rounded-2xl p-3.5">
+              다른 공동체의 묵상·감사·기도제목은 서로 보이지 않습니다. 우리 공동체 안에서만
+              나눕니다.
+            </p>
+          </div>
         )}
 
         {mode === "join" && (
-          <form onSubmit={join}>
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">가입코드 입력</h1>
-            <p className="text-slate-500 mb-6">공동체 관리자에게 받으신 6자리를 넣어주세요.</p>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="예: K7M2PQ"
-              autoFocus
-              maxLength={12}
-              className="w-full text-center text-3xl tracking-[0.4em] font-bold py-5 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 outline-none mb-4 uppercase"
-            />
-            {error && <p className="text-red-600 mb-4">{error}</p>}
+          <form onSubmit={join} className="space-y-4">
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                가입코드
+              </label>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="예: K7M2PQ"
+                autoFocus
+                maxLength={12}
+                className={`${fieldClass} text-center text-2xl tracking-[0.35em] font-bold uppercase py-4`}
+              />
+            </div>
             <button
               type="submit"
               disabled={busy || code.length < 4}
-              className="w-full py-4 rounded-2xl bg-emerald-600 text-white text-lg font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
+              className="grad-forest w-full py-3.5 rounded-2xl text-white text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2 transition cursor-pointer hover:brightness-110"
             >
-              {busy && <Loader2 className="animate-spin" size={20} />}
+              {busy && <Loader2 className="animate-spin" size={17} />}
               들어가기
             </button>
           </form>
         )}
 
         {mode === "create" && (
-          <form onSubmit={create}>
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">새 공동체 만들기</h1>
-            <p className="text-slate-500 mb-6">
-              만드신 분이 첫 관리자가 됩니다. 만든 뒤 나오는 가입코드를 지체들께 알려주세요.
-            </p>
-
-            <label className="block mb-4">
-              <span className="block text-slate-600 mb-2">공동체 이름</span>
+          <form onSubmit={create} className="space-y-4">
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                공동체 이름
+              </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="예: 소망교회 청년부"
                 autoFocus
-                className="w-full text-lg py-4 px-4 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 outline-none"
+                className={fieldClass}
               />
-            </label>
+            </div>
 
-            <label className="block mb-4">
-              <span className="block text-slate-600 mb-2">관리자 성함</span>
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                관리자 성함
+              </label>
               <input
                 value={adminName}
                 onChange={(e) => setAdminName(e.target.value)}
                 placeholder="예: 김목사"
-                className="w-full text-lg py-4 px-4 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 outline-none"
+                className={fieldClass}
               />
-            </label>
+            </div>
 
-            <label className="block mb-5">
-              <span className="block text-slate-600 mb-2">비밀번호 4자리</span>
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                비밀번호 4자리
+              </label>
               <input
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                 inputMode="numeric"
+                type="password"
                 placeholder="••••"
-                className="w-full text-center text-2xl tracking-[0.5em] py-4 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 outline-none"
+                className={`${fieldClass} text-center text-lg tracking-[0.5em] font-bold`}
               />
-            </label>
+            </div>
 
-            {error && <p className="text-red-600 mb-4">{error}</p>}
+            <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F9F9F9] rounded-2xl p-3.5">
+              만든 뒤 나오는 <strong className="text-[#0C3B2E]">가입코드</strong>를 지체들께
+              알려주시면, 그분들도 이 앱으로 들어오실 수 있습니다.
+            </p>
+
             <button
               type="submit"
               disabled={busy || !name.trim() || !adminName.trim() || pin.length !== 4}
-              className="w-full py-4 rounded-2xl bg-emerald-600 text-white text-lg font-semibold disabled:opacity-40 flex items-center justify-center gap-2"
+              className="grad-forest w-full py-3.5 rounded-2xl text-white text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2 transition cursor-pointer hover:brightness-110"
             >
-              {busy && <Loader2 className="animate-spin" size={20} />}
+              {busy && <Loader2 className="animate-spin" size={17} />}
               공동체 만들기
             </button>
           </form>
         )}
-      </motion.div>
+      </motion.main>
     </div>
   );
 }
