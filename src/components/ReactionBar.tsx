@@ -15,9 +15,10 @@ const REACTIONS: {
   onColor: string;
   onFill: string;
 }[] = [
-  // 좋아요는 붉은 하트, 기도는 초록 — 눌렀는지 색으로 바로 알 수 있다
-  { type: "like", icon: Heart, label: "좋아요", onColor: "text-[#E0455A]", onFill: "fill-[#E0455A]" },
-  { type: "pray", icon: HandHeart, label: "기도할게요", onColor: "text-[#2B8577]", onFill: "fill-[#2B8577]" }
+  // 두 반응 모두 앱의 포인트 색(#FFBA00 — 머리말 오른쪽 이름 동그라미와 같은 색)으로 채워진다.
+  // 글씨는 그대로 두고 아이콘만 물든다.
+  { type: "like", icon: Heart, label: "좋아요", onColor: "text-[#FFBA00]", onFill: "fill-[#FFBA00]" },
+  { type: "pray", icon: HandHeart, label: "기도할게요", onColor: "text-[#FFBA00]", onFill: "fill-[#FFBA00]" }
 ];
 
 interface ReactionBarProps {

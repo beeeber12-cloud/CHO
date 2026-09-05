@@ -8,6 +8,7 @@ import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
 import { useSwipe } from "../lib/useSwipe";
+import { useKeepAwake } from "../lib/keepAwake";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
 
@@ -29,6 +30,9 @@ interface BibleResult {
 }
 
 export default function BibleReader({ currentUser, onSelectVerseForMeditation, initialQuery = "", queryNonce = 0 }: BibleReaderProps) {
+  // 성경을 읽는 동안에는 화면이 꺼지지 않는다 (이 탭을 떠나면 바로 풀린다)
+  useKeepAwake();
+
   // Navigation & Selector states
   const [selectedBook, setSelectedBook] = useState<BibleBookInfo>(BIBLE_BOOKS.find(b => b.name === "요한복음") || BIBLE_BOOKS[0]);
   const [selectedChapter, setSelectedChapter] = useState<number>(1);

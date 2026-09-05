@@ -805,7 +805,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 <div className="flex justify-between items-start gap-2">
                   <div className="min-w-0">
                     {/* 이름은 카드에서 가장 먼저 읽히는 것 — 넉넉히 크게 */}
-                    <span className="block text-base sm:text-lg font-bold text-[#14261E] leading-[1.25]">
+                    <span className="block text-[0.97rem] font-bold text-[#14261E] leading-[1.3]">
                       {med.userName}
                     </span>
                     <span className="flex items-center gap-1.5 mt-1">
@@ -845,7 +845,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* 성경 구절 — 시안의 .post-verse (본문 위에 한 줄로) */}
                 {med.verseTitle && (
-                  <p className="text-sm font-bold text-[#4A6B57]">{med.verseTitle}</p>
+                  <p className="text-[0.88rem] font-bold text-[#4A6B57]">{med.verseTitle}</p>
                 )}
 
                 {/* Content body (제목 없이 본문만) — 앞머리의 골라 온 성경 구절만
@@ -853,7 +853,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     긴 글은 접어 둔다 — 안 그러면 다음 지체 묵상까지 한참 내려가야 한다. */}
                 <CollapsibleText fadeColor="#F9F9F9">
                   {medQuote && (
-                    <p className="text-sm font-bold text-[#0C3B2E] leading-[1.6] whitespace-pre-line">
+                    <p className="text-[0.88rem] font-bold text-[#0C3B2E] leading-[1.6] whitespace-pre-line">
                       {medQuote}
                     </p>
                   )}
@@ -861,7 +861,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                     <MentionText
                       text={medBody}
                       names={memberNames}
-                      className={`text-base text-[#14261E] leading-[1.65] whitespace-pre-line ${
+                      className={`text-[0.92rem] text-[#14261E] leading-[1.62] whitespace-pre-line ${
                         medQuote ? "mt-2" : ""
                       }`}
                     />
@@ -871,7 +871,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
                 {/* 기도제목 */}
                 {med.prayer && (
-                  <div className="bg-white rounded-3xl p-4 text-sm space-y-2">
+                  <div className="bg-white rounded-3xl p-4 text-[0.88rem] space-y-2">
                     <span className="font-bold text-[#0C3B2E] block">기도제목</span>
                     <CollapsibleText collapsedHeight={110} fadeColor="#FFFFFF">
                       <MentionText
@@ -925,7 +925,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                           const isMyComment = comment.userId === currentUser.id;
                           return (
                             <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-3xl">
-                              <div className="text-sm">
+                              <div className="text-[0.88rem]">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
                                   <span className="text-xs text-[#6F8377]">

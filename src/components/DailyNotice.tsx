@@ -7,6 +7,7 @@ import DualBibleText from "./DualBibleText";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
+import { useKeepAwake } from "../lib/keepAwake";
 
 /** "2026-09-04" → "9월 4일 금요일" (저장된 형식이 그대로 화면에 노출되지 않도록) */
 const formatKoreanDate = (iso: string): string => {
@@ -26,6 +27,9 @@ interface DailyNoticeProps {
 }
 
 export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSelectVerseForMeditation }: DailyNoticeProps) {
+  // 말씀을 읽는 동안에는 화면이 꺼지지 않는다 (이 탭을 떠나면 바로 풀린다)
+  useKeepAwake();
+
   const [notice, setNotice] = useState<Notice | null>(null);
 
   // 사용자가 눌러서 고른 구절 (번호 -> 본문)
