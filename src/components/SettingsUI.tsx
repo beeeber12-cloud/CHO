@@ -125,7 +125,8 @@ export function Switch({
 
 /**
  * 설정에서 여는 팝업.
- * 휴대폰에서는 아래에서 올라오는 시트, PC 에서는 가운데 창.
+ * 휴대폰·PC 모두 **화면 맨 위**에 붙는다 — 버튼을 누르자마자 바로 눈에 들어오도록.
+ * 내용이 길면 창 안에서만 스크롤된다.
  */
 export function SettingModal({
   open,
@@ -147,9 +148,9 @@ export function SettingModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          // 아래에서 올라오는 시트가 아니라 **화면 가운데**에 뜬다.
-          // (아래에 뜨면 하단 탭 바 근처라 손이 가려지고, 무엇보다 눈이 먼저 가지 않는다)
-          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          // 창은 **화면 맨 위**에 붙는다 — 누르자마자 바로 눈에 들어오도록.
+          // (위쪽이 가려지는 기기에서는 그 높이만큼만 띄운다)
+          className="fixed inset-0 bg-black/50 z-[70] flex items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
@@ -158,7 +159,7 @@ export function SettingModal({
             exit={{ opacity: 0, y: -12, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.6 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full sm:max-w-lg max-h-[82vh] rounded-[26px] flex flex-col shadow-2xl"
+            className="bg-white w-full sm:max-w-lg max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] rounded-[26px] flex flex-col shadow-2xl"
           >
             <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3.5">
               <div className="min-w-0">

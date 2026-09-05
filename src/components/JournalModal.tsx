@@ -103,11 +103,13 @@ export default function JournalModal({ currentUser, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[70] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
+    // 창은 **화면 맨 위**에 붙는다. 아래에 있으면 버튼을 누른 뒤 눈을 한참 내려야 보인다.
+    // (위쪽이 가려지는 기기에서는 그 높이만큼만 띄운다)
+    <div className="fixed inset-0 z-[70] bg-black/40 flex items-start justify-center px-3 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-[#F0F0F0] w-full sm:max-w-2xl rounded-[32px] mx-2 sm:mx-0 mb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:mb-0 max-h-[76vh] sm:max-h-[86vh] flex flex-col overflow-hidden"
+        className="bg-[#F0F0F0] w-full sm:max-w-2xl rounded-[32px] max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] flex flex-col overflow-hidden"
       >
         {/* 머리 */}
         <div className="bg-white px-5 pt-5 pb-4 shrink-0">

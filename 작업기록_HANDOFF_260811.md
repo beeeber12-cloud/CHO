@@ -708,3 +708,12 @@ Artifact 시안(claude.ai/code/artifact/07a4996a-...)으로 여러 라운드 확
 - **정렬 범위 확대**: `alignReader` 를 본문 상자가 아니라 **탭 화면 전체**에 걸었다.
   대신 `button, a, input, select, textarea, label, .fixed` 안을 누른 경우는 건너뛴다
   (버튼이 할 일을 방해하지 않고, 팝업 안을 눌렀을 때 뒤 화면이 움직이지 않게).
+
+### 15-2. 팝업 위치 — 전부 화면 맨 위로
+목사님 지적: 영성일기·통독 진행률 창이 화면 **아래**에 떠서, 버튼을 누르고도 눈을 한참
+내려야 보였다. 세 창을 모두 `items-start` + `pt-[calc(env(safe-area-inset-top)+0.75rem)]`
+으로 바꿔 화면 맨 위에 붙게 했다 (등장도 아래→위가 아니라 위에서 살짝 내려오는 쪽으로).
+- `SettingsUI.SettingModal` (설정 전부 + 통독 진행률)
+- `JournalModal` (영성일기)
+- `BibleReader` 의 성경 선택(권/장/절) 팝업 — 마지막 남은 '아래에서 올라오는' 창이라 같이.
+창 높이는 `max-h-[calc(100vh - env(safe-area-inset-top) - 1.5rem)]`, 내용이 길면 창 안에서만 스크롤.

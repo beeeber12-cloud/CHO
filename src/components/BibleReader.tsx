@@ -763,15 +763,16 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       <AnimatePresence>
         {showNavModal && (
           <div
-            className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
+            // 다른 팝업과 같게 — 화면 맨 위에 붙는다
+            className="fixed inset-0 bg-black/50 z-[60] flex items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto"
             onClick={() => setShowNavModal(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.97, y: 20 }}
+              initial={{ opacity: 0, scale: 0.97, y: -12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 20 }}
+              exit={{ opacity: 0, scale: 0.97, y: -12 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full sm:max-w-2xl max-h-[88vh] rounded-t-3xl sm:rounded-[32px] p-4 sm:p-6 flex flex-col shadow-2xl"
+              className="bg-white w-full sm:max-w-2xl max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] rounded-[26px] p-4 sm:p-6 flex flex-col shadow-2xl"
             >
               <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3">
                 <h4 className="font-bold text-[#0C3B2E] text-base sm:text-base flex items-center gap-2">
