@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import ModalPortal from "./ModalPortal";
 
 /**
  * 설정 화면의 공통 부품 (시안의 .section-label / .rowgroup / .row / .chip / .switch).
@@ -142,8 +143,10 @@ export function SettingModal({
   children: React.ReactNode;
 }) {
   return (
-    <AnimatePresence>
-      {open && (
+    // 화면(body) 밑에 그린다 — 탭 화면 안에 두면 검은 막이 탭 크기만큼만 덮인다
+    <ModalPortal>
+      <AnimatePresence>
+        {open && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -180,7 +183,8 @@ export function SettingModal({
             </div>
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </ModalPortal>
   );
 }

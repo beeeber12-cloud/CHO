@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Meditation, Comment, SokGroup } from "../types";
 import { MessageSquare, Heart, Edit2, Trash2, Send, Plus, Search, BookOpen, Clock, PenTool, X, ShieldAlert, Bell, Radio, CheckCircle, Users, Globe, Settings, UserPlus, Check, Edit3, Lock } from "lucide-react";
 import JournalModal from "./JournalModal";
+import ModalPortal from "./ModalPortal";
 import { possessiveTitle } from "../lib/koreanName";
 import { motion, AnimatePresence } from "motion/react";
 import { enablePush, isPushEnabled } from "../lib/push";
@@ -1001,6 +1002,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
       </div>
 
       {/* Sok Management Modal */}
+      <ModalPortal>
       <AnimatePresence>
         {showSokManageModal && (
           <motion.div
@@ -1221,6 +1223,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           </motion.div>
         )}
       </AnimatePresence>
+      </ModalPortal>
     </div>
   );
 }

@@ -179,13 +179,14 @@ export default function App() {
   /**
    * 탭이 넘어갈 때의 움직임 — 위아래로 튀지 않고 옆으로만 미끄러진다.
    * 예전에는 y 로 15px 씩 오르내려서, 넘길 때마다 화면이 출렁였다.
+   * will-change 는 일부러 걸지 않는다 — 걸어 두면 이 안에서 여는 팝업의 기준이
+   * 화면이 아니라 이 상자로 바뀌어, 뒤를 덮는 검은 막이 탭 크기만큼만 덮인다.
    */
   const tabMotion = {
     initial: { opacity: 0, x: tabDir === 0 ? 0 : tabDir * 34 },
     animate: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: tabDir === 0 ? 0 : tabDir * -26 },
-    transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-    style: { willChange: "transform, opacity" }
+    transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }
   };
 
   /**

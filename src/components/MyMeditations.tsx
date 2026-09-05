@@ -4,6 +4,7 @@ import { MessageSquare, Heart, Edit2, Trash2, Send, Search, BookOpen, Clock, Cal
 import { motion, AnimatePresence } from "motion/react";
 import { subscribeToDataChanges } from "../lib/revision";
 import { splitLeadingVerses } from "../lib/verseRef";
+import ModalPortal from "./ModalPortal";
 
 interface MyMeditationsProps {
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
@@ -951,6 +952,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
       </div>
 
       {/* 말씀 체크리스트 — 성경 읽다 눌러 체크해 둔 구절 모음 */}
+      <ModalPortal>
       <AnimatePresence>
         {showSavedModal && (
           <div
@@ -1021,8 +1023,10 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
           </div>
         )}
       </AnimatePresence>
+      </ModalPortal>
 
       {/* 나눔 목표 설정 */}
+      <ModalPortal>
       <AnimatePresence>
         {showGoalModal && (
           <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
@@ -1099,6 +1103,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
           </div>
         )}
       </AnimatePresence>
+      </ModalPortal>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import ModalPortal from "./ModalPortal";
 import {
   Trophy, Users, CalendarDays, BookOpen, Plus, Check, Settings2, Flag, Trash2, PartyPopper
 } from "lucide-react";
@@ -337,8 +338,9 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
     const nt = books.filter((b) => b.testament === "NT");
     const ot = books.filter((b) => b.testament === "OT");
     return (
-      <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
-        <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[76vh] sm:max-h-[88vh] overflow-y-auto text-left mx-2 sm:mx-0 mb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:mb-0">
+      <ModalPortal>
+      <div className="fixed inset-0 z-[60] bg-black/40 flex items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto">
+        <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] overflow-y-auto text-left">
           <h3 className="font-bold text-lg text-[#0C3B2E] mb-4">챌린지 시작하기</h3>
 
           <label className="block text-xs font-bold text-[#4A6B57] mb-1.5">읽을 성경</label>
@@ -432,6 +434,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
           </div>
         </div>
       </div>
+      </ModalPortal>
     );
   }
 
@@ -464,8 +467,9 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
 
   function renderMemberPicker() {
     return (
-      <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-5">
-        <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[76vh] sm:max-h-[80vh] overflow-y-auto mx-2 sm:mx-0 mb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:mb-0">
+      <ModalPortal>
+      <div className="fixed inset-0 z-[60] bg-black/40 flex items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto">
+        <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] overflow-y-auto">
           <h3 className="font-bold text-lg text-[#0C3B2E] mb-1">참가자 바꾸기</h3>
           <p className="text-2xs text-[#6F8377] mb-4">
             중간에 들어오셔도 됩니다. 지금까지 읽은 장은 그대로 반영됩니다.
@@ -493,6 +497,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
           </div>
         </div>
       </div>
+      </ModalPortal>
     );
   }
 }

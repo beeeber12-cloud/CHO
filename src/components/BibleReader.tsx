@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
+import ModalPortal from "./ModalPortal";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
@@ -764,6 +765,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       </AnimatePresence>
 
       {/* 성경 선택 팝업 (권 → 장 → 절) */}
+      <ModalPortal>
       <AnimatePresence>
         {showNavModal && (
           <div
@@ -919,6 +921,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         )}
       </AnimatePresence>
+      </ModalPortal>
 
       {/* 진행률 · 통독 설정 팝업 */}
       <SettingModal
@@ -975,6 +978,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       </SettingModal>
 
       {/* Goal Setup Modal */}
+      <ModalPortal>
       <AnimatePresence>
         {showGoalModal && (
           <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
@@ -1099,8 +1103,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         )}
       </AnimatePresence>
+      </ModalPortal>
 
       {/* Full 66-Book Checklist Modal */}
+      <ModalPortal>
       <AnimatePresence>
         {showChecklistModal && (
           <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
@@ -1247,6 +1253,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
         )}
       </AnimatePresence>
+      </ModalPortal>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import ModalPortal from "./ModalPortal";
 import {
   Lock, Plus, X, Pencil, Trash2, ArrowLeft
 } from "lucide-react";
@@ -105,6 +106,8 @@ export default function JournalModal({ currentUser, onClose }: Props) {
   return (
     // 창은 **화면 맨 위**에 붙는다. 아래에 있으면 버튼을 누른 뒤 눈을 한참 내려야 보인다.
     // (위쪽이 가려지는 기기에서는 그 높이만큼만 띄운다)
+    // 화면(body) 밑에 그린다 — 탭 화면 안에 두면 검은 막이 탭 크기만큼만 덮인다
+    <ModalPortal>
     <div className="fixed inset-0 z-[70] bg-black/40 flex items-start justify-center px-3 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, y: -12 }}
@@ -269,5 +272,6 @@ export default function JournalModal({ currentUser, onClose }: Props) {
         </div>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 }
