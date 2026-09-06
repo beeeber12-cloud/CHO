@@ -78,6 +78,14 @@ export function rangeLabel(chapters: PlanChapter[]): string {
   return `${first.book.name} ${first.chapter}장 ~ ${last.book.name} ${last.chapter}장`;
 }
 
+/** 그 주의 월요일 0시 */
+function startOfWeek(today: Date): Date {
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const shift = (d.getDay() + 6) % 7; // 월요일을 주의 시작으로
+  d.setDate(d.getDate() - shift);
+  return d;
+}
+
 export function dateKey(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
@@ -89,7 +97,7 @@ export interface PlanRow {
   label: string;
   date: Date;
   dateKey: string;
-  when: "today" | "future";
+  when: "past" | "today" | "future";
   /** 이 칸에서 읽을(또는 읽은) 장들. 다 읽어서 남은 게 없으면 빈 배열 */
   chapters: PlanChapter[];
   /** 그 장들을 전부 읽었는지 */
@@ -128,24 +136,43 @@ export function buildWeeklyPlan(
   // 아직 안 읽은 장들 — 성경 순서 그대로. 여기서 앞에서부터 하루치씩 떼어 준다.
   const remaining = sequence.filter((c) => !completed.has(c.key));
 
+  const monday = startOfWeek(today);
   const todayKey = dateKey(today);
 
   let cursor = 0;
   const rows: PlanRow[] = [];
 
   /**
-   * **오늘부터 앞으로 일주일**만 보여준다.
-   * 지나간 날은 넣지 않는다 — 이미 지난 칸은 할 일이 아니라서 눈만 어지럽힌다.
+   * 이번 주(월~일) 중 읽기로 정한 요일만.
+   * 지난 요일은 **그날 실제로 읽은 것**만 보여준다 — 읽었으면 완료, 아니면 지나감.
+   * 오늘과 앞으로는 아직 안 읽은 장부터 하루치씩이라, 하루 밀리면 다음 칸이 저절로 당겨진다.
    */
   for (let i = 0; i < 7; i++) {
-    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
     const weekday = date.getDay();
     if (!days.includes(weekday)) continue;
 
     const key = dateKey(date);
-    const when: PlanRow["when"] = key === todayKey ? "today" : "future";
+    const when: PlanRow["when"] =
+      key === todayKey ? "today" : key < todayKey ? "past" : "future";
 
-    // 아직 안 읽은 것부터 하루치씩 — 하루 밀리면 다음 칸이 저절로 당겨진다
+    if (when === "past") {
+      const read = (readLog[key] || [])
+        .map((k) => byKey.get(k))
+        .filter((c): c is PlanChapter => !!c)
+        .sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
+      rows.push({
+        weekday,
+        label: DAY_LABELS[weekday],
+        date,
+        dateKey: key,
+        when,
+        chapters: read,
+        done: read.length > 0
+      });
+      continue;
+    }
+
     let chapters = remaining.slice(cursor, cursor + perDay);
     cursor += chapters.length;
     let done = false;

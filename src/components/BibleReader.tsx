@@ -1049,13 +1049,21 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <div className="flex flex-col gap-1.5">
                 {weeklyPlan.rows.map((row) => {
                   const empty = row.chapters.length === 0;
+                  // 줄 전체가 버튼이다 — 요일을 누르든 어디를 누르든 그 본문으로 넘어간다
                   return (
-                    <div
+                    <button
                       key={row.dateKey}
-                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl ${
-                        empty ? "bg-[#FBFBFB]" : "bg-[#F9F9F9]"
+                      type="button"
+                      disabled={empty}
+                      onClick={() => startPlanRow(row.chapters)}
+                      title={empty ? undefined : `${rangeLabel(row.chapters)} 읽으러 가기`}
+                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
+                        empty
+                          ? "bg-[#FBFBFB] cursor-default"
+                          : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
                       } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
                     >
+                      {/* 읽은 날은 요일 동그라미에 불이 들어온다 (초록). 아니면 그대로 회색 */}
                       <span
                         className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                           row.done
@@ -1065,7 +1073,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                             : "bg-[#EDEDED] text-[#6F8377]"
                         }`}
                       >
-                        {row.done ? <Check size={15} className="stroke-[3px]" /> : row.label}
+                        {row.label}
                       </span>
 
                       <span className="flex-1 min-w-0">
@@ -1074,34 +1082,27 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                             empty ? "text-[#A8B3A9]" : "text-[#14261E]"
                           }`}
                         >
-                          {empty ? "읽을 분량이 없습니다" : rangeLabel(row.chapters)}
+                          {empty ? "—" : rangeLabel(row.chapters)}
                         </span>
-                        <span className="block text-2xs text-[#6F8377] mt-px">
+                        <span
+                          className={`block text-2xs mt-px font-bold ${
+                            row.done ? "text-[#195C50]" : "text-[#6F8377]"
+                          }`}
+                        >
                           {row.done
-                            ? "읽기 완료"
+                            ? "완료"
+                            : row.when === "past"
+                            ? "지나감"
                             : row.when === "today"
-                            ? "오늘 읽을 차례"
-                            : `${row.label}요일`}
+                            ? "오늘"
+                            : "예정"}
                         </span>
                       </span>
 
-                      {/* 맨 오른쪽 성경 아이콘 — 누르면 그 본문으로 바로 넘어간다 */}
-                      {!empty && (
-                        <button
-                          type="button"
-                          onClick={() => startPlanRow(row.chapters)}
-                          title={`${rangeLabel(row.chapters)} 읽으러 가기`}
-                          aria-label={`${rangeLabel(row.chapters)} 읽으러 가기`}
-                          className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition cursor-pointer ${
-                            row.when === "today"
-                              ? "grad-forest text-white hover:brightness-110"
-                              : "bg-white text-[#4A6B57] hover:bg-[#EDEDED]"
-                          }`}
-                        >
-                          <BookOpen size={17} />
-                        </button>
+                      {row.done && (
+                        <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
                       )}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
