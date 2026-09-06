@@ -63,12 +63,20 @@ export default function DualBibleText({
 
   // 첫 번째 번역본을 기준으로 절을 세우고, 두 번째는 절 번호로 맞춰 붙인다
   const baseVerses = parseVerses(used[0].text);
+  const secondVerses = comparing ? parseVerses(used[1].text) : [];
   const secondMap = new Map<string, string>();
-  if (comparing) {
-    parseVerses(used[1].text).forEach((v, i) => {
-      secondMap.set(v.num || String(i + 1), v.body);
-    });
-  }
+  secondVerses.forEach((v, i) => {
+    secondMap.set(v.num || String(i + 1), v.body);
+  });
+
+  /**
+   * 리딩지저스 통독표는 하루에 여러 장을 한 덩어리로 올린다 — 그러면 절 번호가 겹친다.
+   * 번호로 맞추면 12장 1절 자리에 11장 1절이 붙으므로, 그때는 순서로 맞춘다.
+   */
+  const baseNums = baseVerses.map((v) => v.num).filter(Boolean);
+  const numsRepeat = new Set(baseNums).size !== baseNums.length;
+  const secondBodyAt = (i: number, num?: string) =>
+    !comparing ? undefined : numsRepeat ? secondVerses[i]?.body : num ? secondMap.get(num) : undefined;
 
   /** 이 절이 골라져 있는지 (앞뒤 절과 이어 붙일지 판단하는 데 쓴다) */
   const picked = (i: number) => {
@@ -79,7 +87,7 @@ export default function DualBibleText({
   return (
     <div className={className}>
       {baseVerses.map((v, idx) => {
-        const second = comparing && v.num ? secondMap.get(v.num) : undefined;
+        const second = secondBodyAt(idx, v.num);
         const isHighlighted = highlightVerse != null && v.num != null && Number(v.num) === highlightVerse;
         const isPicked = picked(idx);
         const canPick = !!(onToggleVerse && v.num);

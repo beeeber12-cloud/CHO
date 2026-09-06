@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw, Settings, Check, Play } from "lucide-react";
+import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw, Settings, Check, Play, CalendarDays, Video, Sparkles } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
 import ModalPortal from "./ModalPortal";
 import { motion, AnimatePresence } from "motion/react";
@@ -22,6 +22,21 @@ import {
   DAY_LABELS,
   PlanScope
 } from "../lib/readingPlan";
+import {
+  rjChaptersOf,
+  rjDayFor,
+  rjDayLabel,
+  rjIndexFor,
+  rjMonths,
+  rjPlanDateLabel,
+  rjRangeLabel,
+  rjValidAnchor,
+  rjWeek,
+  RJAnchor,
+  RJChapter,
+  RJ_TOTAL_CHAPTERS
+} from "../lib/readingJesus";
+import { READING_JESUS_TITLE } from "../data/readingJesus";
 
 interface BibleReaderProps {
   currentUser?: { id: string; name: string; role: 'admin' | 'member' };
@@ -76,6 +91,18 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   /** 통독을 시작할 권 */
   const [startBook, setStartBook] = useState<string>("창세기");
   const [showStartBookModal, setShowStartBookModal] = useState<boolean>(false);
+
+  /**
+   * 통독 방식 — 내가 정한 범위를 하루 n장씩(normal) 이냐,
+   * 교회 리딩지저스 통독표를 그대로 따르느냐(readingJesus).
+   */
+  const [planMode, setPlanMode] = useState<"normal" | "readingJesus">("normal");
+  const [switchingMode, setSwitchingMode] = useState<boolean>(false);
+  /** 교회가 통독표의 어느 날부터 시작했는지 (오늘의 말씀 설정에서 관리자가 정한다) */
+  const [rjAnchor, setRjAnchor] = useState<RJAnchor | null>(null);
+  const [showRjScheduleModal, setShowRjScheduleModal] = useState<boolean>(false);
+  /** 전체 스케줄 팝업에서 보고 있는 달 (1~12) */
+  const [rjMonth, setRjMonth] = useState<number>(new Date().getMonth() + 1);
 
   // 원터치 성경 네비게이터 (구약/신약 탭 → 팝업에서 권 → 장 → 절)
   const [showNavModal, setShowNavModal] = useState<boolean>(false);
@@ -137,6 +164,17 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   }, [currentUser?.id]);
 
+  // 통독표의 시작 자리는 교회 전체가 같아야 한다 — 오늘의 말씀 설정에 정해 둔 것을 그대로 쓴다
+  useEffect(() => {
+    fetch("/api/bible-plan")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        setRjAnchor(rjValidAnchor({ planDate: d.rjPlanDate || "", startDate: d.rjStartDate || "" }));
+      })
+      .catch(() => { /* 못 받아오면 통독표 첫날 기준으로 본다 */ });
+  }, []);
+
   useEffect(() => {
     // Perform initial load if query or default is set
     if (initialQuery) {
@@ -187,6 +225,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setPlanScope(scopeOf(data));
         setReadingDays(readingDaysOf(data));
         setStartBook(startBookOf(data));
+        setPlanMode(data.planMode === "readingJesus" ? "readingJesus" : "normal");
 
         if (!initialQuery && data.lastReadBook && data.lastReadChapter) {
           const matchedBook = BIBLE_BOOKS.find(b => b.name === data.lastReadBook);
@@ -402,6 +441,33 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
+  /**
+   * 일반 통독 ↔ 리딩지저스 통독 플랜 전환.
+   *
+   * 목표 이름·장 수는 **건드리지 않는다**. 리딩지저스 모드일 때만 화면에서
+   * "리딩지저스 통독"으로 보여주므로, 되돌리면 원래 목표가 그대로 살아 있다.
+   */
+  const switchPlanMode = async (next: "normal" | "readingJesus") => {
+    if (!currentUser?.id || next === planMode) return;
+    setPlanMode(next); // 눌렀을 때 바로 바뀌게 (저장은 뒤따라간다)
+    setSwitchingMode(true);
+    try {
+      const res = await fetch("/api/bible-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id, planMode: next })
+      });
+      if (res.ok) {
+        const updated: UserBibleProgress = await res.json();
+        setUserProgress(updated);
+      }
+    } catch (err) {
+      console.error("통독 방식 저장 실패:", err);
+    } finally {
+      setSwitchingMode(false);
+    }
+  };
+
   const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser?.id) return;
@@ -515,6 +581,37 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
    */
   const weeklyPlan = React.useMemo(() => buildWeeklyPlan(userProgress), [userProgress]);
 
+  const isRJ = planMode === "readingJesus";
+
+  /** 읽은 장 모음 — 리딩지저스 표에서 완료 표시를 붙이는 데 쓴다 */
+  const completedSet = React.useMemo(
+    () => new Set(userProgress?.completedChapters || []),
+    [userProgress?.completedChapters]
+  );
+
+  /** 이번 주 월~일 통독표 (리딩지저스 모드에서 늘 보인다) */
+  const rjRows = React.useMemo(
+    () => rjWeek(new Date(), rjAnchor, completedSet),
+    [rjAnchor, completedSet]
+  );
+  const rjToday = React.useMemo(() => rjDayFor(new Date(), rjAnchor), [rjAnchor]);
+  const rjTodayIndex = React.useMemo(() => rjIndexFor(new Date(), rjAnchor), [rjAnchor]);
+  const rjMonthList = React.useMemo(() => rjMonths(), []);
+
+  const bookInfoOf = (name: string) => BIBLE_BOOKS.find((b) => b.name === name) || null;
+
+  /** 통독표의 한 줄을 눌러 그날 첫 장으로 넘어간다 */
+  const startRjRow = (chapters: RJChapter[]) => {
+    const first = chapters[0];
+    const book = first && bookInfoOf(first.book);
+    if (!book) return;
+    setShowRjScheduleModal(false);
+    setShowProgressModal(false);
+    setHighlightVerse(null);
+    setPendingScroll(true);
+    handleSelectBookChapter(book, first.chapter);
+  };
+
   /** 계획의 한 줄을 눌러 그 본문으로 바로 넘어간다 */
   const startPlanRow = (chapters: { book: BibleBookInfo; chapter: number }[]) => {
     const first = chapters[0];
@@ -531,18 +628,43 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
   // Calculate Progress Stats
   const completedCount = userProgress?.completedChapters?.length || 0;
-  const targetCount = userProgress?.targetChapters || TOTAL_BIBLE_CHAPTERS;
+  // 리딩지저스 모드에서는 통독표가 정한 분량이 곧 목표다 (목표 장 수 설정이 필요 없다)
+  const targetCount = isRJ
+    ? RJ_TOTAL_CHAPTERS
+    : userProgress?.targetChapters || TOTAL_BIBLE_CHAPTERS;
+  const goalTitleShown = isRJ ? READING_JESUS_TITLE : userProgress?.goalTitle || "1년 1독";
   const progressPercent = Math.min(100, Math.round((completedCount / targetCount) * 100));
 
   return (
     // 화면 어디를 눌러도 성경이 화면에 맞춰진다 (버튼·팝업은 제외 — alignReader 참고)
     <div className="space-y-4 sm:space-y-6" onClick={alignReader}>
-      {/* Page title — 다른 탭과 같은 자리, 같은 형식 */}
-      <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">성경 통독</h2>
-        <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">
-          {userProgress?.goalTitle || "1년 1독"} · 하루 {userProgress?.dailyTarget || 3}장
-        </p>
+      {/* Page title — 오른쪽 단추로 통독 플랜을 갈아 끼운다 */}
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">성경 통독</h2>
+          <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5 truncate">
+            {isRJ
+              ? `${READING_JESUS_TITLE} · 통독표 ${rjPlanDateLabel(rjToday)}`
+              : `${goalTitleShown} · 하루 ${userProgress?.dailyTarget || 3}장`}
+          </p>
+        </div>
+
+        {/* 리딩지저스 통독 플랜 ↔ 일반 통독. 켠 뒤에도 같은 자리에서 되돌릴 수 있다 */}
+        {currentUser && (
+          <button
+            type="button"
+            disabled={switchingMode}
+            onClick={() => switchPlanMode(isRJ ? "normal" : "readingJesus")}
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-3xl text-2xs sm:text-xs font-bold transition cursor-pointer disabled:opacity-60 ${
+              isRJ
+                ? "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                : "grad-forest text-white hover:brightness-110"
+            }`}
+          >
+            <Sparkles size={13} />
+            <span className="whitespace-nowrap">{isRJ ? "일반 통독" : "리딩지저스 통독 플랜"}</span>
+          </button>
+        )}
       </div>
 
       {/* 진행률 + 마지막 읽은 곳 + 구약/신약을 한 상자로 묶었다 (시안의 .nav-card) */}
@@ -557,10 +679,13 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           >
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-bold text-[#14261E]">
-                통독 진행률 {progressPercent}%
+                {isRJ ? "리딩지저스 통독 진행률" : "통독 진행률"} {progressPercent}%
               </span>
               <span className="block text-2xs text-[#6F8377] mt-0.5 truncate">
-                {completedCount}장 / {targetCount}장 · 하루 {userProgress?.dailyTarget || 3}장
+                {/* 리딩지저스는 하루 분량을 통독표가 정하므로 '하루 n장'을 적지 않는다 */}
+                {isRJ
+                  ? `${completedCount}장 / ${targetCount}장 · 통독표대로`
+                  : `${completedCount}장 / ${targetCount}장 · 하루 ${userProgress?.dailyTarget || 3}장`}
               </span>
               <span className="block w-full bg-[#E4E4E4] rounded-full h-1 overflow-hidden mt-1.5">
                 <span
@@ -619,6 +744,88 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </button>
         </div>
       </div>
+
+      {/* 리딩지저스 이번 주 표 — 팝업이 아니라 늘 화면에 있다.
+          월~일 한 줄씩, 누르면 그날 말씀으로 바로 넘어간다. */}
+      {isRJ && currentUser && (
+        <div className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <p className="text-sm font-bold text-[#14261E] flex items-center gap-1.5">
+              <CalendarDays size={15} className="text-[#4A6B57]" />
+              이번 주 통독표
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setRjMonth(Number(rjToday.date.slice(5, 7)));
+                setShowRjScheduleModal(true);
+              }}
+              className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-2xs font-bold text-[#195C50] hover:bg-[#F0F0F0] transition cursor-pointer"
+            >
+              전체 스케줄 확인
+              <ChevronRight size={13} />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            {rjRows.map((row) => {
+              const empty = row.chapters.length === 0;
+              return (
+                <button
+                  key={row.dateKey}
+                  type="button"
+                  disabled={empty}
+                  onClick={() => startRjRow(row.chapters)}
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
+                    empty ? "bg-[#FBFBFB] cursor-default" : "bg-white hover:bg-[#F0F0F0] cursor-pointer"
+                  } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
+                >
+                  {/* 다 읽은 날은 요일 동그라미에 불이 들어온다 */}
+                  <span
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                      row.done
+                        ? "grad-forest text-white"
+                        : row.when === "today"
+                        ? "bg-[#FFBA00] text-[#4A3600]"
+                        : "bg-[#EDEDED] text-[#6F8377]"
+                    }`}
+                  >
+                    {DAY_LABELS[row.weekday]}
+                  </span>
+
+                  <span className="flex-1 min-w-0">
+                    {/* 아직 안 읽은 날은 연하게, 읽은 날은 읽은 색으로 */}
+                    <span
+                      className={`block text-sm font-bold truncate ${
+                        empty ? "text-[#C7CFC8]" : row.done ? "text-[#195C50]" : "text-[#A8B3A9]"
+                      }`}
+                    >
+                      {rjDayLabel(row.day)}
+                    </span>
+                    {(row.done || row.when === "today" || empty) && (
+                      <span
+                        className={`block text-2xs mt-px font-bold ${
+                          row.done ? "text-[#195C50]" : "text-[#6F8377]"
+                        }`}
+                      >
+                        {row.done ? "완료" : empty ? (row.day.video ? "강해 영상" : "쉬는 날") : "오늘"}
+                      </span>
+                    )}
+                  </span>
+
+                  {row.done ? (
+                    <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
+                  ) : empty ? (
+                    <Video size={15} className="text-[#C7CFC8] shrink-0" />
+                  ) : (
+                    <BookOpen size={15} className="text-[#6F8377] shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 3. Main Bible Chapter Reader Display */}
       <div ref={readerRef} className="scroll-mt-4" />
@@ -1008,8 +1215,12 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       <SettingModal
         open={showProgressModal}
         onClose={() => setShowProgressModal(false)}
-        title="통독 진행률"
-        sub={userProgress?.goalTitle || "1년 1독 (전체 1,189장)"}
+        title={isRJ ? "리딩지저스 통독 진행률" : "통독 진행률"}
+        sub={
+          isRJ
+            ? `${READING_JESUS_TITLE} · 통독표가 날마다 읽을 분량을 정합니다`
+            : userProgress?.goalTitle || "1년 1독 (전체 1,189장)"
+        }
       >
         <div className="space-y-4">
           <div className="bg-[#F9F9F9] rounded-2xl p-4">
@@ -1026,13 +1237,18 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               />
             </div>
             <div className="flex justify-between items-center text-2xs text-[#6F8377] mt-2.5 font-medium">
-              <span>하루 권장 {userProgress?.dailyTarget || 3}장</span>
+              <span>
+                {isRJ
+                  ? `오늘 ${rjChaptersOf(rjToday).length > 0 ? rjRangeLabel(rjToday) : rjDayLabel(rjToday)}`
+                  : `하루 권장 ${userProgress?.dailyTarget || 3}장`}
+              </span>
               <span>남은 분량 {Math.max(0, targetCount - completedCount)}장</span>
             </div>
           </div>
 
-          {/* 읽기 계획 — 오늘부터 일주일. 하루 밀리면 다음 칸이 저절로 당겨진다 */}
-          <div>
+          {/* 읽기 계획 — 오늘부터 일주일. 하루 밀리면 다음 칸이 저절로 당겨진다.
+              리딩지저스 모드에서는 이번 주 표가 본 화면에 늘 나와 있으므로 여기서는 뺀다. */}
+          <div className={isRJ ? "hidden" : ""}>
             <div className="flex items-baseline justify-between gap-2 mb-2 ml-1">
               <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">앞으로 일주일 계획</p>
               <p className="text-2xs text-[#6F8377]">
@@ -1111,6 +1327,21 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </div>
 
           <div className="grid grid-cols-2 gap-2">
+            {/* 리딩지저스는 하루 장 수·목표 장 수를 정할 것이 없다 — 그 자리에 전체 스케줄을 둔다 */}
+            {isRJ ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setRjMonth(Number(rjToday.date.slice(5, 7)));
+                  setShowProgressModal(false);
+                  setShowRjScheduleModal(true);
+                }}
+                className="grad-forest flex items-center justify-center gap-1.5 py-3 rounded-2xl text-white text-sm font-bold transition cursor-pointer hover:brightness-110"
+              >
+                <CalendarDays size={15} />
+                전체 스케줄 확인
+              </button>
+            ) : (
             <button
               type="button"
               onClick={() => {
@@ -1122,6 +1353,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <Target size={15} />
               목표 설정
             </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -1133,6 +1365,86 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <ListChecks size={15} />
               통독 체크리스트
             </button>
+          </div>
+        </div>
+      </SettingModal>
+
+      {/* 리딩지저스 전체 스케줄 — 달을 골라 한 해 통독표를 통째로 본다.
+          한 줄을 누르면 그 말씀으로 바로 넘어간다. */}
+      <SettingModal
+        open={showRjScheduleModal}
+        onClose={() => setShowRjScheduleModal(false)}
+        title="리딩지저스 전체 스케줄"
+        sub={`${READING_JESUS_TITLE} 통독표 · 오늘은 ${rjPlanDateLabel(rjToday)}자 분량입니다`}
+      >
+        <div className="space-y-3">
+          {/* 달 고르기 */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-200">
+            {rjMonthList.map((m) => (
+              <button
+                key={m.month}
+                type="button"
+                onClick={() => setRjMonth(m.month)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition cursor-pointer ${
+                  rjMonth === m.month
+                    ? "grad-forest text-white"
+                    : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                }`}
+              >
+                {m.month}월
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            {(rjMonthList.find((m) => m.month === rjMonth)?.rows || []).map(({ index, day }) => {
+              const chapters = rjChaptersOf(day);
+              const empty = chapters.length === 0;
+              const done = !empty && chapters.every((c) => completedSet.has(c.key));
+              const isToday = index === rjTodayIndex;
+              return (
+                <button
+                  key={day.date}
+                  type="button"
+                  disabled={empty}
+                  onClick={() => startRjRow(chapters)}
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
+                    empty ? "bg-[#FBFBFB] cursor-default" : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
+                  } ${isToday ? "ring-2 ring-[#4A6B57]" : ""}`}
+                >
+                  <span
+                    className={`w-11 h-8 rounded-full flex items-center justify-center shrink-0 text-2xs font-bold ${
+                      done ? "grad-forest text-white" : isToday ? "bg-[#FFBA00] text-[#4A3600]" : "bg-[#EDEDED] text-[#6F8377]"
+                    }`}
+                  >
+                    {Number(day.date.slice(8, 10))}일
+                  </span>
+
+                  <span className="flex-1 min-w-0">
+                    <span
+                      className={`block text-sm font-bold truncate ${
+                        empty ? "text-[#C7CFC8]" : done ? "text-[#195C50]" : "text-[#A8B3A9]"
+                      }`}
+                    >
+                      {rjDayLabel(day)}
+                    </span>
+                    {(day.section || day.special) && (
+                      <span className="block text-2xs text-[#6F8377] mt-px truncate">
+                        {day.section ? `${day.section} 강해` : day.special}
+                      </span>
+                    )}
+                  </span>
+
+                  {done ? (
+                    <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
+                  ) : empty ? (
+                    <Video size={15} className="text-[#C7CFC8] shrink-0" />
+                  ) : (
+                    <BookOpen size={15} className="text-[#6F8377] shrink-0" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </SettingModal>

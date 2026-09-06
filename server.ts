@@ -10,6 +10,13 @@ import webpush from "web-push";
 import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community, ReadingChallenge, JournalEntry } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import {
+  rjChaptersOf,
+  rjDayFor,
+  rjRangeLabel,
+  rjValidAnchor,
+  RJAnchor
+} from "./src/lib/readingJesus.js";
+import {
   fetchFromFirestore,
   saveToFirestore,
   fetchCommunities,
@@ -1325,6 +1332,76 @@ function normalizePlanPosition(book: string, chapter: number): { book: string; c
 }
 
 /**
+ * 여러 장을 묶은 구절명을 장 목록으로 푼다.
+ *  "마가복음 11~16장"        → 마가복음 11,12,…,16장
+ *  "요엘 1장 ~ 아모스 3장"    → 요엘 1~3장 + 아모스 1~3장
+ *  "마가복음 11장"           → null (한 장짜리는 기존 조회기가 그대로 처리한다)
+ *
+ * 리딩지저스 통독표는 하루에 여러 장을 읽히기 때문에 이것이 필요해졌다.
+ */
+function parsePassageTitle(title: string): { book: string; chapter: number }[] | null {
+  const t = (title || "").trim();
+  const chaptersOf = (name: string) => BIBLE_BOOKS.find((b) => b.name === name)?.totalChapters || 0;
+
+  // 한 권 안에서 여러 장 — "마가복음 11~16장"
+  const same = t.match(/^(.+?)\s*(\d+)\s*[~-]\s*(\d+)\s*[장편]$/);
+  if (same) {
+    const book = same[1].trim();
+    const from = Number(same[2]);
+    const to = Number(same[3]);
+    const max = chaptersOf(book);
+    if (!max || from < 1 || to > max || to < from) return null;
+    const out: { book: string; chapter: number }[] = [];
+    for (let c = from; c <= to; c++) out.push({ book, chapter: c });
+    return out;
+  }
+
+  // 권이 바뀌는 범위 — "요엘 1장 ~ 아모스 3장"
+  const cross = t.match(/^(.+?)\s*(\d+)\s*[장편]\s*~\s*(.+?)\s*(\d+)\s*[장편]$/);
+  if (cross) {
+    const fi = BIBLE_BOOKS.findIndex((b) => b.name === cross[1].trim());
+    const li = BIBLE_BOOKS.findIndex((b) => b.name === cross[3].trim());
+    if (fi === -1 || li === -1 || li < fi) return null;
+    const from = Number(cross[2]);
+    const to = Number(cross[4]);
+    const out: { book: string; chapter: number }[] = [];
+    for (let i2 = fi; i2 <= li; i2++) {
+      const b = BIBLE_BOOKS[i2];
+      const s0 = i2 === fi ? from : 1;
+      const e0 = i2 === li ? to : b.totalChapters;
+      if (s0 < 1 || e0 > b.totalChapters || e0 < s0) return null;
+      for (let c = s0; c <= e0; c++) out.push({ book: b.name, chapter: c });
+    }
+    return out;
+  }
+
+  return null;
+}
+
+/**
+ * 여러 장을 한 덩어리 본문으로 잇는다.
+ * 장이 바뀌는 자리에는 권·장 이름만 적힌 줄을 넣는다 — 절 번호가 없는 줄이라
+ * 화면에서는 절이 아니라 소제목처럼 보인다.
+ */
+function buildPassageText(list: { book: string; chapter: number }[]): string {
+  const blocks: string[] = [];
+  for (const { book, chapter } of list) {
+    const looked = parseAndGenerateBibleText(book + ' ' + chapter + '장');
+    if (!looked?.text || !looked.text.trim()) continue;
+    blocks.push(list.length > 1 ? book + ' ' + chapter + '장\n' + looked.text : looked.text);
+  }
+  return blocks.join("\n\n");
+}
+
+/** 한 장이든 여러 장이든 구절명만으로 본문을 되살린다 */
+function lookupPassageText(title: string): string {
+  const many = parsePassageTitle(title);
+  if (many) return buildPassageText(many);
+  const looked = parseAndGenerateBibleText(title);
+  return looked?.text || "";
+}
+
+/**
  * 공지는 구절명(예: "요한2서 1장")만 저장하고 성경 본문은 저장하지 않는다.
  * 본문까지 DB 에 넣으면 공지 한 건마다 3~4KB 씩 쌓여 Firestore 문서(1MiB)가 결국 꽉 찬다.
  * 성경 본문은 서버가 이미 갖고 있으므로, 내보낼 때 그때그때 채워 넣는다.
@@ -1333,8 +1410,8 @@ function normalizePlanPosition(book: string, chapter: number): { book: string; c
 function withVerseText(n: Notice): Notice {
   if (n.verseText && n.verseText.trim()) return n;
   try {
-    const looked = parseAndGenerateBibleText(n.verseTitle);
-    if (looked?.text && looked.text.trim()) return { ...n, verseText: looked.text };
+    const text = lookupPassageText(n.verseTitle);
+    if (text && text.trim()) return { ...n, verseText: text };
   } catch (err) {
     console.warn("[공지] 성경 본문 복원 실패:", n.verseTitle, err);
   }
@@ -1344,8 +1421,7 @@ function withVerseText(n: Notice): Notice {
 /** 구절명만으로 본문을 되살릴 수 있으면 저장할 필요가 없다 */
 function canRebuildVerseText(verseTitle: string): boolean {
   try {
-    const looked = parseAndGenerateBibleText(verseTitle);
-    return !!(looked?.text && looked.text.trim().length > 20);
+    return lookupPassageText(verseTitle).trim().length > 20;
   } catch {
     return false;
   }
@@ -1447,8 +1523,100 @@ async function ensureTodayNotice(cid: string = DEFAULT_COMMUNITY_ID): Promise<No
   }
 }
 
+/** 통독표 설정에서 시작 자리를 꺼낸다 (안 정해 뒀으면 null → 통독표 첫날 기준) */
+function readingJesusAnchor(db: DatabaseSchema): RJAnchor | null {
+  const plan = db.biblePlan;
+  return rjValidAnchor({
+    planDate: plan?.rjPlanDate || "",
+    startDate: plan?.rjStartDate || ""
+  });
+}
+
+/**
+ * 리딩지저스 통독표를 따라 그날 분량 전체를 오늘의 말씀으로 올린다.
+ *
+ * 한 장씩 넘기는 방식과 다른 점:
+ *  · 진도를 서버가 세지 않는다 — 통독표가 날짜로 정한다. 하루 쉬어도 밀리지 않는다.
+ *  · 하루에 여러 장이 올라간다 ("마가복음 11~16장").
+ *  · 강해 영상만 있는 주일과 특별주간처럼 읽을 분량이 없는 날은 공지를 만들지 않는다.
+ *    (그런 날은 앞 공지가 그대로 남는다)
+ */
+async function autoPostReadingJesus(db: DatabaseSchema, todayStr: string): Promise<Notice | null> {
+  const plan = db.biblePlan!;
+  const [y, m, d] = todayStr.split("-").map(Number);
+  const day = rjDayFor(new Date(y, m - 1, d), readingJesusAnchor(db));
+  const chapters = rjChaptersOf(day);
+
+  if (chapters.length === 0) {
+    console.log(
+      `[리딩지저스] ${todayStr} 은 읽을 분량이 없는 날입니다 (${day.section || day.special || day.label}). 공지를 만들지 않습니다.`
+    );
+    return null;
+  }
+
+  const verseTitle = rjRangeLabel(day);
+  const verseText = buildPassageText(chapters);
+  if (!verseText.trim()) {
+    console.warn(`[리딩지저스] ${verseTitle} 본문을 찾지 못해 공지를 건너뜁니다.`);
+    return null;
+  }
+
+  console.log(`[리딩지저스] ${todayStr} 통독표 ${day.date} → ${verseTitle} (${chapters.length}장)`);
+
+  let content = `리딩지저스 통독표에 따라 오늘 읽을 말씀은 ${verseTitle} 입니다. 한 절씩 천천히 읽으며 주님의 마음을 헤아려 보세요.`;
+
+  if (ai) {
+    try {
+      const prompt = `성도들에게 오늘의 말씀 "${verseTitle}" 을 공지하려 합니다.
+
+이 범위 전체를 아우르는 목회적 묵상 가이드를 한국어로 작성해 주세요.
+역사적 배경, 성도들을 향한 따뜻한 하루 적용 질문, 은혜의 권면을 담아 주세요.
+성경 본문 자체는 이미 준비되어 있으니 본문은 옮겨 적지 마세요.
+
+꼭 아래의 JSON 형식으로 답변해주십시오:
+{
+  \"content\": \"이 범위 전체의 깊이 있는 목회적 가이드와 적용 질문\"
+}`;
+
+      const result = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
+      });
+
+      if (result && result.text) {
+        const parsed = JSON.parse(result.text.trim());
+        if (parsed.content) content = parsed.content;
+      }
+    } catch (err) {
+      console.error("[리딩지저스] 묵상 가이드 생성 실패, 기본 문구를 씁니다:", err);
+    }
+  }
+
+  const newNotice: Notice = {
+    id: "notice-" + Math.random().toString(36).substring(2, 11),
+    date: todayStr,
+    verseTitle,
+    // 구절명만으로 본문을 되살릴 수 있으면 저장하지 않는다 (DB 가 매일 커지는 것을 막는다)
+    verseText: canRebuildVerseText(verseTitle) ? "" : verseText,
+    content,
+    createdBy: "성경 플래너(자동)",
+    readBy: []
+  };
+
+  db.notices.unshift(newNotice);
+  // 진도는 통독표가 날짜로 정하므로 book/currentChapter 는 건드리지 않는다
+  plan.lastUpdatedDate = todayStr;
+  plan.updatedAt = new Date().toISOString();
+  saveDb(db);
+  return newNotice;
+}
+
 async function autoPostNextBibleChapter(db: DatabaseSchema, todayStr: string): Promise<Notice | null> {
   if (!db.biblePlan || !db.biblePlan.active) return null;
+
+  // 리딩지저스 통독표 방식은 진도를 세지 않고 날짜로 정한다
+  if (db.biblePlan.mode === "readingJesus") return autoPostReadingJesus(db, todayStr);
 
   const position = positionForNotice(db, todayStr);
   if (position.book !== db.biblePlan.book || position.chapter !== db.biblePlan.currentChapter) {
@@ -2345,13 +2513,18 @@ async function startServer() {
 
   app.post("/api/bible-plan", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { book, currentChapter, active } = req.body;
-    if (!book) {
+    const { book, currentChapter, active, mode, rjPlanDate, rjStartDate } = req.body;
+    const planMode = mode === "readingJesus" ? "readingJesus" : "chapter";
+    // 통독표 방식에서는 진도(권·장)를 쓰지 않으므로 책 이름을 요구하지 않는다
+    if (planMode === "chapter" && !book) {
       return res.status(400).json({ error: "성경 책 이름을 지정해주세요 (예: 요한복음)." });
     }
 
     // 그 책에 없는 장을 넣으면 다음 권으로 넘겨 잡아준다 (없는 장이 공지되는 것 방지)
-    const fixed = normalizePlanPosition(book.trim(), Number(currentChapter) || 1);
+    const fixed = normalizePlanPosition(
+      (book || db.biblePlan?.book || "요한복음").trim(),
+      Number(currentChapter) || db.biblePlan?.currentChapter || 1
+    );
     const prev = db.biblePlan;
     const moved = !prev || prev.book !== fixed.book || prev.currentChapter !== fixed.chapter;
 
@@ -2362,8 +2535,39 @@ async function startServer() {
       // 관리자가 위치를 옮겼으면 '아직 이 자리에서 공지한 적 없음' 상태로 되돌린다.
       // 그래야 공지 이력에 따른 자동 보정이 관리자의 지정을 덮어쓰지 않는다.
       lastUpdatedDate: moved ? undefined : prev?.lastUpdatedDate,
+      mode: planMode,
+      // 통독표에서 고른 시작 자리. 새로 고르면 그날부터 다시 센다.
+      ...(typeof rjPlanDate === "string" && rjPlanDate ? { rjPlanDate } : prev?.rjPlanDate ? { rjPlanDate: prev.rjPlanDate } : {}),
+      ...(typeof rjStartDate === "string" && rjStartDate
+        ? { rjStartDate }
+        : prev?.rjStartDate
+        ? { rjStartDate: prev.rjStartDate }
+        : {}),
       updatedAt: new Date().toISOString()
     };
+
+    /*
+      통독표 방식으로 바꾸거나 시작 자리를 새로 고르면, **오늘 것부터** 그 말씀이 올라가야 한다.
+      이미 자동으로 나간 오늘 공지는 걷어내고 다시 만들게 둔다.
+      (관리자가 손으로 쓴 공지는 createdBy 가 다르므로 건드리지 않는다)
+    */
+    const prevMode = prev?.mode === "readingJesus" ? "readingJesus" : "chapter";
+    const anchorChanged =
+      prevMode !== planMode ||
+      prev?.rjPlanDate !== db.biblePlan.rjPlanDate ||
+      prev?.rjStartDate !== db.biblePlan.rjStartDate;
+    // 한 장씩 방식은 진도를 이력으로 바로잡으므로 다시 만들 이유가 없다
+    if (db.biblePlan.active && planMode === "readingJesus" && anchorChanged) {
+      const today = getKSTDateString();
+      const before = db.notices.length;
+      db.notices = db.notices.filter(
+        (nt) => !(nt.date === today && nt.createdBy === "성경 플래너(자동)")
+      );
+      if (db.notices.length !== before) {
+        console.log(`[성경 플래너] 공지 방식이 바뀌어 ${today} 자동 공지를 다시 만듭니다.`);
+        db.biblePlan.lastUpdatedDate = undefined;
+      }
+    }
 
     saveDb(db);
     res.json(db.biblePlan);
@@ -3257,7 +3461,7 @@ JSON format:
 
   app.post("/api/bible-progress", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays, planStartBook } = req.body;
+    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays, planStartBook, planMode } = req.body;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
     if (!db.userBibleProgress) {
@@ -3288,6 +3492,9 @@ JSON format:
     }
     if (typeof planStartBook === "string") {
       progress.planStartBook = planStartBook.trim();
+    }
+    if (planMode === "normal" || planMode === "readingJesus") {
+      progress.planMode = planMode;
     }
     if (Array.isArray(readingDays)) {
       // 0=일 … 6=토. 중복과 이상한 값은 걸러내고 순서대로 둔다.

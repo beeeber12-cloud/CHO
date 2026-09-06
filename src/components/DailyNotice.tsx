@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Notice, User } from "../types";
-import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send } from "lucide-react";
+import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send, CalendarDays, Video, ChevronRight } from "lucide-react";
+import { SettingModal } from "./SettingsUI";
+import {
+  rjChaptersOf,
+  rjDateKey,
+  rjDayFor,
+  rjDayLabel,
+  rjIndexFor,
+  rjMonths,
+  rjPlanDateLabel,
+  rjValidAnchor,
+  RJAnchor
+} from "../lib/readingJesus";
+import { READING_JESUS_TITLE } from "../data/readingJesus";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
@@ -49,7 +62,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     // '요한1서'처럼 책 이름 안에 숫자가 있으므로 끝의 '장/편'을 기준으로 끊어야 한다.
     // (앞에서부터 첫 숫자를 집으면 '요한1서 7장'이 '요한 1장'으로 잘린다)
     const m = ref.match(/^(.+?)\s*(\d+)\s*[장편]\s*$/) || ref.match(/^(.+)\s+(\d+)\s*$/);
-    if (currentUser?.id && m) {
+    // 리딩지저스 통독표는 하루에 여러 장을 올린다("마태복음 1~3장").
+    // 그런 제목은 책 이름이 엉뚱하게 잘리므로 말씀 체크리스트에 남기지 않는다.
+    const isRange = /[~-]/.test(ref);
+    if (currentUser?.id && m && !isRange) {
       fetch("/api/saved-verses/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,6 +193,33 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
   const [plannerSaving, setPlannerSaving] = useState<boolean>(false);
   const [plannerMessage, setPlannerMessage] = useState<string>("");
 
+  /**
+   * 오늘의 말씀을 만드는 방식.
+   *  - chapter: 정한 권에서 하루 한 장씩 (예전부터 쓰던 방식)
+   *  - readingJesus: 교회 리딩지저스 통독표를 따라 그날 분량 전체
+   */
+  const [plannerMode, setPlannerMode] = useState<"chapter" | "readingJesus">("chapter");
+  /** 통독표에서 고른 시작 자리 (통독표의 날짜) */
+  const [rjPlanDate, setRjPlanDate] = useState<string>("");
+  /** 그 자리를 실제로 시작한 날 */
+  const [rjStartDate, setRjStartDate] = useState<string>("");
+  const [showRjPicker, setShowRjPicker] = useState<boolean>(false);
+  const [rjPickMonth, setRjPickMonth] = useState<number>(new Date().getMonth() + 1);
+
+  const rjMonthList = React.useMemo(() => rjMonths(), []);
+  const rjAnchor: RJAnchor | null = React.useMemo(
+    () => rjValidAnchor({ planDate: rjPlanDate, startDate: rjStartDate }),
+    [rjPlanDate, rjStartDate]
+  );
+  /** 지금 설정대로면 오늘 어떤 말씀이 올라가는지 */
+  const rjTodayDay = React.useMemo(() => rjDayFor(new Date(), rjAnchor), [rjAnchor]);
+  const rjTodayIndex = React.useMemo(() => rjIndexFor(new Date(), rjAnchor), [rjAnchor]);
+  /** 통독표에서 고른 그 날 (안 골랐으면 오늘 자리) */
+  const rjAnchorDay = React.useMemo(
+    () => rjMonthList.flatMap((m) => m.rows).find((r) => r.day.date === rjPlanDate)?.day || rjTodayDay,
+    [rjMonthList, rjPlanDate, rjTodayDay]
+  );
+
   useEffect(() => {
     fetchTodayNotice();
     if (currentUser.role === "admin") {
@@ -222,6 +265,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
         setPlannerBook(data.book);
         setPlannerChapter(data.currentChapter);
         setPlannerActive(data.active);
+        setPlannerMode(data.mode === "readingJesus" ? "readingJesus" : "chapter");
+        setRjPlanDate(data.rjPlanDate || "");
+        setRjStartDate(data.rjStartDate || "");
       }
     } catch (err) {
       console.error("Failed to fetch bible plan:", err);
@@ -239,7 +285,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
         body: JSON.stringify({
           book: plannerBook,
           currentChapter: plannerChapter,
-          active: plannerActive
+          active: plannerActive,
+          mode: plannerMode,
+          rjPlanDate,
+          rjStartDate
         })
       });
       if (res.ok) {
@@ -363,8 +412,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             onClick={() => setShowPlannerConfig(!showPlannerConfig)}
             className="flex items-center justify-between w-full text-xs font-bold text-[#0C3B2E] hover:text-[#4A6B57] transition cursor-pointer"
           >
-            <span className="flex items-center gap-1.5">
-              📖 말씀 일일 자동 공지 플래너 설정
+            <span className="flex items-center gap-1.5 min-w-0">
+              <span className="truncate">
+                📖 말씀 일일 자동 공지 {plannerMode === "readingJesus" ? `(${READING_JESUS_TITLE})` : "플래너 설정"}
+              </span>
               {plannerActive ? (
                 <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs px-2 py-0.5 rounded-full font-bold">활성화됨</span>
               ) : (
@@ -383,11 +434,71 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 onSubmit={handleSaveBiblePlan}
                 className="mt-3.5 pt-3.5 border-t border-[#E3E9E2] space-y-3 text-xs"
               >
+                {/* 어떤 방식으로 공지할지 먼저 고른다 */}
+                <div>
+                  <label className="block text-2xs font-bold text-[#6F8377] mb-1.5">공지 방식</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { key: "chapter" as const, label: "한 장씩 자동 공지" },
+                      { key: "readingJesus" as const, label: "리딩지저스 통독표" }
+                    ]).map((m) => (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => setPlannerMode(m.key)}
+                        className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                          plannerMode === m.key
+                            ? "grad-forest text-white"
+                            : "bg-white text-[#4A6B57] hover:bg-[#EDEDED]"
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <p className="text-[#6F8377] leading-relaxed">
-                  설정한 성경책에서 매일 새로운 하루가 시작될 때 <strong>한 장씩</strong> 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 말씀 본문을 조회하고 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다).
+                  {plannerMode === "readingJesus"
+                    ? "교회 리딩지저스 통독표를 그대로 따릅니다. 고른 날짜부터 하루하루 그날 분량 전체(예: 마태복음 1~3장)가 오늘의 말씀으로 올라갑니다. 강해 영상만 있는 주일과 특별주간처럼 읽을 분량이 없는 날은 앞 공지가 그대로 남습니다."
+                    : "설정한 성경책에서 매일 새로운 하루가 시작될 때 한 장씩 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다)."}
                 </p>
 
-                <div className="grid grid-cols-2 gap-3">
+                {/* 리딩지저스 — 통독표에서 시작할 날을 고른다 */}
+                {plannerMode === "readingJesus" && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRjPickMonth(Number((rjPlanDate || rjTodayDay.date).slice(5, 7)));
+                        setShowRjPicker(true);
+                      }}
+                      className="w-full flex items-center gap-3 p-3 bg-white hover:bg-[#EDEDED] rounded-2xl transition cursor-pointer text-left"
+                    >
+                      <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                        <CalendarDays size={17} />
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-2xs text-[#6F8377]">시작할 통독표 날짜</span>
+                        <span className="block text-xs font-bold text-[#14261E] truncate">
+                          {rjAnchor
+                            ? `통독표 ${rjPlanDateLabel(rjAnchorDay)}부터 · ${rjStartDate} 시작`
+                            : "아직 고르지 않음 (통독표 1월 1일 기준)"}
+                        </span>
+                      </span>
+                      <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
+                    </button>
+
+                    {/* 지금 설정대로면 오늘 무엇이 올라가는지 바로 보여준다 */}
+                    <p className="mt-2 text-2xs text-[#4A6B57] bg-white rounded-xl px-3 py-2 font-bold">
+                      오늘 올라갈 말씀: {rjChaptersOf(rjTodayDay).length > 0
+                        ? rjDayLabel(rjTodayDay)
+                        : `${rjDayLabel(rjTodayDay)} (읽을 분량 없음 — 공지하지 않습니다)`}
+                    </p>
+                  </div>
+                )}
+
+                <div className={`grid grid-cols-2 gap-3 ${plannerMode === "readingJesus" ? "hidden" : ""}`}>
                   <div>
                     <label className="block text-2xs font-bold text-[#6F8377] mb-1">성경 책 설정 (한글명)</label>
                     <input
@@ -421,7 +532,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                     className="w-4 h-4 rounded border-[#E3E9E2] text-[#4A6B57] focus:ring-[#4A6B57] cursor-pointer"
                   />
                   <label htmlFor="plannerActive" className="font-bold text-[#0C3B2E] cursor-pointer">
-                    매일 자동으로 한 장씩 공지 활성화하기 (체크 시 자동 공지 시작)
+                    {plannerMode === "readingJesus"
+                      ? "매일 통독표대로 자동 공지 활성화하기 (체크 시 자동 공지 시작)"
+                      : "매일 자동으로 한 장씩 공지 활성화하기 (체크 시 자동 공지 시작)"}
                   </label>
                 </div>
 
@@ -439,6 +552,89 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             )}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* 통독표에서 시작할 날 고르기 — 고른 날짜부터 오늘의 말씀이 그날 분량으로 올라간다 */}
+      {currentUser.role === "admin" && (
+        <SettingModal
+          open={showRjPicker}
+          onClose={() => setShowRjPicker(false)}
+          title="시작할 통독표 날짜 선택"
+          sub="고른 날의 분량이 오늘 올라가고, 그 다음 날부터 통독표를 하루씩 따라갑니다."
+        >
+          <div className="space-y-3">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-200">
+              {rjMonthList.map((m) => (
+                <button
+                  key={m.month}
+                  type="button"
+                  onClick={() => setRjPickMonth(m.month)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition cursor-pointer ${
+                    rjPickMonth === m.month
+                      ? "grad-forest text-white"
+                      : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                  }`}
+                >
+                  {m.month}월
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              {(rjMonthList.find((m) => m.month === rjPickMonth)?.rows || []).map(({ index, day }) => {
+                const empty = rjChaptersOf(day).length === 0;
+                const picked = rjPlanDate === day.date;
+                const isToday = index === rjTodayIndex;
+                return (
+                  <button
+                    key={day.date}
+                    type="button"
+                    onClick={() => {
+                      setRjPlanDate(day.date);
+                      setRjStartDate(rjDateKey(new Date()));
+                      setShowRjPicker(false);
+                    }}
+                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition cursor-pointer ${
+                      picked ? "grad-forest text-white" : "bg-[#F9F9F9] hover:bg-[#F0F0F0]"
+                    } ${!picked && isToday ? "ring-2 ring-[#4A6B57]" : ""}`}
+                  >
+                    <span
+                      className={`w-11 h-8 rounded-full flex items-center justify-center shrink-0 text-2xs font-bold ${
+                        picked ? "bg-white/25 text-white" : "bg-[#EDEDED] text-[#6F8377]"
+                      }`}
+                    >
+                      {Number(day.date.slice(8, 10))}일
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span
+                        className={`block text-sm font-bold truncate ${
+                          picked ? "text-white" : empty ? "text-[#C7CFC8]" : "text-[#14261E]"
+                        }`}
+                      >
+                        {rjDayLabel(day)}
+                      </span>
+                      {(day.section || day.special) && (
+                        <span
+                          className={`block text-2xs mt-px truncate ${
+                            picked ? "text-white/80" : "text-[#6F8377]"
+                          }`}
+                        >
+                          {day.section ? `${day.section} 강해` : day.special}
+                        </span>
+                      )}
+                    </span>
+                    {empty && (
+                      <Video
+                        size={15}
+                        className={picked ? "text-white/80 shrink-0" : "text-[#C7CFC8] shrink-0"}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </SettingModal>
       )}
 
       <AnimatePresence mode="wait">

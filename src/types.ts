@@ -115,6 +115,16 @@ export interface BiblePlan {
    * 이게 없으면 원격의 옛 진도가 방금 넘긴 장을 덮어써서 같은 장이 반복된다.
    */
   updatedAt?: string;
+  /**
+   * 오늘의 말씀을 만드는 방식.
+   *  - chapter(기본): 정한 권에서 하루 한 장씩
+   *  - readingJesus: 리딩지저스 통독표를 따라 그날 분량 전체
+   */
+  mode?: 'chapter' | 'readingJesus';
+  /** 리딩지저스 통독표에서 고른 시작 자리 ("2025-08-24") */
+  rjPlanDate?: string;
+  /** 그 자리를 실제로 시작한 날 ("2026-09-06") */
+  rjStartDate?: string;
 }
 
 export interface UserBibleProgress {
@@ -139,6 +149,12 @@ export interface UserBibleProgress {
    * 이게 없으면 지난 요일 칸에 무엇을 읽었는지 지어내야 한다.
    */
   readLog?: Record<string, string[]>;
+  /**
+   * 통독을 어떤 방식으로 하는지.
+   *  - normal(기본): 내가 정한 범위를 하루 n장씩
+   *  - readingJesus: 교회 리딩지저스 통독표를 그대로 따른다
+   */
+  planMode?: 'normal' | 'readingJesus';
   updatedAt: string;
 }
 
