@@ -3238,14 +3238,14 @@ JSON format:
 
   app.post("/api/bible-progress", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter } = req.body;
+    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays } = req.body;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
     if (!db.userBibleProgress) {
       db.userBibleProgress = {};
     }
 
-    let progress = db.userBibleProgress[userId] || {
+    let progress: UserBibleProgress = db.userBibleProgress[userId] || {
       userId,
       goalTitle: "1년 1독 (전체 1,189장)",
       targetChapters: 1189,
@@ -3264,14 +3264,36 @@ JSON format:
     if (completedChapters !== undefined && Array.isArray(completedChapters)) {
       progress.completedChapters = completedChapters;
     }
+    if (planScope === "all" || planScope === "OT" || planScope === "NT") {
+      progress.planScope = planScope;
+    }
+    if (Array.isArray(readingDays)) {
+      // 0=일 … 6=토. 중복과 이상한 값은 걸러내고 순서대로 둔다.
+      progress.readingDays = [...new Set(readingDays.map(Number))]
+        .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        .sort((a, b) => a - b);
+    }
 
     if (toggleChapter && typeof toggleChapter === "string") {
+      // 오늘 무엇을 읽었는지도 함께 남긴다.
+      // 주간 계획에서 "월요일에 1~3장 읽음"을 지어내지 않고 그대로 보여주기 위한 것.
+      const today = getKSTDateString();
+      if (!progress.readLog) progress.readLog = {};
+      const todayList = progress.readLog[today] || [];
+
       const idx = progress.completedChapters.indexOf(toggleChapter);
       if (idx === -1) {
         progress.completedChapters.push(toggleChapter);
+        if (!todayList.includes(toggleChapter)) todayList.push(toggleChapter);
       } else {
         progress.completedChapters.splice(idx, 1);
+        // 오늘 표시한 것을 되돌린 경우에만 오늘 기록에서 지운다.
+        // (며칠 전에 읽은 장을 오늘 해제해도 그날 기록은 건드리지 않는다)
+        const inToday = todayList.indexOf(toggleChapter);
+        if (inToday !== -1) todayList.splice(inToday, 1);
       }
+      if (todayList.length > 0) progress.readLog[today] = todayList;
+      else delete progress.readLog[today];
     }
 
     progress.updatedAt = new Date().toISOString();

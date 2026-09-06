@@ -125,6 +125,18 @@ export interface UserBibleProgress {
   lastReadBook: string; // e.g. "요한복음"
   lastReadChapter: number; // e.g. 1
   completedChapters: string[]; // e.g. ["창세기 1", "요한복음 1"]
+  /**
+   * 통독할 범위. 주간 계획에서 "다음에 읽을 장"을 순서대로 뽑을 때 쓴다.
+   * 없으면 targetChapters 로 미루어 짐작한다 (예전 자료 호환).
+   */
+  planScope?: 'all' | 'OT' | 'NT';
+  /** 읽기로 정한 요일 (0=일 … 6=토). 없으면 월~금으로 본다. */
+  readingDays?: number[];
+  /**
+   * 날짜별로 그날 읽은 장. "월요일에 1~3장 읽었다"를 그대로 보여주기 위한 기록.
+   * 이게 없으면 지난 요일 칸에 무엇을 읽었는지 지어내야 한다.
+   */
+  readLog?: Record<string, string[]>;
   updatedAt: string;
 }
 

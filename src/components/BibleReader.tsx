@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw } from "lucide-react";
+import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw, Settings, Check, Play } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
 import ModalPortal from "./ModalPortal";
 import { motion, AnimatePresence } from "motion/react";
@@ -12,6 +12,14 @@ import { useSwipe } from "../lib/useSwipe";
 import { useKeepAwake } from "../lib/keepAwake";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
+import {
+  buildWeeklyPlan,
+  rangeLabel,
+  readingDaysOf,
+  scopeOf,
+  DAY_LABELS,
+  PlanScope
+} from "../lib/readingPlan";
 
 interface BibleReaderProps {
   currentUser?: { id: string; name: string; role: 'admin' | 'member' };
@@ -59,6 +67,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [targetChapters, setTargetChapters] = useState<number>(TOTAL_BIBLE_CHAPTERS);
   const [dailyTarget, setDailyTarget] = useState<number>(3);
   const [savingGoal, setSavingGoal] = useState<boolean>(false);
+  /** 통독 범위 — 주간 계획에서 다음에 읽을 장을 뽑는 기준 */
+  const [planScope, setPlanScope] = useState<PlanScope>("all");
+  /** 읽기로 정한 요일 (0=일 … 6=토) */
+  const [readingDays, setReadingDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
   // 원터치 성경 네비게이터 (구약/신약 탭 → 팝업에서 권 → 장 → 절)
   const [showNavModal, setShowNavModal] = useState<boolean>(false);
@@ -167,6 +179,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setGoalTitle(data.goalTitle);
         setTargetChapters(data.targetChapters);
         setDailyTarget(data.dailyTarget);
+        setPlanScope(scopeOf(data));
+        setReadingDays(readingDaysOf(data));
 
         if (!initialQuery && data.lastReadBook && data.lastReadChapter) {
           const matchedBook = BIBLE_BOOKS.find(b => b.name === data.lastReadBook);
@@ -395,7 +409,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           userId: currentUser.id,
           goalTitle: goalTitle.trim(),
           targetChapters: Number(targetChapters),
-          dailyTarget: Number(dailyTarget)
+          dailyTarget: Number(dailyTarget),
+          planScope,
+          readingDays
         })
       });
 
@@ -486,6 +502,22 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     togglePickedVerse(num, body);
   };
 
+  /**
+   * 이번 주 계획.
+   * 하루 밀리면 다음 칸이 저절로 당겨진다 (자세한 규칙은 lib/readingPlan.ts).
+   */
+  const weeklyPlan = React.useMemo(() => buildWeeklyPlan(userProgress), [userProgress]);
+
+  /** 계획의 한 줄을 눌러 그 본문으로 바로 넘어간다 */
+  const startPlanRow = (chapters: { book: BibleBookInfo; chapter: number }[]) => {
+    const first = chapters[0];
+    if (!first) return;
+    setShowProgressModal(false);
+    setHighlightVerse(null);
+    setPendingScroll(true);
+    handleSelectBookChapter(first.book, first.chapter);
+  };
+
   // Calculate current chapter key
   const currentChapterKey = `${selectedBook.name} ${selectedChapter}장`;
   const isCurrentChapterCompleted = userProgress?.completedChapters?.includes(currentChapterKey) || false;
@@ -516,9 +548,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             onClick={() => setShowProgressModal(true)}
             className="w-full flex items-center gap-3 text-left cursor-pointer"
           >
-            <span className="w-[34px] h-[34px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-              <Target size={17} />
-            </span>
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-bold text-[#14261E]">
                 통독 진행률 {progressPercent}%
@@ -533,7 +562,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 />
               </span>
             </span>
-            <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+            {/* 꺾쇠 대신 설정 아이콘 — 눌러서 통독 설정으로 들어간다는 뜻이 더 분명하다 */}
+            <span className="w-9 h-9 rounded-full bg-white text-[#4A6B57] flex items-center justify-center shrink-0">
+              <Settings size={17} />
+            </span>
           </button>
         )}
 
@@ -950,6 +982,86 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             </div>
           </div>
 
+          {/* 이번 주 계획 — 요일마다 읽을 범위. 하루 밀리면 다음 칸이 당겨진다 */}
+          <div>
+            <div className="flex items-baseline justify-between gap-2 mb-2 ml-1">
+              <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">이번 주 계획</p>
+              <p className="text-2xs text-[#6F8377]">
+                {readingDaysOf(userProgress).map((d) => DAY_LABELS[d]).join("·")} · 하루{" "}
+                {userProgress?.dailyTarget || 3}장
+              </p>
+            </div>
+
+            {weeklyPlan.finished ? (
+              <p className="text-xs text-[#0C3B2E] bg-[#E8F0E9] rounded-2xl p-3.5 font-bold text-center">
+                통독을 다 마치셨습니다. 수고 많으셨습니다 🎉
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {weeklyPlan.rows.map((row) => {
+                  const empty = row.chapters.length === 0;
+                  return (
+                    <button
+                      key={row.dateKey}
+                      type="button"
+                      disabled={empty}
+                      onClick={() => startPlanRow(row.chapters)}
+                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
+                        empty
+                          ? "bg-[#FBFBFB] cursor-default"
+                          : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
+                      } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
+                    >
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                          row.done
+                            ? "grad-forest text-white"
+                            : row.when === "today"
+                            ? "bg-[#FFBA00] text-[#4A3600]"
+                            : "bg-[#EDEDED] text-[#6F8377]"
+                        }`}
+                      >
+                        {row.done ? <Check size={15} className="stroke-[3px]" /> : row.label}
+                      </span>
+
+                      <span className="flex-1 min-w-0">
+                        <span
+                          className={`block text-sm font-bold truncate ${
+                            empty ? "text-[#A8B3A9]" : "text-[#14261E]"
+                          }`}
+                        >
+                          {empty ? "읽지 못한 날" : rangeLabel(row.chapters)}
+                        </span>
+                        <span className="block text-2xs text-[#6F8377] mt-px">
+                          {row.done
+                            ? "읽기 완료"
+                            : row.when === "today"
+                            ? "오늘 읽을 차례"
+                            : row.when === "past"
+                            ? "지나간 날"
+                            : `${row.label}요일`}
+                        </span>
+                      </span>
+
+                      {!empty && !row.done && (
+                        <span
+                          className={`shrink-0 flex items-center gap-1 text-2xs font-bold px-2.5 py-1.5 rounded-full ${
+                            row.when === "today"
+                              ? "grad-forest text-white"
+                              : "bg-white text-[#4A6B57]"
+                          }`}
+                        >
+                          <Play size={11} fill="currentColor" />
+                          읽기 시작
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -1024,6 +1136,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setGoalTitle("1년 1독 (전체 1,189장)");
                         setTargetChapters(1189);
                         setDailyTarget(3);
+                        setPlanScope("all");
                       }}
                       className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 1189 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
@@ -1037,6 +1150,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setGoalTitle("신약 통독 (260장)");
                         setTargetChapters(260);
                         setDailyTarget(2);
+                        setPlanScope("NT");
                       }}
                       className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 260 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
@@ -1050,6 +1164,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setGoalTitle("구약 통독 (929장)");
                         setTargetChapters(929);
                         setDailyTarget(3);
+                        setPlanScope("OT");
                       }}
                       className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 929 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
@@ -1080,6 +1195,60 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     max={50}
                     required
                   />
+                </div>
+
+                {/* 읽는 요일 — 이 요일들에만 주간 계획이 잡힌다 */}
+                <div>
+                  <label className="block font-bold text-[#0C3B2E] mb-1">읽는 요일</label>
+                  <div className="grid grid-cols-7 gap-1.5 mb-2">
+                    {DAY_LABELS.map((label, day) => {
+                      const on = readingDays.includes(day);
+                      const weekend = day === 0 || day === 6;
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() =>
+                            setReadingDays((prev) =>
+                              prev.includes(day)
+                                ? prev.filter((d) => d !== day)
+                                : [...prev, day].sort((a, b) => a - b)
+                            )
+                          }
+                          className={`h-10 rounded-2xl text-sm font-bold transition cursor-pointer ${
+                            on
+                              ? "grad-forest text-white"
+                              : weekend
+                              ? "bg-[#F5F5F5] text-[#B3261E] hover:bg-[#EDEDED]"
+                              : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#EDEDED]"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {([
+                      { label: "월~금", days: [1, 2, 3, 4, 5] },
+                      { label: "월~토", days: [1, 2, 3, 4, 5, 6] },
+                      { label: "월~일 (매일)", days: [0, 1, 2, 3, 4, 5, 6] }
+                    ] as const).map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setReadingDays([...preset.days])}
+                        className="px-3 py-1.5 rounded-full bg-[#F5F5F5] hover:bg-[#D2DDD3] text-2xs font-bold text-[#4A6B57] transition cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                  {readingDays.length === 0 && (
+                    <p className="text-2xs text-[#8F1E17] mt-1.5">
+                      하루도 고르지 않으면 주간 계획이 비어 있게 됩니다.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-[#E3E9E2]">
