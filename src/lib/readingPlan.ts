@@ -37,9 +37,25 @@ export function readingDaysOf(progress: UserBibleProgress | null | undefined): n
   return d && d.length > 0 ? [...d].sort((a, b) => a - b) : DEFAULT_READING_DAYS;
 }
 
-/** 정한 범위의 모든 장을 성경 순서대로 늘어놓는다 (창 1장 → … → 계 22장) */
-export function planSequence(scope: PlanScope): PlanChapter[] {
+/** 그 범위에서 통독을 시작할 권 (정해둔 것이 없으면 첫 권) */
+export function startBookOf(progress: UserBibleProgress | null | undefined): string {
+  const scope = scopeOf(progress);
   const books = BIBLE_BOOKS.filter((b) => scope === "all" || b.testament === scope);
+  const picked = progress?.planStartBook;
+  if (picked && books.some((b) => b.name === picked)) return picked;
+  return books[0]?.name || "창세기";
+}
+
+/**
+ * 정한 범위의 장을 성경 순서대로 늘어놓는다 (창 1장 → … → 계 22장).
+ * startBook 을 주면 그 권부터 시작한다 — 앞쪽 권은 이번 통독에 넣지 않는다.
+ */
+export function planSequence(scope: PlanScope, startBook?: string): PlanChapter[] {
+  let books = BIBLE_BOOKS.filter((b) => scope === "all" || b.testament === scope);
+  if (startBook) {
+    const from = books.findIndex((b) => b.name === startBook);
+    if (from > 0) books = books.slice(from);
+  }
   const out: PlanChapter[] = [];
   for (const book of books) {
     for (let c = 1; c <= book.chapters; c++) {
@@ -62,14 +78,6 @@ export function rangeLabel(chapters: PlanChapter[]): string {
   return `${first.book.name} ${first.chapter}장 ~ ${last.book.name} ${last.chapter}장`;
 }
 
-/** 그 주의 월요일 0시 (한국 시간 기준으로 도는 기기의 오늘을 그대로 쓴다) */
-function startOfWeek(today: Date): Date {
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const shift = (d.getDay() + 6) % 7; // 월요일을 주의 시작으로
-  d.setDate(d.getDate() - shift);
-  return d;
-}
-
 export function dateKey(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
@@ -81,7 +89,7 @@ export interface PlanRow {
   label: string;
   date: Date;
   dateKey: string;
-  when: "past" | "today" | "future";
+  when: "today" | "future";
   /** 이 칸에서 읽을(또는 읽은) 장들. 다 읽어서 남은 게 없으면 빈 배열 */
   chapters: PlanChapter[];
   /** 그 장들을 전부 읽었는지 */
@@ -112,7 +120,7 @@ export function buildWeeklyPlan(
   const scope = scopeOf(progress);
   const days = readingDaysOf(progress);
   const perDay = Math.max(1, Number(progress?.dailyTarget) || 3);
-  const sequence = planSequence(scope);
+  const sequence = planSequence(scope, startBookOf(progress));
   const completed = new Set(progress?.completedChapters || []);
   const readLog = progress?.readLog || {};
 
@@ -120,47 +128,38 @@ export function buildWeeklyPlan(
   // 아직 안 읽은 장들 — 성경 순서 그대로. 여기서 앞에서부터 하루치씩 떼어 준다.
   const remaining = sequence.filter((c) => !completed.has(c.key));
 
-  const monday = startOfWeek(today);
   const todayKey = dateKey(today);
 
   let cursor = 0;
   const rows: PlanRow[] = [];
 
+  /**
+   * **오늘부터 앞으로 일주일**만 보여준다.
+   * 지나간 날은 넣지 않는다 — 이미 지난 칸은 할 일이 아니라서 눈만 어지럽힌다.
+   */
   for (let i = 0; i < 7; i++) {
-    const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
     const weekday = date.getDay();
     if (!days.includes(weekday)) continue;
 
     const key = dateKey(date);
-    const when: PlanRow["when"] = key === todayKey ? "today" : key < todayKey ? "past" : "future";
+    const when: PlanRow["when"] = key === todayKey ? "today" : "future";
 
-    let chapters: PlanChapter[];
-    let done: boolean;
+    // 아직 안 읽은 것부터 하루치씩 — 하루 밀리면 다음 칸이 저절로 당겨진다
+    let chapters = remaining.slice(cursor, cursor + perDay);
+    cursor += chapters.length;
+    let done = false;
 
-    if (when === "past") {
-      // 지난 날은 그날 실제로 읽은 것만. 지어내지 않는다.
-      chapters = (readLog[key] || [])
+    // 오늘 이미 하루치를 다 읽었다면, 읽은 것을 보여주고 완료로 표시한다
+    if (when === "today") {
+      const readToday = (readLog[key] || [])
         .map((k) => byKey.get(k))
-        .filter((c): c is PlanChapter => !!c)
-        .sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
-      done = chapters.length > 0;
-    } else {
-      // 오늘·앞으로는 아직 안 읽은 것부터 하루치씩
-      chapters = remaining.slice(cursor, cursor + perDay);
-      cursor += chapters.length;
-      done = false;
-
-      // 오늘 이미 하루치를 다 읽었다면, 읽은 것을 보여주고 완료로 표시한다
-      if (when === "today") {
-        const readToday = (readLog[key] || [])
-          .map((k) => byKey.get(k))
-          .filter((c): c is PlanChapter => !!c);
-        if (readToday.length >= perDay || (chapters.length === 0 && readToday.length > 0)) {
-          chapters = readToday.sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
-          cursor -= perDay; // 오늘 몫으로 떼어 뒀던 것은 내일 칸으로 돌려준다
-          if (cursor < 0) cursor = 0;
-          done = true;
-        }
+        .filter((c): c is PlanChapter => !!c);
+      if (readToday.length >= perDay || (chapters.length === 0 && readToday.length > 0)) {
+        chapters = readToday.sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
+        cursor -= perDay; // 오늘 몫으로 떼어 뒀던 것은 내일 칸으로 돌려준다
+        if (cursor < 0) cursor = 0;
+        done = true;
       }
     }
 

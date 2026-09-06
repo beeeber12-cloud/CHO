@@ -132,6 +132,8 @@ export interface UserBibleProgress {
   planScope?: 'all' | 'OT' | 'NT';
   /** 읽기로 정한 요일 (0=일 … 6=토). 없으면 월~금으로 본다. */
   readingDays?: number[];
+  /** 통독을 시작할 권 ("마태복음"). 없으면 범위의 첫 권부터. */
+  planStartBook?: string;
   /**
    * 날짜별로 그날 읽은 장. "월요일에 1~3장 읽었다"를 그대로 보여주기 위한 기록.
    * 이게 없으면 지난 요일 칸에 무엇을 읽었는지 지어내야 한다.

@@ -3238,7 +3238,7 @@ JSON format:
 
   app.post("/api/bible-progress", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays } = req.body;
+    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays, planStartBook } = req.body;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
     if (!db.userBibleProgress) {
@@ -3266,6 +3266,9 @@ JSON format:
     }
     if (planScope === "all" || planScope === "OT" || planScope === "NT") {
       progress.planScope = planScope;
+    }
+    if (typeof planStartBook === "string") {
+      progress.planStartBook = planStartBook.trim();
     }
     if (Array.isArray(readingDays)) {
       // 0=일 … 6=토. 중복과 이상한 값은 걸러내고 순서대로 둔다.

@@ -14,9 +14,11 @@ import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleB
 import { UserBibleProgress } from "../types";
 import {
   buildWeeklyPlan,
+  planSequence,
   rangeLabel,
   readingDaysOf,
   scopeOf,
+  startBookOf,
   DAY_LABELS,
   PlanScope
 } from "../lib/readingPlan";
@@ -71,6 +73,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [planScope, setPlanScope] = useState<PlanScope>("all");
   /** 읽기로 정한 요일 (0=일 … 6=토) */
   const [readingDays, setReadingDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  /** 통독을 시작할 권 */
+  const [startBook, setStartBook] = useState<string>("창세기");
+  const [showStartBookModal, setShowStartBookModal] = useState<boolean>(false);
 
   // 원터치 성경 네비게이터 (구약/신약 탭 → 팝업에서 권 → 장 → 절)
   const [showNavModal, setShowNavModal] = useState<boolean>(false);
@@ -181,6 +186,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setDailyTarget(data.dailyTarget);
         setPlanScope(scopeOf(data));
         setReadingDays(readingDaysOf(data));
+        setStartBook(startBookOf(data));
 
         if (!initialQuery && data.lastReadBook && data.lastReadChapter) {
           const matchedBook = BIBLE_BOOKS.find(b => b.name === data.lastReadBook);
@@ -411,7 +417,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           targetChapters: Number(targetChapters),
           dailyTarget: Number(dailyTarget),
           planScope,
-          readingDays
+          readingDays,
+          planStartBook: startBook
         })
       });
 
@@ -955,6 +962,48 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       </AnimatePresence>
       </ModalPortal>
 
+      {/* 시작할 말씀 고르기 — 목표 설정에서 연다 */}
+      <SettingModal
+        open={showStartBookModal}
+        onClose={() => setShowStartBookModal(false)}
+        title="시작할 말씀 선택"
+        sub="고른 권의 1장부터 통독을 시작합니다. 목표 장 수도 거기에 맞춰 다시 셉니다."
+      >
+        <div className="space-y-4">
+          {(["OT", "NT"] as const)
+            .filter((t) => planScope === "all" || planScope === t)
+            .map((testament) => (
+              <div key={testament}>
+                <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1">
+                  {testament === "OT" ? "구약 (39권)" : "신약 (27권)"}
+                </p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                  {BIBLE_BOOKS.filter((b) => b.testament === testament).map((b) => {
+                    const on = startBook === b.name;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => {
+                          setStartBook(b.name);
+                          // 그 권부터 끝까지가 이번 통독 분량이 된다
+                          setTargetChapters(planSequence(planScope, b.name).length);
+                          setShowStartBookModal(false);
+                        }}
+                        className={`py-2.5 px-1 rounded-2xl text-sm font-bold transition cursor-pointer ${
+                          on ? "grad-forest text-white" : "bg-[#F9F9F9] text-[#14261E] hover:bg-[#F0F0F0]"
+                        }`}
+                      >
+                        {b.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+        </div>
+      </SettingModal>
+
       {/* 진행률 · 통독 설정 팝업 */}
       <SettingModal
         open={showProgressModal}
@@ -982,10 +1031,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             </div>
           </div>
 
-          {/* 이번 주 계획 — 요일마다 읽을 범위. 하루 밀리면 다음 칸이 당겨진다 */}
+          {/* 읽기 계획 — 오늘부터 일주일. 하루 밀리면 다음 칸이 저절로 당겨진다 */}
           <div>
             <div className="flex items-baseline justify-between gap-2 mb-2 ml-1">
-              <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">이번 주 계획</p>
+              <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">앞으로 일주일 계획</p>
               <p className="text-2xs text-[#6F8377]">
                 {readingDaysOf(userProgress).map((d) => DAY_LABELS[d]).join("·")} · 하루{" "}
                 {userProgress?.dailyTarget || 3}장
@@ -1001,15 +1050,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 {weeklyPlan.rows.map((row) => {
                   const empty = row.chapters.length === 0;
                   return (
-                    <button
+                    <div
                       key={row.dateKey}
-                      type="button"
-                      disabled={empty}
-                      onClick={() => startPlanRow(row.chapters)}
-                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
-                        empty
-                          ? "bg-[#FBFBFB] cursor-default"
-                          : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
+                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl ${
+                        empty ? "bg-[#FBFBFB]" : "bg-[#F9F9F9]"
                       } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
                     >
                       <span
@@ -1030,32 +1074,34 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                             empty ? "text-[#A8B3A9]" : "text-[#14261E]"
                           }`}
                         >
-                          {empty ? "읽지 못한 날" : rangeLabel(row.chapters)}
+                          {empty ? "읽을 분량이 없습니다" : rangeLabel(row.chapters)}
                         </span>
                         <span className="block text-2xs text-[#6F8377] mt-px">
                           {row.done
                             ? "읽기 완료"
                             : row.when === "today"
                             ? "오늘 읽을 차례"
-                            : row.when === "past"
-                            ? "지나간 날"
                             : `${row.label}요일`}
                         </span>
                       </span>
 
-                      {!empty && !row.done && (
-                        <span
-                          className={`shrink-0 flex items-center gap-1 text-2xs font-bold px-2.5 py-1.5 rounded-full ${
+                      {/* 맨 오른쪽 성경 아이콘 — 누르면 그 본문으로 바로 넘어간다 */}
+                      {!empty && (
+                        <button
+                          type="button"
+                          onClick={() => startPlanRow(row.chapters)}
+                          title={`${rangeLabel(row.chapters)} 읽으러 가기`}
+                          aria-label={`${rangeLabel(row.chapters)} 읽으러 가기`}
+                          className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition cursor-pointer ${
                             row.when === "today"
-                              ? "grad-forest text-white"
-                              : "bg-white text-[#4A6B57]"
+                              ? "grad-forest text-white hover:brightness-110"
+                              : "bg-white text-[#4A6B57] hover:bg-[#EDEDED]"
                           }`}
                         >
-                          <Play size={11} fill="currentColor" />
-                          읽기 시작
-                        </span>
+                          <BookOpen size={17} />
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -1103,7 +1149,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3">
                 <h4 className="font-bold text-[#0C3B2E] text-base flex items-center gap-2">
                   <Target className="text-[#4A6B57]" size={18} />
-                  내 성경 통독 목표 설정 (개인 전용)
+                  내 성경 통독 목표 설정
                 </h4>
                 <button
                   type="button"
@@ -1128,7 +1174,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#0C3B2E] mb-1">목표 장 수 (권장 preset)</label>
+                  <label className="block font-bold text-[#0C3B2E] mb-1">목표 장 수</label>
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <button
                       type="button"
@@ -1137,6 +1183,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setTargetChapters(1189);
                         setDailyTarget(3);
                         setPlanScope("all");
+                        setStartBook("창세기");
                       }}
                       className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 1189 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
@@ -1151,6 +1198,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setTargetChapters(260);
                         setDailyTarget(2);
                         setPlanScope("NT");
+                        setStartBook("마태복음");
                       }}
                       className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 260 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
@@ -1165,6 +1213,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                         setTargetChapters(929);
                         setDailyTarget(3);
                         setPlanScope("OT");
+                        setStartBook("창세기");
                       }}
                       className={`p-2 rounded-3xl text-xs font-bold border transition cursor-pointer ${
                         targetChapters === 929 ? "bg-[#0C3B2E] text-white border-[#0C3B2E]" : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
@@ -1173,15 +1222,23 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       구약 전체 (929장)
                     </button>
                   </div>
-                  <input
-                    type="number"
-                    value={targetChapters}
-                    onChange={(e) => setTargetChapters(Number(e.target.value))}
-                    className="w-full p-2.5 bg-[#F5F5F5] rounded-3xl text-[#14261E] font-bold"
-                    min={1}
-                    max={1189}
-                    required
-                  />
+                  {/* 어느 권부터 시작할지 — 누르면 팝업에서 고른다 */}
+                  <button
+                    type="button"
+                    onClick={() => setShowStartBookModal(true)}
+                    className="w-full flex items-center gap-3 p-3 bg-[#F5F5F5] hover:bg-[#EDEDED] rounded-3xl transition cursor-pointer text-left"
+                  >
+                    <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                      <BookOpen size={17} />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-2xs text-[#6F8377]">시작할 말씀</span>
+                      <span className="block text-sm font-bold text-[#14261E] truncate">
+                        {startBook} 1장부터 · {targetChapters}장
+                      </span>
+                    </span>
+                    <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                  </button>
                 </div>
 
                 <div>
