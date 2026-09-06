@@ -1077,26 +1077,27 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       </span>
 
                       <span className="flex-1 min-w-0">
+                        {/* 읽은 것은 진하게, 앞으로 읽을 것은 연하게 */}
                         <span
                           className={`block text-sm font-bold truncate ${
-                            empty ? "text-[#A8B3A9]" : "text-[#14261E]"
+                            empty
+                              ? "text-[#C7CFC8]"
+                              : row.done || row.when === "today"
+                              ? "text-[#14261E]"
+                              : "text-[#A8B3A9]"
                           }`}
                         >
                           {empty ? "—" : rangeLabel(row.chapters)}
                         </span>
-                        <span
-                          className={`block text-2xs mt-px font-bold ${
-                            row.done ? "text-[#195C50]" : "text-[#6F8377]"
-                          }`}
-                        >
-                          {row.done
-                            ? "완료"
-                            : row.when === "past"
-                            ? "지나감"
-                            : row.when === "today"
-                            ? "오늘"
-                            : "예정"}
-                        </span>
+                        {(row.done || row.when === "today") && (
+                          <span
+                            className={`block text-2xs mt-px font-bold ${
+                              row.done ? "text-[#195C50]" : "text-[#6F8377]"
+                            }`}
+                          >
+                            {row.done ? "완료" : "오늘"}
+                          </span>
+                        )}
                       </span>
 
                       {row.done && (

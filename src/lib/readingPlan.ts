@@ -161,13 +161,16 @@ export function buildWeeklyPlan(
         .map((k) => byKey.get(k))
         .filter((c): c is PlanChapter => !!c)
         .sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
+      // 못 읽고 지나간 날은 빈 칸으로 두지 않는다.
+      // 그 몫이 오늘로 넘어왔으므로 **앞으로 읽을 장**을 대신 보여준다 (화면에서는 연하게).
+      const chapters = read.length > 0 ? read : remaining.slice(0, perDay);
       rows.push({
         weekday,
         label: DAY_LABELS[weekday],
         date,
         dateKey: key,
         when,
-        chapters: read,
+        chapters,
         done: read.length > 0
       });
       continue;
