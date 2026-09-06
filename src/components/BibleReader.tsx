@@ -675,7 +675,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           <button
             type="button"
             onClick={() => setShowProgressModal(true)}
-            className="w-full flex items-center gap-3 text-left cursor-pointer"
+            // 상자 안 어디를 눌러도 열린다 (글씨·막대·빈 자리 모두 이 단추 안이다)
+            className="w-full flex items-center gap-3 bg-white rounded-2xl p-3.5 text-left cursor-pointer transition hover:bg-[#F4F4F4]"
           >
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-bold text-[#14261E]">
@@ -695,7 +696,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               </span>
             </span>
             {/* 꺾쇠 대신 설정 아이콘 — 눌러서 통독 설정으로 들어간다는 뜻이 더 분명하다 */}
-            <span className="w-9 h-9 rounded-full bg-white text-[#4A6B57] flex items-center justify-center shrink-0">
+            <span className="w-9 h-9 rounded-full bg-[#F0F0F0] text-[#4A6B57] flex items-center justify-center shrink-0">
               <Settings size={17} />
             </span>
           </button>
@@ -711,7 +712,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               setPendingScroll(true);
               handleSelectBookChapter(book, userProgress?.lastReadChapter || 1);
             }}
-            className="w-full flex items-center justify-between gap-2 pt-4 border-t border-[#EDEDED] transition cursor-pointer text-left"
+            className="w-full flex items-center justify-between gap-2 px-1.5 transition cursor-pointer text-left"
           >
             <span className="min-w-0">
               <span className="block text-2xs font-bold text-[#6F8377]">마지막 읽은 곳</span>
@@ -744,88 +745,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           </button>
         </div>
       </div>
-
-      {/* 리딩지저스 이번 주 표 — 팝업이 아니라 늘 화면에 있다.
-          월~일 한 줄씩, 누르면 그날 말씀으로 바로 넘어간다. */}
-      {isRJ && currentUser && (
-        <div className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] p-4 sm:p-5">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <p className="text-sm font-bold text-[#14261E] flex items-center gap-1.5">
-              <CalendarDays size={15} className="text-[#4A6B57]" />
-              이번 주 통독표
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setRjMonth(Number(rjToday.date.slice(5, 7)));
-                setShowRjScheduleModal(true);
-              }}
-              className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-2xs font-bold text-[#195C50] hover:bg-[#F0F0F0] transition cursor-pointer"
-            >
-              전체 스케줄 확인
-              <ChevronRight size={13} />
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            {rjRows.map((row) => {
-              const empty = row.chapters.length === 0;
-              return (
-                <button
-                  key={row.dateKey}
-                  type="button"
-                  disabled={empty}
-                  onClick={() => startRjRow(row.chapters)}
-                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
-                    empty ? "bg-[#FBFBFB] cursor-default" : "bg-white hover:bg-[#F0F0F0] cursor-pointer"
-                  } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
-                >
-                  {/* 다 읽은 날은 요일 동그라미에 불이 들어온다 */}
-                  <span
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                      row.done
-                        ? "grad-forest text-white"
-                        : row.when === "today"
-                        ? "bg-[#FFBA00] text-[#4A3600]"
-                        : "bg-[#EDEDED] text-[#6F8377]"
-                    }`}
-                  >
-                    {DAY_LABELS[row.weekday]}
-                  </span>
-
-                  <span className="flex-1 min-w-0">
-                    {/* 아직 안 읽은 날은 연하게, 읽은 날은 읽은 색으로 */}
-                    <span
-                      className={`block text-sm font-bold truncate ${
-                        empty ? "text-[#C7CFC8]" : row.done ? "text-[#195C50]" : "text-[#A8B3A9]"
-                      }`}
-                    >
-                      {rjDayLabel(row.day)}
-                    </span>
-                    {(row.done || row.when === "today" || empty) && (
-                      <span
-                        className={`block text-2xs mt-px font-bold ${
-                          row.done ? "text-[#195C50]" : "text-[#6F8377]"
-                        }`}
-                      >
-                        {row.done ? "완료" : empty ? (row.day.video ? "강해 영상" : "쉬는 날") : "오늘"}
-                      </span>
-                    )}
-                  </span>
-
-                  {row.done ? (
-                    <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
-                  ) : empty ? (
-                    <Video size={15} className="text-[#C7CFC8] shrink-0" />
-                  ) : (
-                    <BookOpen size={15} className="text-[#6F8377] shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* 3. Main Bible Chapter Reader Display */}
       <div ref={readerRef} className="scroll-mt-4" />
@@ -1246,8 +1165,76 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             </div>
           </div>
 
+          {/* 이번 주 통독표 — 리딩지저스 모드에서는 여기서 본다.
+              줄을 누르면 팝업이 닫히고 그날 말씀으로 바로 넘어간다. */}
+          {isRJ && (
+            <div>
+              <div className="flex items-baseline justify-between gap-2 mb-2 ml-1">
+                <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">이번 주 통독표</p>
+                <p className="text-2xs text-[#6F8377]">통독표 {rjPlanDateLabel(rjToday)} 기준</p>
+              </div>
+            <div className="flex flex-col gap-1.5">
+              {rjRows.map((row) => {
+                const empty = row.chapters.length === 0;
+                return (
+                  <button
+                    key={row.dateKey}
+                    type="button"
+                    disabled={empty}
+                    onClick={() => startRjRow(row.chapters)}
+                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
+                      empty ? "bg-[#FBFBFB] cursor-default" : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
+                    } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
+                  >
+                    {/* 다 읽은 날은 요일 동그라미에 불이 들어온다 */}
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                        row.done
+                          ? "grad-forest text-white"
+                          : row.when === "today"
+                          ? "bg-[#FFBA00] text-[#4A3600]"
+                          : "bg-[#EDEDED] text-[#6F8377]"
+                      }`}
+                    >
+                      {DAY_LABELS[row.weekday]}
+                    </span>
+
+                    <span className="flex-1 min-w-0">
+                      {/* 아직 안 읽은 날은 연하게, 읽은 날은 읽은 색으로 */}
+                      <span
+                        className={`block text-sm font-bold truncate ${
+                          empty ? "text-[#C7CFC8]" : row.done ? "text-[#195C50]" : "text-[#A8B3A9]"
+                        }`}
+                      >
+                        {rjDayLabel(row.day)}
+                      </span>
+                      {(row.done || row.when === "today" || empty) && (
+                        <span
+                          className={`block text-2xs mt-px font-bold ${
+                            row.done ? "text-[#195C50]" : "text-[#6F8377]"
+                          }`}
+                        >
+                          {row.done ? "완료" : empty ? (row.day.video ? "강해 영상" : "쉬는 날") : "오늘"}
+                        </span>
+                      )}
+                    </span>
+
+                    {row.done ? (
+                      <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
+                    ) : empty ? (
+                      <Video size={15} className="text-[#C7CFC8] shrink-0" />
+                    ) : (
+                      <BookOpen size={15} className="text-[#6F8377] shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            </div>
+          )}
+
           {/* 읽기 계획 — 오늘부터 일주일. 하루 밀리면 다음 칸이 저절로 당겨진다.
-              리딩지저스 모드에서는 이번 주 표가 본 화면에 늘 나와 있으므로 여기서는 뺀다. */}
+              리딩지저스 모드에서는 위 통독표가 그 자리를 대신한다. */}
           <div className={isRJ ? "hidden" : ""}>
             <div className="flex items-baseline justify-between gap-2 mb-2 ml-1">
               <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">앞으로 일주일 계획</p>

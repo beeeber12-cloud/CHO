@@ -198,6 +198,8 @@ export default function App() {
    */
   const tabIndex = visibleTabs.indexOf(activeTab);
   const skipSwipe = React.useRef(false);
+  /** 좌우 밀기를 받는 영역. 팝업이 이 안쪽인지 바깥인지 가리는 데 쓴다 */
+  const viewPortalRef = React.useRef<HTMLDivElement>(null);
   const rawTabSwipe = useSwipe({
     onSwipeLeft: () => {
       if (tabIndex >= 0 && tabIndex < visibleTabs.length - 1) openTab(visibleTabs[tabIndex + 1], 1);
@@ -212,7 +214,13 @@ export default function App() {
   const tabSwipeHandlers = {
     onTouchStart: (e: React.TouchEvent) => {
       const el = e.target as HTMLElement | null;
-      skipSwipe.current = !!el?.closest?.("[data-no-tab-swipe]");
+      /*
+        팝업은 화면(body) 밑에 그려진다. React 로는 이 안쪽이라 손짓이 여기까지 올라오지만,
+        DOM 으로는 바깥이다. 그대로 두면 팝업 안에서 달 목록을 옆으로 넘길 때
+        탭까지 같이 넘어가면서 팝업이 닫힌다 — 그래서 바깥에서 온 손짓은 흘려보낸다.
+      */
+      const fromPopup = !!el && !!viewPortalRef.current && !viewPortalRef.current.contains(el);
+      skipSwipe.current = fromPopup || !!el?.closest?.("[data-no-tab-swipe]");
       if (skipSwipe.current) return;
       rawTabSwipe.swipeHandlers.onTouchStart(e);
     },
@@ -577,6 +585,7 @@ export default function App() {
         {/* Selected View Window */}
         <div
           id="view-portal"
+          ref={viewPortalRef}
           className="min-h-[50vh] overflow-x-hidden"
           style={{ touchAction: "pan-y" }}
           {...tabSwipeHandlers}
