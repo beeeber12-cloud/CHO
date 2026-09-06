@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Notice, User } from "../types";
-import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send, CalendarDays, Video, ChevronRight } from "lucide-react";
+import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send, CalendarDays, Video, ChevronRight, Settings } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
 import {
   rjChaptersOf,
@@ -393,165 +393,190 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               <span>성경통독에서 보기</span>
             </button>
           )}
-          {currentUser.role === "admin" && !isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#4A6B57] bg-[#F5F5F5] px-3 py-1.5 rounded-xl hover:bg-[#EDEDED] transition cursor-pointer whitespace-nowrap"
-            >
-              {notice ? <Edit3 size={14} /> : <Plus size={14} />}
-              <span>{notice ? "말씀 수정" : "새 말씀 공지"}</span>
-            </button>
-          )}
+          {/* 말씀 수정·자동 공지 설정은 아래 '오늘의 말씀 설정' 한 창에서 다 한다 */}
         </div>
       </div>
 
-      {/* Bible Auto Notice Planner Section for Admins */}
+      {/* 오늘의 말씀 설정 — 말씀 수정과 자동 공지를 한 창에서 다 한다 */}
       {currentUser.role === "admin" && (
-        <div className="mb-4 bg-[#F5F5F5]/60 bg-[#F5F5F5] rounded-3xl p-4">
-          <button
-            onClick={() => setShowPlannerConfig(!showPlannerConfig)}
-            className="flex items-center justify-between w-full text-xs font-bold text-[#0C3B2E] hover:text-[#4A6B57] transition cursor-pointer"
-          >
+        <button
+          type="button"
+          onClick={() => setShowPlannerConfig(true)}
+          className="w-full flex items-center gap-3 mb-4 p-3.5 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-3xl transition cursor-pointer text-left"
+        >
+          <span className="flex-1 min-w-0">
             <span className="flex items-center gap-1.5 min-w-0">
-              <span className="truncate">
-                📖 말씀 일일 자동 공지 {plannerMode === "readingJesus" ? `(${READING_JESUS_TITLE})` : "플래너 설정"}
-              </span>
+              <span className="text-sm font-bold text-[#14261E] truncate">오늘의 말씀 설정</span>
               {plannerActive ? (
-                <span className="bg-[#F5F5F5] text-[#0C3B2E] text-2xs px-2 py-0.5 rounded-full font-bold">활성화됨</span>
+                <span className="shrink-0 bg-[#D2DDD3] text-[#0C3B2E] text-2xs px-2 py-0.5 rounded-full font-bold">
+                  자동 공지 켜짐
+                </span>
               ) : (
-                <span className="bg-[#D2DDD3] text-[#6F8377] text-2xs px-2 py-0.5 rounded-full font-bold">비활성화</span>
+                <span className="shrink-0 bg-[#EDEDED] text-[#6F8377] text-2xs px-2 py-0.5 rounded-full font-bold">
+                  자동 공지 꺼짐
+                </span>
               )}
             </span>
-            <span className="text-2xs underline font-bold text-[#4A6B57]">{showPlannerConfig ? "닫기" : "설정 열기"}</span>
-          </button>
+            <span className="block text-2xs text-[#6F8377] mt-0.5 truncate">
+              말씀 수정 · {plannerMode === "readingJesus" ? READING_JESUS_TITLE : "한 장씩 자동 공지"}
+            </span>
+          </span>
+          <span className="w-9 h-9 rounded-full bg-white text-[#4A6B57] flex items-center justify-center shrink-0">
+            <Settings size={17} />
+          </span>
+        </button>
+      )}
 
-          <AnimatePresence>
-            {showPlannerConfig && (
-              <motion.form
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                onSubmit={handleSaveBiblePlan}
-                className="mt-3.5 pt-3.5 border-t border-[#E3E9E2] space-y-3 text-xs"
-              >
-                {/* 어떤 방식으로 공지할지 먼저 고른다 */}
-                <div>
-                  <label className="block text-2xs font-bold text-[#6F8377] mb-1.5">공지 방식</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([
-                      { key: "chapter" as const, label: "한 장씩 자동 공지" },
-                      { key: "readingJesus" as const, label: "리딩지저스 통독표" }
-                    ]).map((m) => (
-                      <button
-                        key={m.key}
-                        type="button"
-                        onClick={() => setPlannerMode(m.key)}
-                        className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition cursor-pointer ${
-                          plannerMode === m.key
-                            ? "grad-forest text-white"
-                            : "bg-white text-[#4A6B57] hover:bg-[#EDEDED]"
-                        }`}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+      {/* 오늘의 말씀 설정 창 */}
+      {currentUser.role === "admin" && (
+        <SettingModal
+          open={showPlannerConfig}
+          onClose={() => setShowPlannerConfig(false)}
+          title="오늘의 말씀 설정"
+          sub="말씀을 직접 쓰거나, 매일 자동으로 올라갈 말씀을 정합니다."
+        >
+          <form onSubmit={handleSaveBiblePlan} className="space-y-4 text-xs">
+            {/* 말씀 직접 쓰기 — 예전에 화면 위에 따로 있던 단추 */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowPlannerConfig(false);
+                setIsEditing(true);
+              }}
+              className="w-full flex items-center gap-3 p-3 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-2xl transition cursor-pointer text-left"
+            >
+              <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                {notice ? <Edit3 size={17} /> : <Plus size={17} />}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-bold text-[#14261E] truncate">
+                  {notice ? "오늘 말씀 직접 수정" : "새 말씀 직접 공지"}
+                </span>
+                <span className="block text-2xs text-[#6F8377] mt-px truncate">
+                  {notice ? `${notice.verseTitle} · 구절과 본문을 손으로 고칩니다` : "구절을 적으면 본문을 찾아 채워 줍니다"}
+                </span>
+              </span>
+              <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
+            </button>
 
-                <p className="text-[#6F8377] leading-relaxed">
-                  {plannerMode === "readingJesus"
-                    ? "교회 리딩지저스 통독표를 그대로 따릅니다. 고른 날짜부터 하루하루 그날 분량 전체(예: 마태복음 1~3장)가 오늘의 말씀으로 올라갑니다. 강해 영상만 있는 주일과 특별주간처럼 읽을 분량이 없는 날은 앞 공지가 그대로 남습니다."
-                    : "설정한 성경책에서 매일 새로운 하루가 시작될 때 한 장씩 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다)."}
-                </p>
+            <div className="pt-1 border-t border-[#EDEDED]" />
 
-                {/* 리딩지저스 — 통독표에서 시작할 날을 고른다 */}
-                {plannerMode === "readingJesus" && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRjPickMonth(Number((rjPlanDate || rjTodayDay.date).slice(5, 7)));
-                        setShowRjPicker(true);
-                      }}
-                      className="w-full flex items-center gap-3 p-3 bg-white hover:bg-[#EDEDED] rounded-2xl transition cursor-pointer text-left"
-                    >
-                      <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                        <CalendarDays size={17} />
-                      </span>
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-2xs text-[#6F8377]">시작할 통독표 날짜</span>
-                        <span className="block text-xs font-bold text-[#14261E] truncate">
-                          {rjAnchor
-                            ? `통독표 ${rjPlanDateLabel(rjAnchorDay)}부터 · ${rjStartDate} 시작`
-                            : "아직 고르지 않음 (통독표 1월 1일 기준)"}
-                        </span>
-                      </span>
-                      <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
-                    </button>
-
-                    {/* 지금 설정대로면 오늘 무엇이 올라가는지 바로 보여준다 */}
-                    <p className="mt-2 text-2xs text-[#4A6B57] bg-white rounded-xl px-3 py-2 font-bold">
-                      오늘 올라갈 말씀: {rjChaptersOf(rjTodayDay).length > 0
-                        ? rjDayLabel(rjTodayDay)
-                        : `${rjDayLabel(rjTodayDay)} (읽을 분량 없음 — 공지하지 않습니다)`}
-                    </p>
-                  </div>
-                )}
-
-                <div className={`grid grid-cols-2 gap-3 ${plannerMode === "readingJesus" ? "hidden" : ""}`}>
-                  <div>
-                    <label className="block text-2xs font-bold text-[#6F8377] mb-1">성경 책 설정 (한글명)</label>
-                    <input
-                      type="text"
-                      value={plannerBook}
-                      onChange={(e) => setPlannerBook(e.target.value)}
-                      placeholder="예: 요한복음, 창세기, 시편"
-                      className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white text-[#14261E] font-semibold"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-2xs font-bold text-[#6F8377] mb-1">현재/시작 장 번호 (장)</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={plannerChapter}
-                      onChange={(e) => setPlannerChapter(Number(e.target.value))}
-                      className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white text-[#14261E] font-semibold"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="plannerActive"
-                    checked={plannerActive}
-                    onChange={(e) => setPlannerActive(e.target.checked)}
-                    className="w-4 h-4 rounded border-[#E3E9E2] text-[#4A6B57] focus:ring-[#4A6B57] cursor-pointer"
-                  />
-                  <label htmlFor="plannerActive" className="font-bold text-[#0C3B2E] cursor-pointer">
-                    {plannerMode === "readingJesus"
-                      ? "매일 통독표대로 자동 공지 활성화하기 (체크 시 자동 공지 시작)"
-                      : "매일 자동으로 한 장씩 공지 활성화하기 (체크 시 자동 공지 시작)"}
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[#4A6B57] font-bold text-2xs">{plannerMessage}</span>
+            {/* 어떤 방식으로 자동 공지할지 */}
+            <div>
+              <label className="block text-2xs font-bold text-[#6F8377] mb-1.5">자동 공지 방식</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: "chapter" as const, label: "한 장씩 자동 공지" },
+                  { key: "readingJesus" as const, label: "리딩지저스 통독표" }
+                ]).map((m) => (
                   <button
-                    type="submit"
-                    disabled={plannerSaving}
-                    className="px-3.5 py-1.5 bg-[#4A6B57] hover:bg-[#072A20] text-white font-bold rounded-xl transition text-xs cursor-pointer"
+                    key={m.key}
+                    type="button"
+                    onClick={() => setPlannerMode(m.key)}
+                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                      plannerMode === m.key
+                        ? "grad-forest text-white"
+                        : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                    }`}
                   >
-                    {plannerSaving ? "저장 중..." : "설정 저장하기"}
+                    {m.label}
                   </button>
-                </div>
-              </motion.form>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-[#6F8377] leading-relaxed">
+              {plannerMode === "readingJesus"
+                ? "교회 리딩지저스 통독표를 그대로 따릅니다. 고른 날짜부터 하루하루 그날 분량 전체(예: 마태복음 1~3장)가 오늘의 말씀으로 올라갑니다. 강해 영상만 있는 주일과 특별주간처럼 읽을 분량이 없는 날은 앞 공지가 그대로 남습니다."
+                : "설정한 성경책에서 매일 새로운 하루가 시작될 때 한 장씩 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다)."}
+            </p>
+
+            {/* 리딩지저스 — 통독표에서 시작할 날을 고른다 */}
+            {plannerMode === "readingJesus" && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRjPickMonth(Number((rjPlanDate || rjTodayDay.date).slice(5, 7)));
+                    setShowRjPicker(true);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-2xl transition cursor-pointer text-left"
+                >
+                  <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                    <CalendarDays size={17} />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-2xs text-[#6F8377]">시작할 통독표 날짜</span>
+                    <span className="block text-xs font-bold text-[#14261E] truncate">
+                      {rjAnchor
+                        ? `통독표 ${rjPlanDateLabel(rjAnchorDay)}부터 · ${rjStartDate} 시작`
+                        : "아직 고르지 않음 (통독표 1월 1일 기준)"}
+                    </span>
+                  </span>
+                  <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
+                </button>
+
+                {/* 지금 설정대로면 오늘 무엇이 올라가는지 바로 보여준다 */}
+                <p className="mt-2 text-2xs text-[#4A6B57] bg-[#F9F9F9] rounded-xl px-3 py-2 font-bold">
+                  오늘 올라갈 말씀: {rjChaptersOf(rjTodayDay).length > 0
+                    ? rjDayLabel(rjTodayDay)
+                    : `${rjDayLabel(rjTodayDay)} (읽을 분량 없음 — 공지하지 않습니다)`}
+                </p>
+              </div>
             )}
-          </AnimatePresence>
-        </div>
+
+            <div className={`grid grid-cols-2 gap-3 ${plannerMode === "readingJesus" ? "hidden" : ""}`}>
+              <div>
+                <label className="block text-2xs font-bold text-[#6F8377] mb-1">성경 책 설정 (한글명)</label>
+                <input
+                  type="text"
+                  value={plannerBook}
+                  onChange={(e) => setPlannerBook(e.target.value)}
+                  placeholder="예: 요한복음, 창세기, 시편"
+                  className="w-full text-xs px-3 py-2.5 bg-[#F9F9F9] rounded-xl text-[#14261E] font-semibold"
+                  required={plannerMode !== "readingJesus"}
+                />
+              </div>
+              <div>
+                <label className="block text-2xs font-bold text-[#6F8377] mb-1">현재/시작 장 번호 (장)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={plannerChapter}
+                  onChange={(e) => setPlannerChapter(Number(e.target.value))}
+                  className="w-full text-xs px-3 py-2.5 bg-[#F9F9F9] rounded-xl text-[#14261E] font-semibold"
+                  required={plannerMode !== "readingJesus"}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="plannerActive"
+                checked={plannerActive}
+                onChange={(e) => setPlannerActive(e.target.checked)}
+                className="w-4 h-4 mt-0.5 rounded border-[#E3E9E2] text-[#4A6B57] focus:ring-[#4A6B57] cursor-pointer shrink-0"
+              />
+              <label htmlFor="plannerActive" className="font-bold text-[#0C3B2E] cursor-pointer leading-relaxed">
+                {plannerMode === "readingJesus"
+                  ? "매일 통독표대로 자동 공지하기"
+                  : "매일 자동으로 한 장씩 공지하기"}
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#EDEDED]">
+              <span className="text-[#4A6B57] font-bold text-2xs">{plannerMessage}</span>
+              <button
+                type="submit"
+                disabled={plannerSaving}
+                className="grad-forest px-5 py-2.5 text-white font-bold rounded-2xl transition text-xs cursor-pointer hover:brightness-110 disabled:opacity-60"
+              >
+                {plannerSaving ? "저장 중..." : "설정 저장하기"}
+              </button>
+            </div>
+          </form>
+        </SettingModal>
       )}
 
       {/* 통독표에서 시작할 날 고르기 — 고른 날짜부터 오늘의 말씀이 그날 분량으로 올라간다 */}
