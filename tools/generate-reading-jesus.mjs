@@ -79,12 +79,25 @@ function parseReading(raw) {
   return out;
 }
 
+/**
+ * 인쇄된 통독표의 오탈자를 바로잡는다 (목사님 확인을 받은 것만 적는다).
+ *  · 2025-10-16 "고전13~15" → "고전13~16": 다음 날이 바로 고린도후서라
+ *    고린도전서 16장이 한 해 통독에서 통째로 빠져 있었다. (2026-09-07 확인)
+ */
+const CORRECTIONS = {
+  "2025-10-16": "고전13~16"
+};
+
 const plan = JSON.parse(fs.readFileSync(SRC, "utf8"));
 const rows = [];
 let chapterTotal = 0;
 const unparsed = [];
 
 for (const d of plan.days) {
+  if (CORRECTIONS[d.date]) {
+    console.log(`바로잡음 ${d.date}: ${d.reading} → ${CORRECTIONS[d.date]}`);
+    d.reading = CORRECTIONS[d.date];
+  }
   const label = d.reading || d.specialLabel || "";
   const ranges = d.isSectionStart ? [] : parseReading(d.reading);
   if (d.reading && ranges.length === 0 && !d.isSectionStart) unparsed.push(d.reading);

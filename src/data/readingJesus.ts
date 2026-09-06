@@ -30,7 +30,7 @@ export const READING_JESUS_YEAR = undefined;
 /** 통독 목표 이름 — 리딩지저스 모드에서는 이 이름으로 고정된다 */
 export const READING_JESUS_TITLE = "리딩지저스 통독";
 /** 통독표 전체에서 읽는 장 수 */
-export const READING_JESUS_TOTAL_CHAPTERS = 1188;
+export const READING_JESUS_TOTAL_CHAPTERS = 1189;
 
 export const READING_JESUS_DAYS: ReadingJesusDay[] = [
   { date:"2025-01-01", label:"", ranges:[] },
@@ -321,7 +321,7 @@ export const READING_JESUS_DAYS: ReadingJesusDay[] = [
   { date:"2025-10-13", label:"고전1~4", ranges:[["고린도전서",1,4]] },
   { date:"2025-10-14", label:"고전5~8", ranges:[["고린도전서",5,8]] },
   { date:"2025-10-15", label:"고전9~12", ranges:[["고린도전서",9,12]] },
-  { date:"2025-10-16", label:"고전13~15", ranges:[["고린도전서",13,15]] },
+  { date:"2025-10-16", label:"고전13~16", ranges:[["고린도전서",13,16]] },
   { date:"2025-10-17", label:"고후1~3", ranges:[["고린도후서",1,3]] },
   { date:"2025-10-18", label:"고후4~6", ranges:[["고린도후서",4,6]] },
   { date:"2025-10-19", label:"바울서신2", section:"바울서신2", sectionCode:"6-2", video:true, ranges:[] },
