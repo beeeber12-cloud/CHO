@@ -289,7 +289,25 @@ async function syncAndRefreshWithFirestore(
         const localTime = localP?.updatedAt ? new Date(localP.updatedAt).getTime() : 0;
         const remoteTime = remoteP?.updatedAt ? new Date(remoteP.updatedAt).getTime() : 0;
         const newer = localTime >= remoteTime ? (localP || remoteP) : (remoteP || localP);
+
+        // 날짜별 읽은 기록도 잃지 않도록 두 쪽을 날짜마다 합친다
+        const combinedReadLog: Record<string, string[]> = {};
+        for (const src of [localP?.readLog, remoteP?.readLog]) {
+          if (!src) continue;
+          for (const [day, keys] of Object.entries(src)) {
+            combinedReadLog[day] = Array.from(new Set([...(combinedReadLog[day] || []), ...keys]));
+          }
+        }
+
+        /*
+          ⚠️ 여기서 필드를 하나하나 적어 넣던 것이, 나중에 더한 설정(통독 범위·읽는 요일·
+          시작할 권·날짜별 기록)을 동기화 때마다 통째로 지워 버렸다. 목사님이 "왜 자꾸
+          설정이 리셋되지?" 하신 원인이 이것이다.
+          이제 최신 쪽을 통째로 펼쳐 담고, 합쳐야 하는 것만 그 위에 덮어쓴다.
+          => 새 설정을 더할 때 이 자리를 고치지 않아도 살아남는다.
+        */
         mergedProgress[uId] = {
+          ...(newer || {}),
           userId: uId,
           goalTitle: newer?.goalTitle || "1년 1독 (매일 3장)",
           targetChapters: newer?.targetChapters || 1189,
@@ -297,6 +315,7 @@ async function syncAndRefreshWithFirestore(
           completedChapters: combinedChapters,
           lastReadBook: newer?.lastReadBook || "요한복음",
           lastReadChapter: newer?.lastReadChapter || 1,
+          ...(Object.keys(combinedReadLog).length > 0 ? { readLog: combinedReadLog } : {}),
           updatedAt: newer?.updatedAt || new Date().toISOString()
         };
         if (!userMap.has(uId) && isHomeCommunity) {

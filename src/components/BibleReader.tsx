@@ -1077,13 +1077,13 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       </span>
 
                       <span className="flex-1 min-w-0">
-                        {/* 읽은 것은 진하게, 앞으로 읽을 것은 연하게 */}
+                        {/* 읽은 날은 읽은 색으로 진하게, 아직 안 읽은 날은 연하게 */}
                         <span
                           className={`block text-sm font-bold truncate ${
                             empty
                               ? "text-[#C7CFC8]"
-                              : row.done || row.when === "today"
-                              ? "text-[#14261E]"
+                              : row.done
+                              ? "text-[#195C50]"
                               : "text-[#A8B3A9]"
                           }`}
                         >

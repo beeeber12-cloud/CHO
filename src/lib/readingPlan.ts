@@ -132,20 +132,42 @@ export function buildWeeklyPlan(
   const completed = new Set(progress?.completedChapters || []);
   const readLog = progress?.readLog || {};
 
-  const byKey = new Map(sequence.map((c) => [c.key, c]));
-  // 아직 안 읽은 장들 — 성경 순서 그대로. 여기서 앞에서부터 하루치씩 떼어 준다.
-  const remaining = sequence.filter((c) => !completed.has(c.key));
+  const indexOfKey = new Map(sequence.map((c, i) => [c.key, i]));
+  /** n 번째 하루치 (0부터). 하루 3장이면 0 = 1~3장, 1 = 4~6장 … */
+  const blockAt = (n: number) => sequence.slice(n * perDay, n * perDay + perDay);
+  const totalBlocks = Math.ceil(sequence.length / perDay);
+
+  /** 아직 다 읽지 않은 첫 하루치 */
+  let firstUnreadBlock = totalBlocks;
+  for (let n = 0; n < totalBlocks; n++) {
+    if (!blockAt(n).every((c) => completed.has(c.key))) {
+      firstUnreadBlock = n;
+      break;
+    }
+  }
 
   const monday = startOfWeek(today);
   const todayKey = dateKey(today);
 
-  let cursor = 0;
+  // 이번 주에 읽은 장이 있으면, 그중 가장 앞선 하루치를 이번 주의 시작점으로 삼는다.
+  // 이렇게 해야 월요일 몫을 읽어도 월요일 칸이 그대로 있고 화·수가 밀려 나가지 않는다.
+  let anchorBlock = firstUnreadBlock;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    for (const key of readLog[dateKey(d)] || []) {
+      const idx = indexOfKey.get(key);
+      if (idx == null) continue;
+      anchorBlock = Math.min(anchorBlock, Math.floor(idx / perDay));
+    }
+  }
+
   const rows: PlanRow[] = [];
+  let slot = 0;
 
   /**
-   * 이번 주(월~일) 중 읽기로 정한 요일만.
-   * 지난 요일은 **그날 실제로 읽은 것**만 보여준다 — 읽었으면 완료, 아니면 지나감.
-   * 오늘과 앞으로는 아직 안 읽은 장부터 하루치씩이라, 하루 밀리면 다음 칸이 저절로 당겨진다.
+   * 이번 주(월~일) 중 읽기로 정한 요일에 하루치를 **차례대로** 놓는다.
+   * 하루 3장이면 월 1~3장, 화 4~6장, 수 7~9장 — 중간에 하루를 건너뛰어도 이 순서는 그대로다.
+   * 읽었는지 여부는 색으로만 구별한다 (읽은 날은 진하게, 아직 안 읽은 날은 연하게).
    */
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
@@ -156,49 +178,23 @@ export function buildWeeklyPlan(
     const when: PlanRow["when"] =
       key === todayKey ? "today" : key < todayKey ? "past" : "future";
 
-    if (when === "past") {
-      const read = (readLog[key] || [])
-        .map((k) => byKey.get(k))
-        .filter((c): c is PlanChapter => !!c)
-        .sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
-      // 못 읽고 지나간 날은 빈 칸으로 두지 않는다.
-      // 그 몫이 오늘로 넘어왔으므로 **앞으로 읽을 장**을 대신 보여준다 (화면에서는 연하게).
-      const chapters = read.length > 0 ? read : remaining.slice(0, perDay);
-      rows.push({
-        weekday,
-        label: DAY_LABELS[weekday],
-        date,
-        dateKey: key,
-        when,
-        chapters,
-        done: read.length > 0
-      });
-      continue;
-    }
+    const chapters = blockAt(anchorBlock + slot);
+    slot += 1;
 
-    let chapters = remaining.slice(cursor, cursor + perDay);
-    cursor += chapters.length;
-    let done = false;
-
-    // 오늘 이미 하루치를 다 읽었다면, 읽은 것을 보여주고 완료로 표시한다
-    if (when === "today") {
-      const readToday = (readLog[key] || [])
-        .map((k) => byKey.get(k))
-        .filter((c): c is PlanChapter => !!c);
-      if (readToday.length >= perDay || (chapters.length === 0 && readToday.length > 0)) {
-        chapters = readToday.sort((a, b) => sequence.indexOf(a) - sequence.indexOf(b));
-        cursor -= perDay; // 오늘 몫으로 떼어 뒀던 것은 내일 칸으로 돌려준다
-        if (cursor < 0) cursor = 0;
-        done = true;
-      }
-    }
-
-    rows.push({ weekday, label: DAY_LABELS[weekday], date, dateKey: key, when, chapters, done });
+    rows.push({
+      weekday,
+      label: DAY_LABELS[weekday],
+      date,
+      dateKey: key,
+      when,
+      chapters,
+      done: chapters.length > 0 && chapters.every((c) => completed.has(c.key))
+    });
   }
 
   return {
     rows,
-    finished: remaining.length === 0,
+    finished: firstUnreadBlock >= totalBlocks,
     totalDays: rows.length,
     doneDays: rows.filter((r) => r.done).length
   };
