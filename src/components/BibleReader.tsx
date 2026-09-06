@@ -1419,10 +1419,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     }`}>
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-bold text-[#0C3B2E] text-sm flex items-center gap-2">
-                          <span className="text-xs bg-[#F5F5F5] text-[#0C3B2E] px-2 py-0.5 rounded-full font-bold">
-                            {b.testament === 'OT' ? '구약' : '신약'}
-                          </span>
-                          {b.name} ({b.chapters}장)
+                          {/* 구약/신약 뱃지와 장 수는 뺐다 — 위 탭에서 이미 구약·신약을 고르고,
+                              장 수는 바로 오른쪽 "n / m장 완료"에 이미 나온다 */}
+                          {b.name}
                           {isLastReadBook && (
                             <span className="text-xs font-bold bg-[#C7D8C9] text-[#0C3B2E] px-2 py-0.5 rounded-full">
                               읽는 중
