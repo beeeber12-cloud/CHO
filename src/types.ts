@@ -161,6 +161,17 @@ export interface UserBibleProgress {
    *  - readingJesus: 교회 리딩지저스 통독표를 그대로 따른다
    */
   planMode?: 'normal' | 'readingJesus';
+  /**
+   * 리딩지저스 통독 일정을 공동체 것으로 따를지, 내가 정한 것으로 할지.
+   * 없으면 공동체 일정을 따른다 (공동체 일정이 없으면 내 일정을 쓴다).
+   */
+  rjFollow?: 'community' | 'personal';
+  /** 내 통독 시작날 (rjFollow 가 personal 일 때 쓴다) */
+  rjStartDate?: string;
+  /** 내가 읽는 요일 (0=일 … 6=토) */
+  rjReadingDays?: number[];
+  /** 내 쉬는 기간 */
+  rjBreaks?: { from: string; to: string; label?: string }[];
   updatedAt: string;
 }
 

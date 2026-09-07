@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw, Settings, Check, Play, CalendarDays, Video, Sparkles } from "lucide-react";
+import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, X, RefreshCw, Settings, Check, Play, CalendarDays, Video, Sparkles, Users } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
+import ReadingJesusScheduleForm from "./ReadingJesusScheduleForm";
 import ModalPortal from "./ModalPortal";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
@@ -33,9 +34,11 @@ import {
   rjShortDate,
   rjWeekBlocks,
   rjWeekRows,
+  RJBreak,
   RJChapter,
   RJSettings,
   RJ_DAY_LABELS,
+  RJ_DEFAULT_READING_DAYS,
   RJ_TOTAL_CHAPTERS,
   RJ_TOTAL_DAYS,
   RJ_WEEKS
@@ -103,7 +106,18 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [planMode, setPlanMode] = useState<"normal" | "readingJesus">("normal");
   const [switchingMode, setSwitchingMode] = useState<boolean>(false);
   /** 공동체가 정한 통독 일정 (오늘의 말씀 설정에서 관리자가 정한다) */
-  const [rjSettings, setRjSettings] = useState<RJSettings | null>(null);
+  const [rjCommunity, setRjCommunity] = useState<RJSettings | null>(null);
+
+  /**
+   * 내 통독 일정.
+   * 공동체 일정을 그대로 따를 수도 있고, 내 사정에 맞춰 따로 정할 수도 있다.
+   */
+  const [rjFollow, setRjFollow] = useState<"community" | "personal">("community");
+  const [rjStartDate, setRjStartDate] = useState<string>("");
+  const [rjReadingDays, setRjReadingDays] = useState<number[]>([...RJ_DEFAULT_READING_DAYS]);
+  const [rjBreaks, setRjBreaks] = useState<RJBreak[]>([]);
+  const [showRjMyPlanModal, setShowRjMyPlanModal] = useState<boolean>(false);
+  const [savingRjPlan, setSavingRjPlan] = useState<boolean>(false);
   const [showRjScheduleModal, setShowRjScheduleModal] = useState<boolean>(false);
   /** 전체 스케줄을 열면 이번 주가 바로 보이도록 */
   const rjCurrentWeekRef = useRef<HTMLDivElement>(null);
@@ -174,7 +188,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return;
-        setRjSettings(
+        setRjCommunity(
           rjNormalizeSettings({
             startDate: d.rjStartDate || "",
             readingDays: d.rjReadingDays,
@@ -236,6 +250,14 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setReadingDays(readingDaysOf(data));
         setStartBook(startBookOf(data));
         setPlanMode(data.planMode === "readingJesus" ? "readingJesus" : "normal");
+        setRjFollow(data.rjFollow === "personal" ? "personal" : "community");
+        setRjStartDate(data.rjStartDate || "");
+        setRjReadingDays(
+          Array.isArray(data.rjReadingDays) && data.rjReadingDays.length > 0
+            ? data.rjReadingDays
+            : [...RJ_DEFAULT_READING_DAYS]
+        );
+        setRjBreaks(Array.isArray(data.rjBreaks) ? data.rjBreaks : []);
 
         if (!initialQuery && data.lastReadBook && data.lastReadChapter) {
           const matchedBook = BIBLE_BOOKS.find(b => b.name === data.lastReadBook);
@@ -478,6 +500,35 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   };
 
+  /** 내 통독 일정을 저장한다 (공동체 일정을 따르기로 한 경우에도 그 선택을 남긴다) */
+  const saveRjPlan = async (follow: "community" | "personal") => {
+    if (!currentUser?.id) return;
+    setRjFollow(follow);
+    setSavingRjPlan(true);
+    try {
+      const res = await fetch("/api/bible-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          rjFollow: follow,
+          rjStartDate,
+          rjReadingDays,
+          rjBreaks: rjBreaks.filter((b) => b.from && b.to)
+        })
+      });
+      if (res.ok) {
+        const updated: UserBibleProgress = await res.json();
+        setUserProgress(updated);
+        setShowRjMyPlanModal(false);
+      }
+    } catch (err) {
+      console.error("통독 일정 저장 실패:", err);
+    } finally {
+      setSavingRjPlan(false);
+    }
+  };
+
   const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser?.id) return;
@@ -598,6 +649,20 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     () => new Set(userProgress?.completedChapters || []),
     [userProgress?.completedChapters]
   );
+
+  /** 내가 정한 일정 (다 갖춰지지 않았으면 null) */
+  const rjPersonal = React.useMemo(
+    () => rjNormalizeSettings({ startDate: rjStartDate, readingDays: rjReadingDays, breaks: rjBreaks }),
+    [rjStartDate, rjReadingDays, rjBreaks]
+  );
+
+  /**
+   * 실제로 쓰는 일정.
+   * 고른 쪽이 아직 비어 있으면 다른 쪽으로 메운다 — 화면이 빈 채로 남지 않게.
+   */
+  const rjSettings = rjFollow === "personal" ? rjPersonal || rjCommunity : rjCommunity || rjPersonal;
+  /** 화면에 "지금 무엇을 따르는 중"이라고 적을지 */
+  const rjFollowingCommunity = rjSettings !== null && rjSettings === rjCommunity;
 
   /** 통독표를 달력에 얹은 것 (270일치) */
   const rjSchedule = React.useMemo(() => buildRjSchedule(rjSettings), [rjSettings]);
@@ -1199,6 +1264,30 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             </div>
           </div>
 
+          {/* 어느 일정을 따르는지 — 눌러서 공동체 일정과 내 일정을 오간다 */}
+          {isRJ && (
+            <button
+              type="button"
+              onClick={() => setShowRjMyPlanModal(true)}
+              className="w-full flex items-center gap-3 p-3 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-2xl transition cursor-pointer text-left"
+            >
+              <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                {rjFollowingCommunity ? <Users size={17} /> : <CalendarDays size={17} />}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-2xs text-[#6F8377]">내 통독 일정</span>
+                <span className="block text-sm font-bold text-[#14261E] truncate">
+                  {rjSchedule.length === 0
+                    ? "아직 정해지지 않음"
+                    : rjFollowingCommunity
+                    ? "공동체 일정 따르기"
+                    : "내가 정한 일정"}
+                </span>
+              </span>
+              <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
+            </button>
+          )}
+
           {/* 이번 주 통독표 — 리딩지저스 모드에서는 여기서 본다.
               줄을 누르면 팝업이 닫히고 그날 말씀으로 바로 넘어간다. */}
           {isRJ && (
@@ -1214,7 +1303,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 <p className="text-xs text-[#6F8377] bg-[#F9F9F9] rounded-2xl p-3.5 text-center leading-relaxed">
                   아직 통독 일정이 정해지지 않았습니다.
                   <br />
-                  관리자가 오늘의 말씀 설정에서 시작날을 정하면 여기에 나옵니다.
+                  위 <strong>내 통독 일정</strong>에서 시작날을 정해 보세요.
                 </p>
               ) : (
                 <div className="flex flex-col gap-1.5">
@@ -1401,6 +1490,99 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         </div>
       </SettingModal>
 
+      {/* 내 통독 일정 — 공동체 일정을 따를지, 내가 정할지 */}
+      <SettingModal
+        open={showRjMyPlanModal}
+        onClose={() => setShowRjMyPlanModal(false)}
+        title="내 통독 일정"
+        sub="공동체와 함께 갈지, 내 사정에 맞춰 따로 갈지 고르세요."
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              { key: "community" as const, label: "공동체 일정", sub: "다 함께 같은 날 같은 본문" },
+              { key: "personal" as const, label: "내 일정", sub: "내가 정한 날짜대로" }
+            ]).map((opt) => {
+              const on = rjFollow === opt.key;
+              const noCommunity = opt.key === "community" && !rjCommunity;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setRjFollow(opt.key)}
+                  className={`p-3 rounded-2xl text-left transition cursor-pointer ${
+                    on ? "grad-forest text-white" : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                  }`}
+                >
+                  <span className="block text-sm font-bold">{opt.label}</span>
+                  <span
+                    className={`block text-2xs mt-0.5 leading-snug ${
+                      on ? "text-white/80" : "text-[#6F8377]"
+                    }`}
+                  >
+                    {noCommunity ? "아직 정해지지 않았습니다" : opt.sub}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 공동체 일정을 따르기로 했으면 그 내용을 보여만 준다 (고치는 건 관리자 몫) */}
+          {rjFollow === "community" ? (
+            <div className="bg-[#F9F9F9] rounded-2xl px-3.5 py-3 space-y-1">
+              {rjCommunity ? (
+                <>
+                  <p className="text-xs font-bold text-[#14261E]">
+                    {rjCommunity.startDate} 시작 ·{" "}
+                    {rjCommunity.readingDays.map((d) => RJ_DAY_LABELS[d]).join("·")}요일
+                  </p>
+                  <p className="text-2xs text-[#6F8377]">
+                    쉬는 기간 {rjCommunity.breaks.length}건
+                  </p>
+                  <p className="text-2xs text-[#6F8377] pt-1">
+                    공동체 일정은 관리자가 오늘의 말씀 설정에서 정합니다.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-[#6F8377] leading-relaxed">
+                  공동체 통독 일정이 아직 정해지지 않았습니다.
+                  <br />
+                  먼저 <strong>내 일정</strong>으로 시작하셔도 됩니다.
+                </p>
+              )}
+            </div>
+          ) : (
+            <ReadingJesusScheduleForm
+              startDate={rjStartDate}
+              onStartDate={setRjStartDate}
+              readingDays={rjReadingDays}
+              onReadingDays={setRjReadingDays}
+              breaks={rjBreaks}
+              onBreaks={setRjBreaks}
+              startHint="이 날 1주차 첫 분량(창세기 1~4장)부터 시작합니다."
+            />
+          )}
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowRjMyPlanModal(false)}
+              className="px-4 py-2.5 text-[#4A6B57] rounded-2xl text-sm font-bold cursor-pointer"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              disabled={savingRjPlan}
+              onClick={() => saveRjPlan(rjFollow)}
+              className="grad-forest px-5 py-2.5 text-white text-sm font-bold rounded-2xl transition cursor-pointer hover:brightness-110 disabled:opacity-60"
+            >
+              {savingRjPlan ? "저장 중..." : "이 일정으로 하기"}
+            </button>
+          </div>
+        </div>
+      </SettingModal>
+
       {/* 리딩지저스 전체 스케줄 — 45주 전체를 주별로 본다.
           열면 이번 주로 내려가고, 한 줄을 누르면 그 말씀으로 바로 넘어간다. */}
       <SettingModal
@@ -1489,7 +1671,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
           {rjSchedule.length === 0 && (
             <p className="text-xs text-[#6F8377] bg-[#F9F9F9] rounded-2xl p-4 text-center leading-relaxed">
-              관리자가 오늘의 말씀 설정에서 통독 시작날과 읽는 요일을 정하면
+              통독 시작날과 읽는 요일을 정하면
               <br />
               여기에 45주 전체 계획이 나옵니다.
             </p>

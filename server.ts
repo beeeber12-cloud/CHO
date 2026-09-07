@@ -3491,7 +3491,8 @@ JSON format:
 
   app.post("/api/bible-progress", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays, planStartBook, planMode } = req.body;
+    const { userId, goalTitle, targetChapters, dailyTarget, lastReadBook, lastReadChapter, completedChapters, toggleChapter, planScope, readingDays, planStartBook, planMode,
+      rjFollow, rjStartDate, rjReadingDays, rjBreaks } = req.body;
     if (!userId) return res.status(400).json({ error: "사용자 ID가 필요합니다." });
 
     if (!db.userBibleProgress) {
@@ -3525,6 +3526,32 @@ JSON format:
     }
     if (planMode === "normal" || planMode === "readingJesus") {
       progress.planMode = planMode;
+    }
+
+    // 리딩지저스 개인 일정 — 공동체 일정을 따를지, 내가 정한 일정을 쓸지
+    if (rjFollow === "community" || rjFollow === "personal") {
+      progress.rjFollow = rjFollow;
+    }
+    if (typeof rjStartDate === "string") {
+      progress.rjStartDate = rjStartDate.trim();
+    }
+    if (Array.isArray(rjReadingDays)) {
+      progress.rjReadingDays = Array.from(new Set(rjReadingDays.map(Number)))
+        .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        .sort((a, b) => a - b);
+    }
+    if (Array.isArray(rjBreaks)) {
+      progress.rjBreaks = rjBreaks
+        .filter(
+          (b: any) =>
+            b && typeof b.from === "string" && typeof b.to === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(b.from) && /^\d{4}-\d{2}-\d{2}$/.test(b.to)
+        )
+        .map((b: any) => ({
+          from: b.from <= b.to ? b.from : b.to,
+          to: b.from <= b.to ? b.to : b.from,
+          ...(typeof b.label === "string" && b.label.trim() ? { label: b.label.trim().slice(0, 40) } : {})
+        }));
     }
     if (Array.isArray(readingDays)) {
       // 0=일 … 6=토. 중복과 이상한 값은 걸러내고 순서대로 둔다.

@@ -960,3 +960,17 @@ Artifact 시안(claude.ai/code/artifact/07a4996a-...)으로 여러 라운드 확
 ### 없어진 것
 `rjPlanDate`(통독표 안에서 시작 자리 고르기)와 52주 순환(`RJ_CYCLE`)은 사라졌다.
 통독표가 날짜를 갖지 않으므로 둘 다 뜻이 없어졌다.
+
+### 통독 일정을 개인도 정할 수 있게 (2026-09-07)
+관리자만 정하던 리딩지저스 일정을 **지체도 자기 것으로 정할 수 있게** 했다.
+
+- `UserBibleProgress` 에 `rjFollow` (community | personal) 와 개인용
+  `rjStartDate` · `rjReadingDays` · `rjBreaks` 가 붙었다.
+- 성경통독 진행률 팝업 맨 위 **[내 통독 일정]** 줄 → 팝업에서 *공동체 일정* / *내 일정* 을 고른다.
+  공동체를 고르면 그 일정을 보여만 준다 (고치는 것은 관리자 몫).
+- 고른 쪽이 비어 있으면 다른 쪽으로 메운다 — 화면이 빈 채로 남지 않게.
+  (`rjFollow === "personal" ? rjPersonal || rjCommunity : rjCommunity || rjPersonal`)
+- 일정을 정하는 칸은 `components/ReadingJesusScheduleForm.tsx` 하나로 뽑아,
+  관리자 화면(오늘의 말씀 설정)과 지체 화면(성경통독)이 **같은 칸**을 쓴다.
+
+오늘의 말씀 자동 공지는 여전히 **공동체 일정만** 따른다 — 공지는 공동체 전체에 하나이므로.
