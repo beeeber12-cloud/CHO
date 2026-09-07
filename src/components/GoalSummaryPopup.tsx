@@ -144,17 +144,17 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold text-[#0C342C] text-base">
+                <h3 className="font-bold text-[#0C3B2E] text-base">
                   {currentUser.name}님, 지금까지 이만큼 오셨어요
                 </h3>
-                <p className="text-xs text-[#4E7568] font-medium mt-0.5">
+                <p className="text-xs text-[#6F8377] font-medium mt-0.5">
                   오늘도 한 걸음 더 나아가 보세요.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-[#77857A] hover:text-[#1E6B57] cursor-pointer shrink-0"
+                className="text-[#85888F] hover:text-[#4A6B57] cursor-pointer shrink-0"
                 aria-label="닫기"
               >
                 <X size={18} />
@@ -167,20 +167,20 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
                 return (
                   <div key={r.label}>
                     <div className="flex justify-between items-center text-xs mb-1.5">
-                      <span className="font-bold text-[#0C342C]">{r.label}</span>
-                      <span className="font-bold text-[#1E6B57]">
+                      <span className="font-bold text-[#0C3B2E]">{r.label}</span>
+                      <span className="font-bold text-[#4A6B57]">
                         {r.done} / {r.target}
                         {r.unit} ({p}%)
                       </span>
                     </div>
-                    <div className="w-full bg-[#E4EFD1] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-[#F0F0F0] rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-[#3E9174] to-[#E3EF26] h-2.5 rounded-full transition-all duration-500"
+                        className="bg-gradient-to-r from-[#6D9773] to-[#FFBA00] h-2.5 rounded-full transition-all duration-500"
                         style={{ width: `${Math.max(2, p)}%` }}
                       />
                     </div>
                     {r.note && (
-                      <p className="text-2xs text-[#4E7568] font-semibold mt-1">{r.note}</p>
+                      <p className="text-2xs text-[#6F8377] font-semibold mt-1">{r.note}</p>
                     )}
                   </div>
                 );
@@ -190,7 +190,7 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="w-full py-2.5 bg-[#0C342C] hover:bg-[#06231D] text-white text-xs font-bold rounded-3xl transition cursor-pointer"
+              className="w-full py-2.5 bg-[#0C3B2E] hover:bg-[#072A20] text-white text-xs font-bold rounded-3xl transition cursor-pointer"
             >
               확인
             </button>

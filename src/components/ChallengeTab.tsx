@@ -119,10 +119,10 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
   if (!challenge) {
     return (
       <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-6 text-center space-y-4">
-        <Trophy className="mx-auto text-[#7C9A87]" size={40} />
+        <Trophy className="mx-auto text-[#AFC0B2]" size={40} />
         <div>
-          <h3 className="font-bold text-[#0C342C] text-lg">진행 중인 챌린지가 없습니다</h3>
-          <p className="text-xs text-[#4E7568] mt-1">
+          <h3 className="font-bold text-[#0C3B2E] text-lg">진행 중인 챌린지가 없습니다</h3>
+          <p className="text-xs text-[#6F8377] mt-1">
             {isAdmin
               ? "성경 한 권과 목표일을 정해 함께 읽어보세요."
               : "관리자가 챌린지를 시작하면 여기에 표시됩니다."}
@@ -131,7 +131,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
         {isAdmin && (
           <button
             onClick={() => setSetupOpen(true)}
-            className="inline-flex items-center gap-1.5 bg-[#0C342C] text-white text-sm font-bold px-5 py-2.5 rounded-3xl cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-[#0C3B2E] text-white text-sm font-bold px-5 py-2.5 rounded-3xl cursor-pointer"
           >
             <Plus size={16} />
             챌린지 시작하기
@@ -149,25 +149,25 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
       {/* 머리 — 무엇을, 언제까지 */}
       <div
         className={`rounded-3xl sm:rounded-[32px] shadow-sm p-5 sm:p-6 ${
-          done ? "bg-[#0C342C] text-white" : "bg-white"
+          done ? "bg-[#0C3B2E] text-white" : "bg-white"
         }`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              {done ? <PartyPopper size={18} /> : <Trophy size={18} className="text-[#1E6B57]" />}
-              <h3 className={`font-bold text-lg ${done ? "text-white" : "text-[#0C342C]"}`}>
+              {done ? <PartyPopper size={18} /> : <Trophy size={18} className="text-[#4A6B57]" />}
+              <h3 className={`font-bold text-lg ${done ? "text-white" : "text-[#0C3B2E]"}`}>
                 {challenge.title}
               </h3>
             </div>
-            <p className={`text-xs mt-1 ${done ? "text-[#CFE0C2]" : "text-[#4E7568]"}`}>
+            <p className={`text-xs mt-1 ${done ? "text-[#D2DDD3]" : "text-[#6F8377]"}`}>
               {done ? (
                 "챌린지를 마쳤습니다. 내일부터 감사·칭찬 탭이 돌아옵니다."
               ) : (
                 <>
                   {challenge.book} {challenge.totalChapters}장 · {challenge.endDate}까지
                   {typeof data?.daysLeft === "number" && (
-                    <strong className="text-[#0C342C]"> (남은 {data.daysLeft}일)</strong>
+                    <strong className="text-[#0C3B2E]"> (남은 {data.daysLeft}일)</strong>
                   )}
                 </>
               )}
@@ -180,7 +180,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
                   setPicked(challenge.participantIds);
                   setEditMembers(true);
                 }}
-                className="p-2 rounded-2xl bg-[#EEF5E1] text-[#1E6B57] hover:bg-[#CFE0C2] transition cursor-pointer"
+                className="p-2 rounded-2xl bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3] transition cursor-pointer"
                 title="참가자 바꾸기"
               >
                 <Settings2 size={16} />
@@ -192,7 +192,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
                   }
                 }}
                 disabled={busy}
-                className="p-2 rounded-2xl bg-[#EEF5E1] text-[#1E6B57] hover:bg-[#CFE0C2] transition cursor-pointer"
+                className="p-2 rounded-2xl bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3] transition cursor-pointer"
                 title="챌린지 마치기"
               >
                 <Flag size={16} />
@@ -210,12 +210,12 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
           ].map((s) => (
             <div
               key={s.label}
-              className={`rounded-2xl py-2.5 text-center ${done ? "bg-[#0A4A3E]" : "bg-[#EEF5E1]"}`}
+              className={`rounded-2xl py-2.5 text-center ${done ? "bg-[#0F4A39]" : "bg-[#F5F5F5]"}`}
             >
-              <div className={`text-base font-bold ${done ? "text-white" : "text-[#0C342C]"}`}>
+              <div className={`text-base font-bold ${done ? "text-white" : "text-[#0C3B2E]"}`}>
                 {s.value}
               </div>
-              <div className={`text-2xs ${done ? "text-[#7C9A87]" : "text-[#4E7568]"}`}>{s.label}</div>
+              <div className={`text-2xs ${done ? "text-[#AFC0B2]" : "text-[#6F8377]"}`}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -231,28 +231,28 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
           {joined ? (
             <>
               <div className="flex items-baseline justify-between mb-2">
-                <span className="text-sm font-bold text-[#0C342C]">내 진행률</span>
-                <span className="text-sm font-bold text-[#1E6B57]">
+                <span className="text-sm font-bold text-[#0C3B2E]">내 진행률</span>
+                <span className="text-sm font-bold text-[#4A6B57]">
                   {mine!.done} / {mine!.total}장 · {mine!.percent}%
                 </span>
               </div>
-              <div className="h-2.5 bg-[#E4EFD1] rounded-full overflow-hidden mb-3">
+              <div className="h-2.5 bg-[#F0F0F0] rounded-full overflow-hidden mb-3">
                 <motion.div
-                  className="h-full bg-[#1E6B57] rounded-full"
+                  className="h-full bg-[#4A6B57] rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${mine!.percent}%` }}
                   transition={{ duration: 0.5 }}
                 />
               </div>
               {mine!.finished ? (
-                <p className="text-xs text-[#1E6B57] font-semibold flex items-center gap-1">
+                <p className="text-xs text-[#4A6B57] font-semibold flex items-center gap-1">
                   <Check size={14} className="stroke-[3px]" />
                   다 읽으셨습니다. 고맙습니다!
                 </p>
               ) : (
                 <button
                   onClick={() => onOpenBible?.(`${challenge.book} ${mine!.remaining[0]}장`)}
-                  className="w-full bg-[#0C342C] text-white text-sm font-bold py-3 rounded-3xl cursor-pointer"
+                  className="w-full bg-[#0C3B2E] text-white text-sm font-bold py-3 rounded-3xl cursor-pointer"
                 >
                   {challenge.book} {mine!.remaining[0]}장 읽으러 가기
                 </button>
@@ -264,20 +264,20 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
                   }
                 }}
                 disabled={busy}
-                className="w-full text-2xs text-[#4E7568] hover:text-[#0C342C] mt-2 cursor-pointer"
+                className="w-full text-2xs text-[#6F8377] hover:text-[#0C3B2E] mt-2 cursor-pointer"
               >
                 그만두기
               </button>
             </>
           ) : (
             <>
-              <p className="text-sm text-[#1E6B57] mb-3">
+              <p className="text-sm text-[#4A6B57] mb-3">
                 아직 참가하지 않으셨습니다. 지금 들어오셔도 됩니다.
               </p>
               <button
                 onClick={() => send(`/api/challenges/${challenge.id}/join`)}
                 disabled={busy}
-                className="w-full bg-[#E3EF26] text-[#0C342C] text-sm font-bold py-3 rounded-3xl cursor-pointer"
+                className="w-full bg-[#FFBA00] text-[#0C3B2E] text-sm font-bold py-3 rounded-3xl cursor-pointer"
               >
                 <Plus size={15} className="inline mr-1" />
                 나도 참가하기
@@ -289,33 +289,33 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
 
       {/* 지체별 진행률 */}
       <div className="bg-white rounded-3xl sm:rounded-[32px] shadow-sm p-5 space-y-3">
-        <h4 className="text-sm font-bold text-[#0C342C] flex items-center gap-1.5">
-          <Users size={16} className="text-[#1E6B57]" />
+        <h4 className="text-sm font-bold text-[#0C3B2E] flex items-center gap-1.5">
+          <Users size={16} className="text-[#4A6B57]" />
           지체별 진행률
         </h4>
 
         {progress.length === 0 ? (
-          <p className="text-xs text-[#4E7568]">아직 참가자가 없습니다.</p>
+          <p className="text-xs text-[#6F8377]">아직 참가자가 없습니다.</p>
         ) : (
           <div className="space-y-2.5">
             {progress.map((p, i) => (
               <div key={p.userId}>
                 <div className="flex items-baseline justify-between mb-1">
-                  <span className="text-xs font-bold text-[#0B2A20] flex items-center gap-1">
+                  <span className="text-xs font-bold text-[#14261E] flex items-center gap-1">
                     {i === 0 && p.done > 0 && <span aria-hidden>🥇</span>}
                     {p.name}
                     {p.userId === currentUser.id && (
-                      <span className="text-2xs text-[#4E7568] font-normal">(나)</span>
+                      <span className="text-2xs text-[#6F8377] font-normal">(나)</span>
                     )}
-                    {p.finished && <Check size={12} className="text-[#1E6B57] stroke-[3px]" />}
+                    {p.finished && <Check size={12} className="text-[#4A6B57] stroke-[3px]" />}
                   </span>
-                  <span className="text-2xs text-[#4E7568]">
+                  <span className="text-2xs text-[#6F8377]">
                     {p.done}/{p.total}장 · {p.percent}%
                   </span>
                 </div>
-                <div className="h-2 bg-[#E4EFD1] rounded-full overflow-hidden">
+                <div className="h-2 bg-[#F0F0F0] rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${p.finished ? "bg-[#0C342C]" : "bg-[#1E6B57]"}`}
+                    className={`h-full rounded-full ${p.finished ? "bg-[#0C3B2E]" : "bg-[#4A6B57]"}`}
                     style={{ width: `${p.percent}%` }}
                   />
                 </div>
@@ -324,8 +324,8 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
           </div>
         )}
 
-        <p className="text-2xs text-[#4E7568] leading-relaxed pt-1">
-          성경통독에서 <strong className="text-[#1E6B57]">읽음</strong>을 누르시면 여기 진행률에 바로 반영됩니다.
+        <p className="text-2xs text-[#6F8377] leading-relaxed pt-1">
+          성경통독에서 <strong className="text-[#4A6B57]">읽음</strong>을 누르시면 여기 진행률에 바로 반영됩니다.
         </p>
       </div>
 
@@ -341,13 +341,13 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
       <ModalPortal>
       <div className="fixed inset-0 z-[60] bg-black/40 flex items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto">
         <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] overflow-y-auto text-left">
-          <h3 className="font-bold text-lg text-[#0C342C] mb-4">챌린지 시작하기</h3>
+          <h3 className="font-bold text-lg text-[#0C3B2E] mb-4">챌린지 시작하기</h3>
 
-          <label className="block text-xs font-bold text-[#1E6B57] mb-1.5">읽을 성경</label>
+          <label className="block text-xs font-bold text-[#4A6B57] mb-1.5">읽을 성경</label>
           <select
             value={book}
             onChange={(e) => setBook(e.target.value)}
-            className="w-full px-3 py-2.5 bg-[#EEF5E1] rounded-2xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#1E6B57]"
+            className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
           >
             <option value="">권을 골라주세요</option>
             <optgroup label="신약">
@@ -366,7 +366,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
             </optgroup>
           </select>
 
-          <label className="block text-xs font-bold text-[#1E6B57] mb-1.5">
+          <label className="block text-xs font-bold text-[#4A6B57] mb-1.5">
             <CalendarDays size={13} className="inline mr-1" />
             목표일
           </label>
@@ -374,10 +374,10 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full px-3 py-2.5 bg-[#EEF5E1] rounded-2xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#1E6B57]"
+            className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
           />
 
-          <label className="block text-xs font-bold text-[#1E6B57] mb-1.5">
+          <label className="block text-xs font-bold text-[#4A6B57] mb-1.5">
             참가자 ({picked.length}명)
           </label>
           {renderMemberList()}
@@ -389,9 +389,9 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
               onChange={(e) => setResetProgress(e.target.checked)}
               className="mt-0.5"
             />
-            <span className="text-2xs text-[#1E6B57] leading-relaxed">
+            <span className="text-2xs text-[#4A6B57] leading-relaxed">
               모두 <strong>0장부터</strong> 시작합니다.
-              <span className="text-[#4E7568]">
+              <span className="text-[#6F8377]">
                 {" "}
                 (참가자가 이 권에 이미 남긴 읽음 표시를 지웁니다. 다른 권의 통독 기록은 그대로입니다)
               </span>
@@ -401,13 +401,13 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
           {error && <p className="text-xs text-[#8F1E17] mt-3">{error}</p>}
 
           {/* 버튼은 창 아래에 붙여 둔다 — 내용이 길어도 스크롤 없이 늘 보인다 */}
-          <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-6 bg-white border-t border-[#DEE9D2] flex gap-2 mt-5">
+          <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-6 bg-white border-t border-[#E3E9E2] flex gap-2 mt-5">
             <button
               onClick={() => {
                 setSetupOpen(false);
                 setError("");
               }}
-              className="flex-1 py-3 rounded-3xl bg-[#EEF5E1] text-[#1E6B57] text-sm font-bold cursor-pointer"
+              className="flex-1 py-3 rounded-3xl bg-[#F5F5F5] text-[#4A6B57] text-sm font-bold cursor-pointer"
             >
               취소
             </button>
@@ -427,7 +427,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
                 }
               }}
               disabled={busy || !book || !endDate}
-              className="flex-1 py-3 rounded-3xl bg-[#0C342C] text-white text-sm font-bold disabled:opacity-40 cursor-pointer"
+              className="flex-1 py-3 rounded-3xl bg-[#0C3B2E] text-white text-sm font-bold disabled:opacity-40 cursor-pointer"
             >
               시작하기
             </button>
@@ -452,8 +452,8 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
               }
               className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-semibold transition cursor-pointer ${
                 on
-                  ? "bg-[#0C342C] text-white"
-                  : "bg-[#EEF5E1] text-[#1E6B57] hover:bg-[#CFE0C2]"
+                  ? "bg-[#0C3B2E] text-white"
+                  : "bg-[#F5F5F5] text-[#4A6B57] hover:bg-[#D2DDD3]"
               }`}
             >
               {on && <Check size={12} className="stroke-[3px] shrink-0" />}
@@ -470,15 +470,15 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
       <ModalPortal>
       <div className="fixed inset-0 z-[60] bg-black/40 flex items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] overflow-y-auto">
         <div className="bg-white w-full sm:max-w-lg rounded-[32px] sm:rounded-[32px] px-6 pt-6 pb-0 max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] overflow-y-auto">
-          <h3 className="font-bold text-lg text-[#0C342C] mb-1">참가자 바꾸기</h3>
-          <p className="text-2xs text-[#4E7568] mb-4">
+          <h3 className="font-bold text-lg text-[#0C3B2E] mb-1">참가자 바꾸기</h3>
+          <p className="text-2xs text-[#6F8377] mb-4">
             중간에 들어오셔도 됩니다. 지금까지 읽은 장은 그대로 반영됩니다.
           </p>
           {renderMemberList()}
-          <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-6 bg-white border-t border-[#DEE9D2] flex gap-2 mt-5">
+          <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-6 bg-white border-t border-[#E3E9E2] flex gap-2 mt-5">
             <button
               onClick={() => setEditMembers(false)}
-              className="flex-1 py-3 rounded-3xl bg-[#EEF5E1] text-[#1E6B57] text-sm font-bold cursor-pointer"
+              className="flex-1 py-3 rounded-3xl bg-[#F5F5F5] text-[#4A6B57] text-sm font-bold cursor-pointer"
             >
               취소
             </button>
@@ -490,7 +490,7 @@ export default function ChallengeTab({ currentUser, onOpenBible, onChanged }: Pr
                 if (out) setEditMembers(false);
               }}
               disabled={busy}
-              className="flex-1 py-3 rounded-3xl bg-[#0C342C] text-white text-sm font-bold cursor-pointer"
+              className="flex-1 py-3 rounded-3xl bg-[#0C3B2E] text-white text-sm font-bold cursor-pointer"
             >
               저장
             </button>

@@ -15,49 +15,39 @@
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1.45;
 
-  /* Palette: FOREST #0C342C / SAGE #3E9174 / TAN #9A8A4B / GOLD #E3EF26
+  /* Palette: FOREST #0C3B2E / SAGE #6D9773 / TAN #BB8A52 / GOLD #FFBA00
      면과 그림자로만 구분한다 — 외곽선은 쓰지 않는다. */
-  --color-forest-primary: #1E6B57;
-  --color-forest-dark: #0C342C;   /* FOREST */
-  --color-forest-hover: #06231D;
-  --color-warm-bg: #EEF3E6;       /* soft gray-green page */
+  --color-forest-primary: #4A6B57;
+  --color-forest-dark: #0C3B2E;   /* FOREST */
+  --color-forest-hover: #072A20;
+  --color-warm-bg: #EDF0EA;       /* soft gray-green page */
   --color-warm-card: #ffffff;
-  --color-warm-border: #DEE9D2;
-  --color-warm-secondary: #ECF4DE;
-  --color-warm-text: #0B2A20;
-  --color-warm-muted: #4E7568;
-  --color-warm-darktext: #1E6B57;
+  --color-warm-border: #E3E9E2;
+  --color-warm-secondary: #F1F4EE;
+  --color-warm-text: #14261E;
+  --color-warm-muted: #6F8377;
+  --color-warm-darktext: #4A6B57;
 
   /* Accents */
-  --color-sage: #3E9174;
-  --color-tan: #9A8A4B;
-  --color-gold: #E3EF26;
+  --color-sage: #6D9773;
+  --color-tan: #BB8A52;
+  --color-gold: #FFBA00;
   /* 삭제·오류 전용 (금색으로는 위험 신호를 전달할 수 없어 별도 유지) */
   --color-danger: #B3261E;
 
   /* 성경 본문 전용: 진한 그레이 */
-  --color-scripture: #22302A;
+  --color-scripture: #333333;
 
   /* 새 디자인: 그라데이션 헤더/버튼 톤 (구약=청록, 신약=진초록) */
-  --color-mist: #EFF6E2;
-  --color-mist-hover: #E4EFD1;
-  --color-teal: #0F8F72;
-  --color-teal-deep: #076653;
-
-  /* 새 색 팔레트 — 크림에서 먹초록까지 한 줄기.
-     밝은 쪽(크림·연둣빛)은 면, 라임은 포인트, 초록 세 단계는 글씨와 그라데이션. */
-  --color-cream: #FFFDEE;
-  --color-mint: #E2FBCE;
-  --color-lime: #E3EF26;
-  --color-lime-ink: #4F5E00;   /* 흰 바탕 위 라임 계열 글씨 (라임 자체는 너무 밝다) */
-  --color-green: #076653;
-  --color-green-deep: #0C342C;
-  --color-green-ink: #06231D;
+  --color-mist: #F9F9F9;
+  --color-mist-hover: #F0F0F0;
+  --color-teal: #2B8577;
+  --color-teal-deep: #195C50;
 }
 
 /* 헤더와 통일된 진초록 그라데이션 — "신약", 기본 행동 버튼에 사용 */
 .grad-forest {
-  background-image: linear-gradient(135deg, #0B7A62, #06231D);
+  background-image: linear-gradient(135deg, #2F7358, #153A2B);
 }
 
 /* 머리말 전용 — 같은 초록이지만 빛이 아주 천천히 지나간다.
@@ -66,7 +56,7 @@
 .grad-forest-sheen {
   position: relative;
   overflow: hidden;
-  background-image: linear-gradient(135deg, #0B7A62, #06231D);
+  background-image: linear-gradient(135deg, #2F7358, #153A2B);
   background-size: 180% 180%;
   background-position: 0% 50%;
   animation: header-drift 22s ease-in-out infinite alternate;
@@ -102,36 +92,7 @@
 }
 /* 청록 그라데이션 — "구약", 보조 행동 버튼에 사용 */
 .grad-teal {
-  background-image: linear-gradient(135deg, #0F8F72, #076653);
-}
-
-/* 먹초록 — 하단 탭 막대처럼 가장 깊은 면 */
-.grad-ink {
-  background-image: linear-gradient(135deg, #0C342C, #06231D);
-}
-
-/* 라임 — 포인트 단추. 글씨는 반드시 진초록(#0C342C)으로 얹는다 */
-.grad-lime {
-  background-image: linear-gradient(135deg, #E9F55B, #C7DE1C);
-}
-
-/* 크림→연둣빛 — 밝은 강조 면(오늘 말씀 카드 머리 등) */
-.grad-cream {
-  background-image: linear-gradient(160deg, #FFFDEE, #E2FBCE);
-}
-
-/* 하단 탭 막대 — 떠 있는 알약. 뒤가 살짝 비쳐 보이게 */
-.tabbar-float {
-  background-image: linear-gradient(135deg, #0C342C, #06231D);
-  box-shadow:
-    0 10px 30px rgba(6, 35, 29, 0.28),
-    0 2px 8px rgba(6, 35, 29, 0.2),
-    inset 0 1px 0 rgba(226, 251, 206, 0.14);
-}
-
-/* 아이폰다운 반응 — 손을 떼면 살짝 튀어 오르듯 제자리로 */
-.ios-press {
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+  background-image: linear-gradient(135deg, #2B8577, #195C50);
 }
 
 html {
@@ -169,13 +130,13 @@ h1, h2, h3, h4 {
 /* 외곽선을 쓰지 않으므로 면의 구분은 전적으로 그림자가 맡는다.
    포레스트 색조를 섞어 회색빛이 아닌 따뜻한 깊이감을 준다. */
 .shadow-sm {
-  box-shadow: 0 1px 2px rgba(6, 35, 29, 0.04), 0 4px 16px rgba(6, 35, 29, 0.05) !important;
+  box-shadow: 0 1px 2px rgba(12, 59, 46, 0.04), 0 4px 16px rgba(12, 59, 46, 0.05) !important;
 }
 .shadow-md {
-  box-shadow: 0 2px 6px rgba(6, 35, 29, 0.06), 0 10px 28px rgba(6, 35, 29, 0.07) !important;
+  box-shadow: 0 2px 6px rgba(12, 59, 46, 0.06), 0 10px 28px rgba(12, 59, 46, 0.07) !important;
 }
 .shadow-2xl {
-  box-shadow: 0 10px 36px rgba(6, 35, 29, 0.16), 0 2px 10px rgba(6, 35, 29, 0.08) !important;
+  box-shadow: 0 10px 36px rgba(12, 59, 46, 0.16), 0 2px 10px rgba(12, 59, 46, 0.08) !important;
 }
 /* 안쪽 그림자는 외곽선처럼 보여 테두리 없는 디자인과 충돌 — 무력화 */
 .shadow-inner {
@@ -184,7 +145,7 @@ h1, h2, h3, h4 {
 
 /* 카드가 테두리 없이도 배경에서 떠 보이도록 기본 표면 그림자 */
 .bg-white {
-  box-shadow: 0 1px 2px rgba(6, 35, 29, 0.03), 0 6px 20px rgba(6, 35, 29, 0.05);
+  box-shadow: 0 1px 2px rgba(12, 59, 46, 0.03), 0 6px 20px rgba(12, 59, 46, 0.05);
 }
 /* 버튼·뱃지처럼 작은 흰 요소까지 뜨면 지저분하므로 예외 처리 */
 button.bg-white,
@@ -265,3 +226,47 @@ button {
   line-height: 1.8;
 }
 
+
+/* ── 어두운 화면 ───────────────────────────────────────────
+   색 대부분은 화면 코드의 값을 덮어써서 바꾼다(src/lib/theme.ts).
+   여기에는 그 방식으로 닿지 않는 것만 적는다 — 그림자, 붉은 알림 상자,
+   기기가 그려 주는 부분(스크롤 막대·입력창) 같은 것들. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+/* 흰 카드가 떠 보이게 하던 그림자는 어두운 바탕에서 지저분한 얼룩이 된다 */
+html[data-theme="dark"] .bg-white {
+  box-shadow: none;
+}
+html[data-theme="dark"] .shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+html[data-theme="dark"] .shadow-md {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+}
+html[data-theme="dark"] .shadow-2xl,
+html[data-theme="dark"] .shadow-xl {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
+}
+/* 삭제·오류를 알리는 붉은 상자 — 어두운 바탕에 맞춰 진하게 (글씨는 밝게) */
+html[data-theme="dark"] [class~="bg-[#FDF3F3]"],
+html[data-theme="dark"] [class~="bg-[#FBE6E4]"] {
+  background-color: #3A1B18 !important;
+}
+html[data-theme="dark"] [class~="text-[#B3261E]"],
+html[data-theme="dark"] [class~="text-[#8F1E17]"],
+html[data-theme="dark"] [class~="text-[#7A1913]"] {
+  color: #FF9A90 !important;
+}
+html[data-theme="dark"] [class~="bg-[#B3261E]"] {
+  background-color: #8F1E17 !important;
+}
+/* 포인트(금색) 바탕 위 글씨는 어두운 화면에서도 진한 색이어야 읽힌다 */
+html[data-theme="dark"] [class~="text-[#4A3600]"] {
+  color: #2A1E00 !important;
+}
+/* 옅은 금빛 상자 안의 진한 금색 글씨 — 그 상자가 어두워지므로 글씨는 밝은 금색으로 */
+html[data-theme="dark"] [class~="text-[#8F6B00]"],
+html[data-theme="dark"] [class~="text-[#B07A00]"] {
+  color: #E9C466 !important;
+}

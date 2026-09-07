@@ -17,9 +17,9 @@ export interface BibleVersionInfo {
 }
 
 export const BIBLE_VERSIONS: BibleVersionInfo[] = [
-  { key: "krv", label: "개역개정", color: "#22302A" },
-  { key: "wm", label: "우리말", color: "#1E5F4E" },
-  { key: "niv", label: "NIV", color: "#5C6A3A" },
+  { key: "krv", label: "개역개정", color: "#333333" },
+  { key: "wm", label: "우리말", color: "#2F5D50" },
+  { key: "niv", label: "NIV", color: "#8A6642" },
 ];
 
 export const MAX_COMPARE = 2;

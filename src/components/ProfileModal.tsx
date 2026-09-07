@@ -95,27 +95,27 @@ export default function ProfileModal({ open, onClose, mode, currentUser, onUserU
           </div>
         )}
         {success && (
-          <div className="bg-[#E7F6D8] text-[#0C342C] text-xs font-semibold p-3 rounded-2xl flex items-center gap-1.5">
+          <div className="bg-[#E8F0E9] text-[#0C3B2E] text-xs font-semibold p-3 rounded-2xl flex items-center gap-1.5">
             <Check className="shrink-0" size={14} />
             <span>{success}</span>
           </div>
         )}
 
         <div>
-          <label className="block text-2xs font-bold text-[#4E7568] mb-1.5 ml-1">내 이름</label>
+          <label className="block text-2xs font-bold text-[#6F8377] mb-1.5 ml-1">내 이름</label>
           <input
             type="text"
             value={name}
             autoFocus={mode === "profile"}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: 김성경"
-            className="w-full text-sm px-4 py-3 bg-[#EFF6E2] rounded-2xl text-[#0B2A20] font-semibold focus:outline-none focus:ring-2 focus:ring-[#1E6B57]"
+            className="w-full text-sm px-4 py-3 bg-[#F9F9F9] rounded-2xl text-[#14261E] font-semibold focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
             required
           />
         </div>
 
         <div>
-          <label className="block text-2xs font-bold text-[#4E7568] mb-1.5 ml-1">
+          <label className="block text-2xs font-bold text-[#6F8377] mb-1.5 ml-1">
             비밀번호 4자리 (PIN)
           </label>
           <input
@@ -127,10 +127,10 @@ export default function ProfileModal({ open, onClose, mode, currentUser, onUserU
             autoFocus={mode === "pin"}
             onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ""))}
             placeholder="••••"
-            className="w-full text-base px-4 py-3 bg-[#EFF6E2] rounded-2xl text-[#0B2A20] font-bold tracking-[0.4em] text-center focus:outline-none focus:ring-2 focus:ring-[#1E6B57]"
+            className="w-full text-base px-4 py-3 bg-[#F9F9F9] rounded-2xl text-[#14261E] font-bold tracking-[0.4em] text-center focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
             required
           />
-          <p className="text-2xs text-[#4E7568] mt-1.5 ml-1 leading-relaxed">
+          <p className="text-2xs text-[#6F8377] mt-1.5 ml-1 leading-relaxed">
             {mode === "pin"
               ? "여기 넣으신 번호가 새 비밀번호가 됩니다."
               : "본인 확인을 위해 필요합니다. 지금 쓰시는 번호를 그대로 넣으시면 비밀번호는 그대로입니다."}

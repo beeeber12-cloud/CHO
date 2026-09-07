@@ -20,7 +20,7 @@ interface CollapsibleTextProps {
 export default function CollapsibleText({
   children,
   collapsedHeight = 150,
-  fadeColor = "#E4EFD1",
+  fadeColor = "#F0F0F0",
   className = ""
 }: CollapsibleTextProps) {
   const innerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +69,7 @@ export default function CollapsibleText({
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="mt-1.5 w-full flex items-center justify-center gap-1 py-1.5 text-2xs font-bold text-[#1E6B57] hover:text-[#0C342C] cursor-pointer rounded-3xl hover:bg-black/5 transition"
+          className="mt-1.5 w-full flex items-center justify-center gap-1 py-1.5 text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] cursor-pointer rounded-3xl hover:bg-black/5 transition"
         >
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           {expanded ? "접기" : "더 보기"}

@@ -67,19 +67,19 @@ export default function ReadingJesusScheduleForm({
     <div className="space-y-3.5 text-xs">
       {/* ① 시작날 */}
       <div>
-        <label className="block text-2xs font-bold text-[#4E7568] mb-1">통독 시작날</label>
+        <label className="block text-2xs font-bold text-[#6F8377] mb-1">통독 시작날</label>
         <input
           type="date"
           value={startDate}
           onChange={(e) => onStartDate(e.target.value)}
-          className="w-full text-xs px-3 py-2.5 bg-[#EFF6E2] rounded-xl text-[#0B2A20] font-semibold"
+          className="w-full text-xs px-3 py-2.5 bg-[#F9F9F9] rounded-xl text-[#14261E] font-semibold"
         />
-        <p className="mt-1 text-2xs text-[#4E7568]">{startHint}</p>
+        <p className="mt-1 text-2xs text-[#6F8377]">{startHint}</p>
       </div>
 
       {/* ② 읽는 요일 */}
       <div>
-        <label className="block text-2xs font-bold text-[#4E7568] mb-1">읽는 요일</label>
+        <label className="block text-2xs font-bold text-[#6F8377] mb-1">읽는 요일</label>
         <div className="grid grid-cols-7 gap-1.5 mb-2">
           {RJ_DAY_LABELS.map((label, day) => {
             const on = readingDays.includes(day);
@@ -93,8 +93,8 @@ export default function ReadingJesusScheduleForm({
                   on
                     ? "grad-forest text-white"
                     : weekend
-                    ? "bg-[#EFF6E2] text-[#B3261E] hover:bg-[#E4EFD1]"
-                    : "bg-[#EFF6E2] text-[#1E6B57] hover:bg-[#E4EFD1]"
+                    ? "bg-[#F9F9F9] text-[#B3261E] hover:bg-[#F0F0F0]"
+                    : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
                 }`}
               >
                 {label}
@@ -108,7 +108,7 @@ export default function ReadingJesusScheduleForm({
               key={preset.label}
               type="button"
               onClick={() => onReadingDays([...preset.days])}
-              className="px-3 py-1.5 rounded-full bg-[#EFF6E2] hover:bg-[#CFE0C2] text-2xs font-bold text-[#1E6B57] transition cursor-pointer"
+              className="px-3 py-1.5 rounded-full bg-[#F9F9F9] hover:bg-[#D2DDD3] text-2xs font-bold text-[#4A6B57] transition cursor-pointer"
             >
               {preset.label}
             </button>
@@ -122,11 +122,11 @@ export default function ReadingJesusScheduleForm({
       {/* ③ 쉬는 기간 — 그만큼 뒤가 밀린다 */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
-          <label className="text-2xs font-bold text-[#4E7568]">쉬는 기간 (방학 · 특별주간)</label>
+          <label className="text-2xs font-bold text-[#6F8377]">쉬는 기간 (방학 · 특별주간)</label>
           <button
             type="button"
             onClick={() => onBreaks([...breaks, { from: "", to: "", label: "" }])}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EFF6E2] hover:bg-[#CFE0C2] text-2xs font-bold text-[#1E6B57] transition cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F9F9F9] hover:bg-[#D2DDD3] text-2xs font-bold text-[#4A6B57] transition cursor-pointer"
           >
             <Plus size={12} />
             기간 추가
@@ -134,20 +134,20 @@ export default function ReadingJesusScheduleForm({
         </div>
 
         {breaks.length === 0 ? (
-          <p className="text-2xs text-[#4E7568] bg-[#EFF6E2] rounded-xl px-3 py-2.5">
+          <p className="text-2xs text-[#6F8377] bg-[#F9F9F9] rounded-xl px-3 py-2.5">
             쉬는 기간이 없습니다. 방학이나 특별주간을 넣으면 그만큼 통독이 미뤄집니다.
           </p>
         ) : (
           <div className="flex flex-col gap-2">
             {breaks.map((br, idx) => (
-              <div key={idx} className="bg-[#EFF6E2] rounded-2xl p-2.5 space-y-2">
+              <div key={idx} className="bg-[#F9F9F9] rounded-2xl p-2.5 space-y-2">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={br.label || ""}
                     onChange={(e) => patchBreak(idx, { label: e.target.value })}
                     placeholder="이름 (예: 여름 방학)"
-                    className="flex-1 min-w-0 text-xs px-3 py-2 bg-white rounded-xl text-[#0B2A20] font-semibold"
+                    className="flex-1 min-w-0 text-xs px-3 py-2 bg-white rounded-xl text-[#14261E] font-semibold"
                   />
                   <button
                     type="button"
@@ -163,14 +163,14 @@ export default function ReadingJesusScheduleForm({
                     type="date"
                     value={br.from}
                     onChange={(e) => patchBreak(idx, { from: e.target.value })}
-                    className="flex-1 min-w-0 text-xs px-2.5 py-2 bg-white rounded-xl text-[#0B2A20] font-semibold"
+                    className="flex-1 min-w-0 text-xs px-2.5 py-2 bg-white rounded-xl text-[#14261E] font-semibold"
                   />
-                  <span className="text-2xs text-[#4E7568] shrink-0">~</span>
+                  <span className="text-2xs text-[#6F8377] shrink-0">~</span>
                   <input
                     type="date"
                     value={br.to}
                     onChange={(e) => patchBreak(idx, { to: e.target.value })}
-                    className="flex-1 min-w-0 text-xs px-2.5 py-2 bg-white rounded-xl text-[#0B2A20] font-semibold"
+                    className="flex-1 min-w-0 text-xs px-2.5 py-2 bg-white rounded-xl text-[#14261E] font-semibold"
                   />
                 </div>
               </div>
@@ -180,20 +180,20 @@ export default function ReadingJesusScheduleForm({
       </div>
 
       {/* 지금 정한 대로 계획이 어떻게 짜이는지 바로 보여준다 */}
-      <div className="bg-[#EFF6E2] rounded-2xl px-3 py-2.5 space-y-1">
+      <div className="bg-[#F9F9F9] rounded-2xl px-3 py-2.5 space-y-1">
         {schedule.length === 0 ? (
           <p className="text-2xs text-[#8F1E17] font-bold">
             시작날과 읽는 요일을 정하면 여기에 계획이 나옵니다.
           </p>
         ) : (
           <>
-            <p className="text-2xs text-[#1E6B57] font-bold">
+            <p className="text-2xs text-[#4A6B57] font-bold">
               {todayLabel}:{" "}
               {today
                 ? `${rjRangeLabel(today.entry)} (${today.entry.week}주 ${today.index + 1}일차)`
                 : "없음 — 오늘은 읽는 날이 아닙니다"}
             </p>
-            <p className="text-2xs text-[#4E7568]">
+            <p className="text-2xs text-[#6F8377]">
               {RJ_WEEKS}주 {RJ_TOTAL_DAYS}일 계획 · 마치는 날 {finish ? rjDateLabel(finish) : "-"}
             </p>
           </>

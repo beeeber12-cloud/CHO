@@ -112,35 +112,35 @@ export default function JournalModal({ currentUser, onClose }: Props) {
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-[#E4EFD1] w-full sm:max-w-2xl rounded-[32px] max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] flex flex-col overflow-hidden"
+        className="bg-[#F0F0F0] w-full sm:max-w-2xl rounded-[32px] max-h-[calc(100vh-env(safe-area-inset-top)-1.5rem)] flex flex-col overflow-hidden"
       >
         {/* 머리 */}
         <div className="bg-white px-5 pt-5 pb-4 shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="p-2 bg-[#EEF5E1] text-[#0C342C] rounded-2xl shrink-0">
+              <div className="p-2 bg-[#F5F5F5] text-[#0C3B2E] rounded-2xl shrink-0">
                 <Lock size={18} />
               </div>
               <div className="min-w-0">
-                <h3 className="font-bold text-[#0C342C] text-lg leading-tight">
+                <h3 className="font-bold text-[#0C3B2E] text-lg leading-tight">
                   {possessiveTitle(currentUser.name, "영성일기")}
                 </h3>
-                <p className="text-2xs text-[#4E7568]">나만 보는 방입니다</p>
+                <p className="text-2xs text-[#6F8377]">나만 보는 방입니다</p>
               </div>
             </div>
             <button
               onClick={writing ? () => setWriting(false) : onClose}
-              className="p-2 rounded-2xl text-[#4E7568] hover:bg-[#EEF5E1] transition cursor-pointer shrink-0"
+              className="p-2 rounded-2xl text-[#6F8377] hover:bg-[#F5F5F5] transition cursor-pointer shrink-0"
             >
               {writing ? <ArrowLeft size={18} /> : <X size={18} />}
             </button>
           </div>
 
           {!writing && (
-            <p className="text-xs text-[#1E6B57] leading-relaxed mt-3 bg-[#EEF5E1] rounded-2xl p-3">
+            <p className="text-xs text-[#4A6B57] leading-relaxed mt-3 bg-[#F5F5F5] rounded-2xl p-3">
               하나님이 주신 마음과 은혜의 순간을 기록하는
               <br />
-              <strong className="text-[#0C342C]">오직 나만 볼 수 있는 공간</strong>입니다.
+              <strong className="text-[#0C3B2E]">오직 나만 볼 수 있는 공간</strong>입니다.
               <br />
               하나님과의 친밀함을 하나씩 채워가 보세요.
             </p>
@@ -152,34 +152,34 @@ export default function JournalModal({ currentUser, onClose }: Props) {
           {writing ? (
             <div className="bg-white rounded-3xl p-5 space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#1E6B57] mb-1">날짜</label>
+                <label className="block text-xs font-bold text-[#4A6B57] mb-1">날짜</label>
                 <input
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-[#EEF5E1] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B57]"
+                  className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1E6B57] mb-1">내용</label>
+                <label className="block text-xs font-bold text-[#4A6B57] mb-1">내용</label>
                 <textarea
                   rows={14}
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-[#EEF5E1] rounded-2xl text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#1E6B57]"
+                  className="w-full px-3 py-2.5 bg-[#F5F5F5] rounded-2xl text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#4A6B57]"
                 />
               </div>
 
               {error && <p className="text-xs text-[#8F1E17]">{error}</p>}
             </div>
           ) : loading ? (
-            <p className="text-center text-xs text-[#4E7568] py-8">불러오는 중...</p>
+            <p className="text-center text-xs text-[#6F8377] py-8">불러오는 중...</p>
           ) : list.length === 0 ? (
             <div className="text-center py-10">
-              <Lock className="mx-auto text-[#7C9A87] mb-3" size={34} />
-              <p className="text-sm text-[#1E6B57] font-semibold">아직 적어둔 일기가 없습니다</p>
-              <p className="text-xs text-[#4E7568] mt-1">
+              <Lock className="mx-auto text-[#AFC0B2] mb-3" size={34} />
+              <p className="text-sm text-[#4A6B57] font-semibold">아직 적어둔 일기가 없습니다</p>
+              <p className="text-xs text-[#6F8377] mt-1">
                 오늘 받은 마음 한 줄부터 시작해 보세요.
               </p>
             </div>
@@ -188,18 +188,18 @@ export default function JournalModal({ currentUser, onClose }: Props) {
               <div key={j.id} className="bg-white rounded-3xl p-5">
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="min-w-0">
-                    <span className="text-2xs text-[#4E7568]">
+                    <span className="text-2xs text-[#6F8377]">
                       {j.date}
                       {j.updatedAt && " · 수정함"}
                     </span>
                     {j.title && (
-                      <h4 className="font-bold text-[#0C342C] leading-snug">{j.title}</h4>
+                      <h4 className="font-bold text-[#0C3B2E] leading-snug">{j.title}</h4>
                     )}
                   </div>
                   <div className="flex gap-0.5 shrink-0">
                     <button
                       onClick={() => openEdit(j)}
-                      className="p-2 rounded-2xl text-[#4E7568] hover:bg-[#EEF5E1] transition cursor-pointer"
+                      className="p-2 rounded-2xl text-[#6F8377] hover:bg-[#F5F5F5] transition cursor-pointer"
                       title="고치기"
                     >
                       <Pencil size={14} />
@@ -207,7 +207,7 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                     <button
                       onClick={() => remove(j)}
                       disabled={busy}
-                      className="p-2 rounded-2xl text-[#7C9A87] hover:text-[#8F1E17] hover:bg-[#FDF3F3] transition cursor-pointer"
+                      className="p-2 rounded-2xl text-[#AFC0B2] hover:text-[#8F1E17] hover:bg-[#FDF3F3] transition cursor-pointer"
                       title="지우기"
                     >
                       <Trash2 size={14} />
@@ -216,22 +216,22 @@ export default function JournalModal({ currentUser, onClose }: Props) {
                 </div>
 
                 {j.verseTitle && (
-                  <p className="text-xs font-bold text-[#1E6B57] mb-2">📖 {j.verseTitle}</p>
+                  <p className="text-xs font-bold text-[#4A6B57] mb-2">📖 {j.verseTitle}</p>
                 )}
 
                 {/* 글은 접어 둔다. 눌러서 펴면 전체가 보인다 */}
                 {j.content && (
                   <CollapsibleText collapsedHeight={96} fadeColor="#FFFFFF">
-                    <p className="text-sm text-[#0B2A20] leading-relaxed whitespace-pre-line">
+                    <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
                       {j.content}
                     </p>
                   </CollapsibleText>
                 )}
 
                 {j.prayer && (
-                  <div className="mt-3 bg-[#EEF5E1] rounded-2xl p-3">
-                    <span className="block text-2xs font-bold text-[#4E7568] mb-1">기도제목</span>
-                    <p className="text-xs text-[#1E6B57] leading-relaxed whitespace-pre-line">
+                  <div className="mt-3 bg-[#F5F5F5] rounded-2xl p-3">
+                    <span className="block text-2xs font-bold text-[#6F8377] mb-1">기도제목</span>
+                    <p className="text-xs text-[#4A6B57] leading-relaxed whitespace-pre-line">
                       {j.prayer}
                     </p>
                   </div>
@@ -243,19 +243,19 @@ export default function JournalModal({ currentUser, onClose }: Props) {
         </div>
 
         {/* 아래 버튼 — 늘 보이도록 고정 */}
-        <div className="shrink-0 bg-white px-5 py-4 border-t border-[#DEE9D2] flex gap-2">
+        <div className="shrink-0 bg-white px-5 py-4 border-t border-[#E3E9E2] flex gap-2">
           {writing ? (
             <>
               <button
                 onClick={() => setWriting(false)}
-                className="flex-1 py-3 rounded-3xl bg-[#EEF5E1] text-[#1E6B57] text-sm font-bold cursor-pointer"
+                className="flex-1 py-3 rounded-3xl bg-[#F5F5F5] text-[#4A6B57] text-sm font-bold cursor-pointer"
               >
                 취소
               </button>
               <button
                 onClick={save}
                 disabled={busy}
-                className="flex-1 py-3 rounded-3xl bg-[#0C342C] text-white text-sm font-bold disabled:opacity-40 cursor-pointer"
+                className="flex-1 py-3 rounded-3xl bg-[#0C3B2E] text-white text-sm font-bold disabled:opacity-40 cursor-pointer"
               >
                 {busy ? "저장 중..." : form.id ? "고쳐 저장" : "저장"}
               </button>
@@ -263,7 +263,7 @@ export default function JournalModal({ currentUser, onClose }: Props) {
           ) : (
             <button
               onClick={openNew}
-              className="w-full flex items-center justify-center gap-1.5 py-3 rounded-3xl bg-[#0C342C] text-white text-sm font-bold cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-3 rounded-3xl bg-[#0C3B2E] text-white text-sm font-bold cursor-pointer"
             >
               <Plus size={16} />
               오늘의 일기 쓰기

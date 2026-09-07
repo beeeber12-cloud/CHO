@@ -83,11 +83,11 @@ export default function FormattedBibleText({
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시
               isPicked
-                ? "bg-[#FFFDEE]"
+                ? "bg-[#FFFBEE]"
                 : isNavHighlight
-                ? "bg-[#EEF5E1]"
+                ? "bg-[#F5F5F5]"
                 : canPick
-                ? "hover:bg-[#F5F9EA]"
+                ? "hover:bg-[#FAFAFA]"
                 : ""
             }`}
           >
@@ -95,13 +95,13 @@ export default function FormattedBibleText({
             <div className="flex gap-1.5">
               <span
                 className={`font-sans font-normal text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
-                  isPicked ? "text-[#4F5E00] font-bold" : "text-[#77857A]"
+                  isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
                 }`}
               >
                 {v.verseNum}
               </span>
               <p
-                className="flex-1 min-w-0 text-sm sm:text-base md:text-lg leading-[1.5] text-[#22302A] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
+                className="flex-1 min-w-0 text-sm sm:text-base md:text-lg leading-[1.5] text-[#333333] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {v.verseBody}

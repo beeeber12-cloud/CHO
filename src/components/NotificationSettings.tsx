@@ -26,7 +26,7 @@ function FontSizeSegment() {
   const index = Math.max(0, scales.findIndex((s) => s.key === fontScale));
 
   return (
-    <div className="relative grid grid-cols-4 bg-[#EFF6E2] rounded-2xl p-1">
+    <div className="relative grid grid-cols-4 bg-[#F9F9F9] rounded-2xl p-1">
       {/* 미끄러지는 흰 알약 — 한 칸 폭만큼(=자기 폭의 100%) 옮겨 간다 */}
       <div
         className="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(25%-2px)] bg-white rounded-xl shadow-[0_2px_6px_rgba(47,115,88,0.14)] transition-transform duration-300 ease-out"
@@ -38,7 +38,7 @@ function FontSizeSegment() {
           type="button"
           onClick={() => setFontScale(s.key)}
           className={`relative z-10 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors cursor-pointer ${
-            fontScale === s.key ? "text-[#0B2A20]" : "text-[#4E7568]"
+            fontScale === s.key ? "text-[#14261E]" : "text-[#6F8377]"
           }`}
         >
           <span className={`${s.sample} font-bold leading-none`}>가</span>
@@ -80,13 +80,13 @@ function PushStatusPanel() {
   const on = status?.users.filter((u) => u.devices > 0) || [];
   const off = status?.users.filter((u) => u.devices === 0) || [];
 
-  if (loading && !status) return <p className="text-xs text-[#4E7568] py-3">불러오는 중...</p>;
-  if (!status) return <p className="text-xs text-[#4E7568] py-3">현황을 불러오지 못했습니다.</p>;
+  if (loading && !status) return <p className="text-xs text-[#6F8377] py-3">불러오는 중...</p>;
+  if (!status) return <p className="text-xs text-[#6F8377] py-3">현황을 불러오지 못했습니다.</p>;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold text-[#0C342C]">
+        <p className="text-sm font-bold text-[#0C3B2E]">
           {status.totalDevices === 0 ? (
             <span className="text-[#8F1E17]">아직 아무도 알림을 켜지 않았습니다.</span>
           ) : (
@@ -98,7 +98,7 @@ function PushStatusPanel() {
         <button
           onClick={load}
           disabled={loading}
-          className="text-2xs font-bold text-[#1E6B57] hover:text-[#0C342C] px-2.5 py-1.5 rounded-xl bg-[#EFF6E2] hover:bg-[#E4EFD1] transition cursor-pointer shrink-0"
+          className="text-2xs font-bold text-[#4A6B57] hover:text-[#0C3B2E] px-2.5 py-1.5 rounded-xl bg-[#F9F9F9] hover:bg-[#F0F0F0] transition cursor-pointer shrink-0"
         >
           새로고침
         </button>
@@ -108,7 +108,7 @@ function PushStatusPanel() {
         {on.map((u) => (
           <span
             key={u.name}
-            className="text-2xs font-bold px-2.5 py-1 rounded-full bg-[#E7F6D8] text-[#0C342C]"
+            className="text-2xs font-bold px-2.5 py-1 rounded-full bg-[#E8F0E9] text-[#0C3B2E]"
           >
             {u.name}
             {u.devices > 1 && ` (${u.devices}대)`}
@@ -117,7 +117,7 @@ function PushStatusPanel() {
         {off.map((u) => (
           <span
             key={u.name}
-            className="text-2xs font-medium px-2.5 py-1 rounded-full bg-[#EFF6E2] text-[#4E7568]"
+            className="text-2xs font-medium px-2.5 py-1 rounded-full bg-[#F9F9F9] text-[#6F8377]"
           >
             {u.name} 꺼짐
           </span>
@@ -125,11 +125,11 @@ function PushStatusPanel() {
       </div>
 
       {off.length > 0 && (
-        <p className="text-2xs text-[#4E7568] leading-relaxed bg-[#EFF6E2] rounded-2xl p-3.5">
+        <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F9F9F9] rounded-2xl p-3.5">
           꺼진 지체에게는 이렇게 안내해 주세요 —
-          <strong className="text-[#0C342C]"> 설정 → 알림 → 휴대폰 알림 켜기</strong>. 아이폰은
+          <strong className="text-[#0C3B2E]"> 설정 → 알림 → 휴대폰 알림 켜기</strong>. 아이폰은
           사파리 공유 버튼 → 홈 화면에 추가로{" "}
-          <strong className="text-[#0C342C]">앱을 설치한 뒤</strong> 켜야 합니다.
+          <strong className="text-[#0C3B2E]">앱을 설치한 뒤</strong> 켜야 합니다.
         </p>
       )}
     </div>
@@ -358,7 +358,7 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
         {pushMsg && (
           <p
             className={`mt-2 text-xs leading-relaxed font-medium whitespace-pre-line rounded-2xl p-3 ${
-              pushMsgTone === "ok" ? "bg-[#E7F6D8] text-[#0C342C]" : "bg-[#FDF3F3] text-[#7A1913]"
+              pushMsgTone === "ok" ? "bg-[#E8F0E9] text-[#0C3B2E]" : "bg-[#FDF3F3] text-[#7A1913]"
             }`}
           >
             {pushMsg}
@@ -374,25 +374,25 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
         sub="정한 시간에 오늘의 말씀을 알려드립니다. 바꾸시면 바로 저장됩니다."
       >
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-3 bg-[#EFF6E2] rounded-2xl p-3.5">
-            <span className="text-sm font-bold text-[#0B2A20]">알림 받기</span>
+          <div className="flex items-center justify-between gap-3 bg-[#F9F9F9] rounded-2xl p-3.5">
+            <span className="text-sm font-bold text-[#14261E]">알림 받기</span>
             <Switch checked={enabled} onChange={() => setEnabled(!enabled)} label="아침 묵상 알림" />
           </div>
 
           {enabled && (
             <>
               <div>
-                <p className="text-2xs font-bold text-[#4E7568] mb-1.5 ml-1">시간</p>
+                <p className="text-2xs font-bold text-[#6F8377] mb-1.5 ml-1">시간</p>
                 <input
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-[#EFF6E2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1E6B57] text-[#0B2A20] text-base font-bold"
+                  className="w-full px-4 py-3 bg-[#F9F9F9] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-base font-bold"
                 />
               </div>
 
               <div>
-                <p className="text-2xs font-bold text-[#4E7568] mb-1.5 ml-1">요일</p>
+                <p className="text-2xs font-bold text-[#6F8377] mb-1.5 ml-1">요일</p>
                 <div className="grid grid-cols-7 gap-1.5">
                   {dayLabels.map((label, index) => {
                     const isSelected = days.includes(index);
@@ -406,8 +406,8 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
                           isSelected
                             ? "grad-forest text-white"
                             : isWeekend
-                            ? "bg-[#EFF6E2] text-[#B3261E] hover:bg-[#E4EFD1]"
-                            : "bg-[#EFF6E2] text-[#1E6B57] hover:bg-[#E4EFD1]"
+                            ? "bg-[#F9F9F9] text-[#B3261E] hover:bg-[#F0F0F0]"
+                            : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
                         }`}
                       >
                         {label}
@@ -418,14 +418,14 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
               </div>
 
               {pushUsable && !pushOn && (
-                <p className="text-2xs text-[#4F5E00] bg-[#F7FCDD] rounded-2xl px-3.5 py-2.5 leading-relaxed">
+                <p className="text-2xs text-[#8F6B00] bg-[#FFF7E0] rounded-2xl px-3.5 py-2.5 leading-relaxed">
                   <strong>휴대폰 알림</strong>을 먼저 켜주셔야 이 알림이 도착합니다.
                 </p>
               )}
             </>
           )}
 
-          <p className="text-2xs text-[#1E6B57] h-4 flex items-center gap-1">
+          <p className="text-2xs text-[#4A6B57] h-4 flex items-center gap-1">
             {saving ? "저장 중..." : success ? (<><Check size={12} className="stroke-[3px]" />{success}</>) : ""}
           </p>
         </div>
@@ -449,19 +449,19 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
         sub={support === "ios-needs-install" ? "아이폰에서 알림 받는 법" : "이 브라우저 안내"}
       >
         {support === "ios-needs-install" ? (
-          <div className="space-y-2.5 text-xs text-[#0C342C] leading-relaxed">
+          <div className="space-y-2.5 text-xs text-[#0C3B2E] leading-relaxed">
             <p className="font-bold flex items-center gap-1.5">
-              <Info size={15} className="text-[#1E6B57]" />
+              <Info size={15} className="text-[#4A6B57]" />
               아이폰은 앱으로 설치해야 알림을 받을 수 있습니다.
             </p>
-            <p className="text-[#4E7568] bg-[#EFF6E2] rounded-2xl p-3.5">
-              사파리 아래쪽 <strong className="text-[#0C342C]">공유 버튼</strong> →{" "}
-              <strong className="text-[#0C342C]">홈 화면에 추가</strong> 를 누른 뒤, 홈 화면에 생긴
+            <p className="text-[#6F8377] bg-[#F9F9F9] rounded-2xl p-3.5">
+              사파리 아래쪽 <strong className="text-[#0C3B2E]">공유 버튼</strong> →{" "}
+              <strong className="text-[#0C3B2E]">홈 화면에 추가</strong> 를 누른 뒤, 홈 화면에 생긴
               아이콘으로 열어 이 화면에서 다시 켜주세요. (애플 정책이라 우회할 방법이 없습니다.)
             </p>
           </div>
         ) : (
-          <p className="text-xs text-[#4E7568] bg-[#EFF6E2] rounded-2xl p-3.5 leading-relaxed">
+          <p className="text-xs text-[#6F8377] bg-[#F9F9F9] rounded-2xl p-3.5 leading-relaxed">
             이 브라우저는 푸시 알림을 지원하지 않습니다. 크롬 또는 삼성 인터넷을 사용해 주세요.
           </p>
         )}

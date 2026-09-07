@@ -23,26 +23,35 @@ import {
  * 아래에서 올라오는 창이라 **뒤로 앱이 그대로 보인다** — 색을 고르면 그 자리에서
  * 앱 전체가 바뀌는 것을 눈으로 보며 고를 수 있다.
  * '저장' 을 눌러야 공동체 모두에게 적용된다. 저장 없이 닫으면 원래대로 돌아간다.
+ *
+ * 여기서 정하는 것은 **밝은 화면**의 색이다. 어두운 화면(다크)은 눈이 부시지 않게
+ * 따로 짜 둔 색을 쓴다 — 그래서 어둡게 쓰는 분이 열면 잠시 밝은 화면으로 보여 드린다.
  */
 
-/** 첨부해 주신 그라데이션 표를 그대로 옮긴 미리 만든 색 */
+/** 미리 만든 색 */
 const PRESETS: { name: string; theme: AppTheme }[] = [
   { name: "기본 초록", theme: DEFAULT_THEME },
   {
     name: "라임 연둣빛",
     theme: {
-      ...DEFAULT_THEME,
       page: "#F6FBE9",
-      box: "#EAF7D4",
-      soft: "#F4FBE4",
-      mint: "#D3EFB4",
-      line: "#E1EFCB",
-      accent: "#0C6B45",
-      accent2: "#3C8A2E",
+      card: "#FFFFFF",
+      box: "#EFF6E2",
+      soft: "#EEF5E1",
+      mint: "#CFE0C2",
+      line: "#E7EFDC",
+      title: "#0C342C",
+      body: "#0B2A20",
+      muted: "#4E7568",
+      faint: "#5E7F71",
+      scripture: "#22302A",
+      accent: "#076653",
+      accent2: "#1E6B57",
       point: "#E3EF26",
-      gradMain: { from: "#E3EF26", to: "#076653", angle: 135 },
-      gradSub: { from: "#B7DE2A", to: "#0C6B45", angle: 135 },
-      gradBar: { from: "#0C342C", to: "#06231D", angle: 135 }
+      ink: "#06231D",
+      gradMain: { from: "#0B7A62", to: "#06231D", angle: 135 },
+      gradSub: { from: "#0F8F72", to: "#076653", angle: 135 },
+      font: "sans"
     }
   },
   {
@@ -58,9 +67,9 @@ const PRESETS: { name: string; theme: AppTheme }[] = [
       title: "#0C342C",
       accent: "#076653",
       accent2: "#2C6B4F",
+      point: "#D8B54A",
       gradMain: { from: "#0C342C", to: "#06231D", angle: 135 },
-      gradSub: { from: "#3F7A5C", to: "#0C342C", angle: 135 },
-      gradBar: { from: "#06231D", to: "#0C342C", angle: 135 }
+      gradSub: { from: "#3F7A5C", to: "#0C342C", angle: 135 }
     }
   },
   {
@@ -68,18 +77,16 @@ const PRESETS: { name: string; theme: AppTheme }[] = [
     theme: {
       ...DEFAULT_THEME,
       page: "#E7EEE8",
-      box: "#E6EFE7",
-      soft: "#EFF5EF",
+      box: "#EFF4F0",
+      soft: "#E9F0EA",
       mint: "#C6DCC9",
       line: "#DDE7DE",
       title: "#06231D",
-      body: "#0B2A20",
       accent: "#0B5C4B",
       accent2: "#1E6B57",
       point: "#C9E04A",
       gradMain: { from: "#076653", to: "#06231D", angle: 160 },
-      gradSub: { from: "#2C8C74", to: "#076653", angle: 160 },
-      gradBar: { from: "#06231D", to: "#02120E", angle: 160 }
+      gradSub: { from: "#2C8C74", to: "#076653", angle: 160 }
     }
   }
 ];
@@ -140,7 +147,7 @@ function HexField({ value, onChange }: { value: string; onChange: (hex: string) 
       spellCheck={false}
       maxLength={7}
       className={`w-[86px] shrink-0 text-2xs font-mono font-bold px-2 py-1.5 rounded-lg ${UI.row} ${UI.text} text-center focus:outline-none`}
-      aria-label="색 값 (예: #EFF6E2)"
+      aria-label="색 값 (예: #F9F9F9)"
     />
   );
 }
@@ -172,12 +179,15 @@ function ColorRow({
 export default function ThemeStudio({
   open,
   saved,
+  dark,
   onClose,
   onSaved
 }: {
   open: boolean;
   /** 지금 저장되어 있는 색 (닫을 때 이 색으로 되돌린다) */
   saved: AppTheme;
+  /** 이 기기가 지금 어두운 화면을 쓰는 중인지 (닫을 때 그대로 되돌리기 위해) */
+  dark: boolean;
   onClose: () => void;
   onSaved: (t: AppTheme) => void;
 }) {
@@ -188,6 +198,8 @@ export default function ThemeStudio({
   const [message, setMessage] = useState("");
   const savedRef = useRef(saved);
   savedRef.current = saved;
+  const darkRef = useRef(dark);
+  darkRef.current = dark;
 
   // 창을 열 때마다 지금 색에서 시작한다
   useEffect(() => {
@@ -199,13 +211,13 @@ export default function ThemeStudio({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // 고르는 즉시 앱 전체에 입힌다 (창 뒤로 바뀌는 것이 보인다)
+  // 고르는 즉시 앱 전체에 입힌다 (창 뒤로 바뀌는 것이 보인다).
+  // 어둡게 쓰는 중이어도 여기서는 밝은 화면으로 보여 드린다 — 정하는 색이 그 색이므로.
   useEffect(() => {
-    if (open) applyTheme(draft);
+    if (open) applyTheme(draft, false);
   }, [draft, open]);
 
-  const setColor = (key: ThemeColorKey, hex: string) =>
-    setDraft((d) => ({ ...d, [key]: hex }));
+  const setColor = (key: ThemeColorKey, hex: string) => setDraft((d) => ({ ...d, [key]: hex }));
   const setGrad = (key: ThemeGradientKey, part: "from" | "to" | "angle", v: string | number) =>
     setDraft((d) => ({ ...d, [key]: { ...d[key], [part]: v } }));
 
@@ -220,7 +232,7 @@ export default function ThemeStudio({
   }, []);
 
   const close = () => {
-    applyTheme(savedRef.current); // 저장 안 한 것은 되돌린다
+    applyTheme(savedRef.current, darkRef.current); // 저장 안 한 것은 되돌린다
     onClose();
   };
 
@@ -238,9 +250,9 @@ export default function ThemeStudio({
         throw new Error(err.error || "저장하지 못했습니다.");
       }
       const applied = normalizeTheme(await res.json());
-      applyTheme(applied);
       cacheTheme(applied);
       onSaved(applied);
+      applyTheme(applied, false);
       setMessage("공동체 모두에게 적용되었습니다.");
     } catch (e: any) {
       setMessage(e?.message || "저장하지 못했습니다.");
@@ -328,7 +340,9 @@ export default function ThemeStudio({
                     <Palette size={17} /> 앱 색 꾸미기
                   </h4>
                   <p className={`text-2xs ${UI.muted} mt-0.5`}>
-                    고르는 즉시 뒤 화면이 바뀝니다 · 저장해야 모두에게 적용됩니다
+                    {dark
+                      ? "어두운 화면은 따로 짜 둔 색을 씁니다 — 지금은 밝은 화면으로 보여 드립니다"
+                      : "고르는 즉시 뒤 화면이 바뀝니다 · 저장해야 모두에게 적용됩니다"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
