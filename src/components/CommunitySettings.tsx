@@ -212,7 +212,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
             onChange={(e) => setDraftName(e.target.value)}
             maxLength={40}
             autoFocus
-            className="w-full px-4 py-3 text-[#14261E] bg-[#F9F9F9] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-sm font-semibold"
+            className="w-full px-4 py-3 text-[#0B2A20] bg-[#EFF6E2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1E6B57] text-sm font-semibold"
           />
           <button
             onClick={rename}
@@ -232,14 +232,14 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
         sub="주소와 코드가 함께 복사됩니다. 새어나갔다 싶으면 새로 발급하시면 됩니다 — 그 순간 옛 코드는 통하지 않습니다."
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 bg-[#F9F9F9] rounded-2xl px-4 py-3">
-            <span className="flex-1 text-2xl font-bold tracking-[0.3em] text-[#0C3B2E]">
+          <div className="flex items-center gap-2 bg-[#EFF6E2] rounded-2xl px-4 py-3">
+            <span className="flex-1 text-2xl font-bold tracking-[0.3em] text-[#0C342C]">
               {mine.joinCode}
             </span>
             <button
               onClick={regenerate}
               disabled={busy}
-              className="p-2.5 rounded-2xl bg-white text-[#4A6B57] hover:bg-[#EAEAEA] transition cursor-pointer disabled:opacity-40 shrink-0"
+              className="p-2.5 rounded-2xl bg-white text-[#1E6B57] hover:bg-[#E4EDD8] transition cursor-pointer disabled:opacity-40 shrink-0"
               title="새로 발급"
             >
               <RefreshCw size={18} className={busy ? "animate-spin" : ""} />
@@ -257,7 +257,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
             {canShare && (
               <button
                 onClick={shareInvite}
-                className="px-4 py-3 rounded-2xl bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0] transition cursor-pointer"
+                className="px-4 py-3 rounded-2xl bg-[#EFF6E2] text-[#1E6B57] hover:bg-[#E4EFD1] transition cursor-pointer"
                 title="보내기"
               >
                 <Share2 size={16} />
@@ -266,7 +266,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
           </div>
 
           {/* 복사되는 내용을 눈으로 확인하실 수 있게 그대로 보여준다 */}
-          <pre className="p-3.5 bg-[#F9F9F9] rounded-2xl text-2xs text-[#4A6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
+          <pre className="p-3.5 bg-[#EFF6E2] rounded-2xl text-2xs text-[#1E6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
             {inviteText}
           </pre>
         </div>
@@ -285,24 +285,24 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
             return (
               <div
                 key={m.id}
-                className="flex items-center justify-between gap-2 py-2.5 px-3.5 rounded-2xl bg-[#F9F9F9]"
+                className="flex items-center justify-between gap-2 py-2.5 px-3.5 rounded-2xl bg-[#EFF6E2]"
               >
-                <span className="flex items-center text-sm font-semibold text-[#14261E] min-w-0">
+                <span className="flex items-center text-sm font-semibold text-[#0B2A20] min-w-0">
                   {admin ? (
-                    <ShieldCheck size={15} className="mr-1.5 text-[#4A6B57] shrink-0" />
+                    <ShieldCheck size={15} className="mr-1.5 text-[#1E6B57] shrink-0" />
                   ) : (
-                    <Shield size={15} className="mr-1.5 text-[#AFC0B2] shrink-0" />
+                    <Shield size={15} className="mr-1.5 text-[#7C9A87] shrink-0" />
                   )}
                   <span className="truncate">{m.name}</span>
                   {m.id === currentUser.id && (
-                    <span className="ml-1.5 text-2xs text-[#6F8377] shrink-0">(나)</span>
+                    <span className="ml-1.5 text-2xs text-[#4E7568] shrink-0">(나)</span>
                   )}
                 </span>
                 {m.id !== currentUser.id && (
                   <button
                     onClick={() => changeRole(m, admin ? "member" : "admin")}
                     disabled={busy}
-                    className="text-2xs font-bold px-3 py-1.5 rounded-full bg-white text-[#4A6B57] hover:bg-[#F0F0F0] transition cursor-pointer disabled:opacity-40 shrink-0"
+                    className="text-2xs font-bold px-3 py-1.5 rounded-full bg-white text-[#1E6B57] hover:bg-[#E4EFD1] transition cursor-pointer disabled:opacity-40 shrink-0"
                   >
                     {admin ? "관리자 내리기" : "관리자로"}
                   </button>

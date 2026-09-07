@@ -15,7 +15,7 @@ export default function BibleVersionPicker({ selected, onChange }: Props) {
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <div className="flex items-center gap-1 bg-[#F5F5F5] p-1 rounded-3xl w-fit">
+      <div className="flex items-center gap-1 bg-[#EEF5E1] p-1 rounded-3xl w-fit">
         {BIBLE_VERSIONS.map((v) => {
           const on = selected.includes(v.key);
           const order = selected.indexOf(v.key);
@@ -26,7 +26,7 @@ export default function BibleVersionPicker({ selected, onChange }: Props) {
               onClick={() => onChange(toggleVersion(selected, v.key))}
               aria-pressed={on}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                on ? "bg-[#0C3B2E] text-white shadow-sm" : "text-[#4A6B57] hover:bg-[#D2DDD3]"
+                on ? "bg-[#0C342C] text-white shadow-sm" : "text-[#1E6B57] hover:bg-[#CFE0C2]"
               }`}
             >
               {/* 두 개를 대조 중일 때만 위·아래 순서를 숫자로 알려준다 */}

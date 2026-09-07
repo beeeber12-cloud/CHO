@@ -15,10 +15,10 @@ const REACTIONS: {
   onColor: string;
   onFill: string;
 }[] = [
-  // 두 반응 모두 앱의 포인트 색(#FFBA00 — 머리말 오른쪽 이름 동그라미와 같은 색)으로 채워진다.
+  // 두 반응 모두 진한 초록으로 채워진다. 라임은 흰 바탕에서 너무 밝아 아이콘이 사라진다
   // 글씨는 그대로 두고 아이콘만 물든다.
-  { type: "like", icon: Heart, label: "좋아요", onColor: "text-[#FFBA00]", onFill: "fill-[#FFBA00]" },
-  { type: "pray", icon: HandHeart, label: "기도할게요", onColor: "text-[#FFBA00]", onFill: "fill-[#FFBA00]" }
+  { type: "like", icon: Heart, label: "좋아요", onColor: "text-[#076653]", onFill: "fill-[#076653]" },
+  { type: "pray", icon: HandHeart, label: "기도할게요", onColor: "text-[#076653]", onFill: "fill-[#076653]" }
 ];
 
 interface ReactionBarProps {
@@ -75,7 +75,7 @@ export default function ReactionBar({
             title={r.label}
             // 시안의 .reaction — 알약 배경 없이 아이콘+글자만.
             // 글씨는 늘 같은 색으로 두고, **아이콘 색만** 바뀌어 눌렀는지 알려준다.
-            className="flex items-center gap-1 text-xs font-semibold transition cursor-pointer disabled:opacity-60 whitespace-nowrap text-[#6F8377] hover:text-[#4A6B57]"
+            className="flex items-center gap-1 text-xs font-semibold transition cursor-pointer disabled:opacity-60 whitespace-nowrap text-[#4E7568] hover:text-[#1E6B57]"
           >
             <Icon
               size={16}

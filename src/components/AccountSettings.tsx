@@ -166,28 +166,28 @@ export default function AccountSettings({
         sub="비밀번호를 잊으신 지체는 여기서 새 번호를 정해 알려드리면 됩니다."
       >
         {loadingUsers ? (
-          <p className="text-xs text-[#6F8377] py-4 text-center">계정 목록을 불러오는 중...</p>
+          <p className="text-xs text-[#4E7568] py-4 text-center">계정 목록을 불러오는 중...</p>
         ) : allUsers.length > 0 ? (
           <div className="space-y-2">
             {allUsers.map((u) => (
               <div
                 key={u.id}
-                className="flex flex-wrap items-center justify-between gap-2 p-3 bg-[#F9F9F9] rounded-2xl"
+                className="flex flex-wrap items-center justify-between gap-2 p-3 bg-[#EFF6E2] rounded-2xl"
               >
                 <span className="flex items-center gap-2 min-w-0">
-                  <span className="w-7 h-7 rounded-full bg-[#D2DDD3] text-[#4A6B57] text-2xs font-bold flex items-center justify-center shrink-0">
+                  <span className="w-7 h-7 rounded-full bg-[#CFE0C2] text-[#1E6B57] text-2xs font-bold flex items-center justify-center shrink-0">
                     {u.name.slice(-1)}
                   </span>
-                  <span className="text-sm font-bold text-[#14261E] truncate">{u.name}</span>
+                  <span className="text-sm font-bold text-[#0B2A20] truncate">{u.name}</span>
                   {u.role === "admin" && (
-                    <span className="text-2xs font-bold text-[#4A3600] bg-[#FFBA00] px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-2xs font-bold text-[#0C342C] bg-[#E3EF26] px-2 py-0.5 rounded-full shrink-0">
                       관리자
                     </span>
                   )}
                 </span>
 
                 {u.id === currentUser.id ? (
-                  <span className="text-2xs text-[#6F8377] font-bold px-2">나</span>
+                  <span className="text-2xs text-[#4E7568] font-bold px-2">나</span>
                 ) : editingPinUserId === u.id ? (
                   <div className="flex items-center gap-1.5">
                     <input
@@ -198,7 +198,7 @@ export default function AccountSettings({
                       placeholder="새 PIN"
                       value={adminNewPin}
                       onChange={(e) => setAdminNewPin(e.target.value.replace(/[^0-9]/g, ""))}
-                      className="w-20 px-2 py-1.5 rounded-xl text-center text-xs font-bold tracking-widest text-[#14261E] bg-white"
+                      className="w-20 px-2 py-1.5 rounded-xl text-center text-xs font-bold tracking-widest text-[#0B2A20] bg-white"
                     />
                     <button
                       onClick={() => handleAdminChangeUserPin(u.id)}
@@ -211,7 +211,7 @@ export default function AccountSettings({
                         setEditingPinUserId(null);
                         setAdminNewPin("");
                       }}
-                      className="bg-white text-[#6F8377] px-3 py-1.5 rounded-xl text-2xs font-bold transition cursor-pointer"
+                      className="bg-white text-[#4E7568] px-3 py-1.5 rounded-xl text-2xs font-bold transition cursor-pointer"
                     >
                       취소
                     </button>
@@ -223,7 +223,7 @@ export default function AccountSettings({
                         setEditingPinUserId(u.id);
                         setAdminNewPin("");
                       }}
-                      className="text-2xs font-bold text-[#4A6B57] bg-white hover:bg-[#F0F0F0] flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition cursor-pointer"
+                      className="text-2xs font-bold text-[#1E6B57] bg-white hover:bg-[#E4EFD1] flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition cursor-pointer"
                     >
                       <Lock size={11} />
                       비번
@@ -241,7 +241,7 @@ export default function AccountSettings({
             ))}
           </div>
         ) : (
-          <p className="text-xs text-[#6F8377] py-4 text-center">가입된 지체가 없습니다.</p>
+          <p className="text-xs text-[#4E7568] py-4 text-center">가입된 지체가 없습니다.</p>
         )}
       </SettingModal>
 

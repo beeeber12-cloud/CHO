@@ -180,7 +180,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   /** 입력칸 한 벌 — 앱 안쪽 화면과 같은 옅은 회색 바탕에 둥근 모서리 */
   const fieldClass =
-    "w-full px-4 py-3.5 bg-[#F9F9F9] rounded-2xl text-[#14261E] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4A6B57] placeholder:text-[#A8B3A9] placeholder:font-medium";
+    "w-full px-4 py-3.5 bg-[#EFF6E2] rounded-2xl text-[#0B2A20] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#1E6B57] placeholder:text-[#5E7F71] placeholder:font-medium";
 
   return (
     <div id="login-container" className="min-h-screen bg-white flex flex-col">
@@ -191,11 +191,11 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.45 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-[22px] bg-white/15 text-[#F2F6F3] mb-4"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-[22px] bg-white/15 text-[#F4FBEA] mb-4"
           >
             <BrandMark size={34} />
           </motion.div>
-          <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F2F6F3]">
+          <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F4FBEA]">
             {community?.name || "말씀나눔"}
           </h1>
           <p className="mt-2 text-xs text-white/70 leading-relaxed">
@@ -214,7 +214,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         )}
 
         {regSuccess && (
-          <div className="mb-4 bg-[#E8F0E9] p-3.5 rounded-2xl text-xs font-semibold text-[#0C3B2E] flex items-center gap-2">
+          <div className="mb-4 bg-[#E7F6D8] p-3.5 rounded-2xl text-xs font-semibold text-[#0C342C] flex items-center gap-2">
             <CheckCircle2 className="shrink-0" size={15} />
             <span>{regSuccess}</span>
           </div>
@@ -223,7 +223,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         {!isRegistering ? (
           <form onSubmit={handleLogin} className="space-y-4">
             {/* 이름을 고를지 직접 칠지 — 시안의 세그먼트 */}
-            <div className="relative grid grid-cols-2 bg-[#F9F9F9] rounded-2xl p-1">
+            <div className="relative grid grid-cols-2 bg-[#EFF6E2] rounded-2xl p-1">
               <div
                 className="absolute top-1 left-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-white rounded-xl shadow-[0_2px_6px_rgba(47,115,88,0.14)] transition-transform duration-300 ease-out"
                 style={{ transform: `translateX(${loginMode === "select" ? 0 : 100}%)` }}
@@ -240,7 +240,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                     setError("");
                   }}
                   className={`relative z-10 py-2.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
-                    loginMode === m.key ? "text-[#14261E]" : "text-[#6F8377]"
+                    loginMode === m.key ? "text-[#0B2A20]" : "text-[#4E7568]"
                   }`}
                 >
                   {m.label}
@@ -249,7 +249,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 {loginMode === 'select' ? "이름" : "성함 직접 입력"}
               </label>
 
@@ -272,7 +272,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   </select>
                   <ChevronDown
                     size={18}
-                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6F8377]"
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4E7568]"
                   />
                 </div>
               ) : (
@@ -290,7 +290,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 비밀번호 4자리
               </label>
               <input
@@ -306,8 +306,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 placeholder="••••"
                 className={`${fieldClass} text-center text-lg tracking-[0.5em] font-bold`}
               />
-              <p className="mt-2 ml-1.5 text-2xs text-[#6F8377] leading-relaxed flex items-start gap-1.5">
-                <Lock size={13} className="shrink-0 mt-px text-[#4A6B57]" />
+              <p className="mt-2 ml-1.5 text-2xs text-[#4E7568] leading-relaxed flex items-start gap-1.5">
+                <Lock size={13} className="shrink-0 mt-px text-[#1E6B57]" />
                 한 번 들어오시면 로그아웃을 누르기 전까지 계속 로그인된 채로 유지됩니다.
               </p>
             </div>
@@ -327,7 +327,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   setIsRegistering(true);
                   setError("");
                 }}
-                className="w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-[#F9F9F9] hover:bg-[#F0F0F0] text-xs font-bold text-[#4A6B57] transition cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl bg-[#EFF6E2] hover:bg-[#E4EFD1] text-xs font-bold text-[#1E6B57] transition cursor-pointer"
               >
                 <UserPlus size={15} />
                 처음 오셨나요? 새 식구 등록하기
@@ -337,14 +337,14 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         ) : (
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-[#0C3B2E]">새 식구 등록</h2>
-              <p className="text-xs text-[#6F8377] mt-1">
+              <h2 className="text-xl font-bold text-[#0C342C]">새 식구 등록</h2>
+              <p className="text-xs text-[#4E7568] mt-1">
                 {community?.name || "우리 공동체"}에 처음 오신 분이 이름을 만드는 곳입니다.
               </p>
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 성함
               </label>
               <input
@@ -358,7 +358,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 비밀번호 4자리
               </label>
               <input
@@ -381,7 +381,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             */}
             {community?.requiresJoinCode && (
               <div>
-                <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+                <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                   가입코드
                 </label>
                 <input
@@ -403,7 +403,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   setIsRegistering(false);
                   setError("");
                 }}
-                className="w-1/2 py-3.5 rounded-2xl bg-[#F9F9F9] hover:bg-[#F0F0F0] text-sm font-bold text-[#4A6B57] transition cursor-pointer"
+                className="w-1/2 py-3.5 rounded-2xl bg-[#EFF6E2] hover:bg-[#E4EFD1] text-sm font-bold text-[#1E6B57] transition cursor-pointer"
               >
                 취소
               </button>
@@ -422,14 +422,14 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           다른 교회 지체가 이 주소로 들어왔을 때의 문.
           평소에는 눈에 잘 띄지 않게 두어, 우리 교인들이 헷갈리지 않게 한다.
         */}
-        <div className="mt-7 pt-4 border-t border-[#F0F0F0] text-center">
+        <div className="mt-7 pt-4 border-t border-[#E4EFD1] text-center">
           <button
             type="button"
             onClick={() => {
               clearToken();
               setShowGate(true);
             }}
-            className="text-2xs text-[#6F8377] hover:text-[#0C3B2E] underline underline-offset-2 cursor-pointer"
+            className="text-2xs text-[#4E7568] hover:text-[#0C342C] underline underline-offset-2 cursor-pointer"
           >
             다른 공동체로 들어가기 · 새 공동체 만들기
           </button>

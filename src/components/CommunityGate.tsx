@@ -111,7 +111,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
 
   /** 입력칸 한 벌 — 로그인 화면과 같은 옅은 회색 바탕 */
   const fieldClass =
-    "w-full px-4 py-3.5 bg-[#F9F9F9] rounded-2xl text-[#14261E] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#4A6B57] placeholder:text-[#A8B3A9] placeholder:font-medium";
+    "w-full px-4 py-3.5 bg-[#EFF6E2] rounded-2xl text-[#0B2A20] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#1E6B57] placeholder:text-[#5E7F71] placeholder:font-medium";
 
   const title =
     mode === "menu" ? "공동체 선택" : mode === "join" ? "가입코드 입력" : "새 공동체 만들기";
@@ -136,9 +136,9 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
           </button>
 
           <div className="flex items-center gap-2.5 mb-3">
-            <BrandMark size={26} className="text-[#F2F6F3] shrink-0" />
+            <BrandMark size={26} className="text-[#F4FBEA] shrink-0" />
           </div>
-          <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F2F6F3]">{title}</h1>
+          <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F4FBEA]">{title}</h1>
           <p className="mt-2 text-xs text-white/70 leading-relaxed">{sub}</p>
         </div>
       </header>
@@ -163,7 +163,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
             */}
             {history.length > 0 && (
               <div>
-                <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2.5 ml-1.5">
+                <p className="text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2.5 ml-1.5">
                   전에 들어갔던 공동체
                 </p>
                 <div className="flex flex-col gap-2">
@@ -174,15 +174,15 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
                           saveCommunity(h);
                           onReady(h);
                         }}
-                        className="flex-1 flex items-center gap-3 p-3 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
+                        className="flex-1 flex items-center gap-3 p-3 rounded-[18px] bg-[#EFF6E2] hover:bg-[#E4EFD1] transition text-left cursor-pointer"
                       >
-                        <span className="w-[34px] h-[34px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                        <span className="w-[34px] h-[34px] rounded-full bg-[#CFE0C2] text-[#1E6B57] flex items-center justify-center shrink-0">
                           <Home size={17} />
                         </span>
-                        <span className="flex-1 min-w-0 text-sm font-semibold text-[#14261E] truncate">
+                        <span className="flex-1 min-w-0 text-sm font-semibold text-[#0B2A20] truncate">
                           {h.name}
                         </span>
-                        <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                        <ChevronRight size={17} className="text-[#4E7568] shrink-0" />
                       </button>
                       <button
                         onClick={() => {
@@ -191,7 +191,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
                           forgetCommunity(h.id);
                           setHistory(getCommunityHistory().filter((c) => c.id !== here));
                         }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-[#A8B3A9] hover:text-[#0C3B2E] hover:bg-[#F9F9F9] transition cursor-pointer shrink-0"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-[#5E7F71] hover:text-[#0C342C] hover:bg-[#EFF6E2] transition cursor-pointer shrink-0"
                         title="목록에서 지우기"
                       >
                         <X size={17} />
@@ -203,45 +203,45 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
             )}
 
             <div>
-              <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2.5 ml-1.5">
+              <p className="text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2.5 ml-1.5">
                 들어가기
               </p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => setMode("join")}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#EFF6E2] hover:bg-[#E4EFD1] transition text-left cursor-pointer"
                 >
-                  <span className="w-[38px] h-[38px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                  <span className="w-[38px] h-[38px] rounded-full bg-[#CFE0C2] text-[#1E6B57] flex items-center justify-center shrink-0">
                     <KeyRound size={19} />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold text-[#14261E]">가입코드로 들어가기</span>
-                    <span className="block text-2xs text-[#6F8377] mt-0.5">
+                    <span className="block text-sm font-bold text-[#0B2A20]">가입코드로 들어가기</span>
+                    <span className="block text-2xs text-[#4E7568] mt-0.5">
                       관리자에게 받은 6자리를 넣습니다
                     </span>
                   </span>
-                  <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                  <ChevronRight size={17} className="text-[#4E7568] shrink-0" />
                 </button>
 
                 <button
                   onClick={() => setMode("create")}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#EFF6E2] hover:bg-[#E4EFD1] transition text-left cursor-pointer"
                 >
-                  <span className="w-[38px] h-[38px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+                  <span className="w-[38px] h-[38px] rounded-full bg-[#CFE0C2] text-[#1E6B57] flex items-center justify-center shrink-0">
                     <Church size={19} />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold text-[#14261E]">새 공동체 만들기</span>
-                    <span className="block text-2xs text-[#6F8377] mt-0.5">
+                    <span className="block text-sm font-bold text-[#0B2A20]">새 공동체 만들기</span>
+                    <span className="block text-2xs text-[#4E7568] mt-0.5">
                       만드신 분이 첫 관리자가 됩니다
                     </span>
                   </span>
-                  <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+                  <ChevronRight size={17} className="text-[#4E7568] shrink-0" />
                 </button>
               </div>
             </div>
 
-            <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F9F9F9] rounded-2xl p-3.5">
+            <p className="text-2xs text-[#4E7568] leading-relaxed bg-[#EFF6E2] rounded-2xl p-3.5">
               다른 공동체의 묵상·감사·기도제목은 서로 보이지 않습니다. 우리 공동체 안에서만
               나눕니다.
             </p>
@@ -251,7 +251,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
         {mode === "join" && (
           <form onSubmit={join} className="space-y-4">
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 가입코드
               </label>
               <input
@@ -277,7 +277,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
         {mode === "create" && (
           <form onSubmit={create} className="space-y-4">
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 공동체 이름
               </label>
               <input
@@ -290,7 +290,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 관리자 성함
               </label>
               <input
@@ -302,7 +302,7 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
+              <label className="block text-2xs font-bold text-[#4E7568] tracking-[0.08em] mb-2 ml-1.5">
                 비밀번호 4자리
               </label>
               <input
@@ -315,8 +315,8 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
               />
             </div>
 
-            <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F9F9F9] rounded-2xl p-3.5">
-              만든 뒤 나오는 <strong className="text-[#0C3B2E]">가입코드</strong>를 지체들께
+            <p className="text-2xs text-[#4E7568] leading-relaxed bg-[#EFF6E2] rounded-2xl p-3.5">
+              만든 뒤 나오는 <strong className="text-[#0C342C]">가입코드</strong>를 지체들께
               알려주시면, 그분들도 이 앱으로 들어오실 수 있습니다.
             </p>
 

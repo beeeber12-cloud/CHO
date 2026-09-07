@@ -453,71 +453,71 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     <div className="space-y-4 sm:space-y-6">
       {/* Page title — 다른 탭과 같은 자리, 같은 형식 */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">나의 기록</h2>
-        <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">{currentUser.name}님의 나눔 발자취</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#0C342C]">나의 기록</h2>
+        <p className="text-xs sm:text-sm text-[#4E7568] mt-0.5">{currentUser.name}님의 나눔 발자취</p>
       </div>
 
       {/* 말씀 체크리스트 · 내 나눔 목표 — 시안의 .nav-card (플레인 행 두 개, 아이콘+글+꺾쇠) */}
-      <div data-guide="my-checklist" className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] px-3 sm:px-4">
+      <div className="bg-[#EFF6E2] rounded-3xl sm:rounded-[32px] px-3 sm:px-4">
         <button
           type="button"
           onClick={openSavedVerses}
           className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer"
         >
-          <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-full bg-[#CFE0C2] text-[#1E6B57] flex items-center justify-center shrink-0">
             <Check size={17} />
           </span>
           <span className="flex-1 min-w-0">
-            <span className="block text-sm font-bold text-[#0C3B2E]">말씀 체크리스트</span>
-            <span className="block text-2xs text-[#6F8377] mt-0.5">읽다가 체크해 둔 구절 {savedVerses.length}개</span>
+            <span className="block text-sm font-bold text-[#0C342C]">말씀 체크리스트</span>
+            <span className="block text-2xs text-[#4E7568] mt-0.5">읽다가 체크해 둔 구절 {savedVerses.length}개</span>
           </span>
-          <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+          <ChevronRight size={17} className="text-[#4E7568] shrink-0" />
         </button>
 
         <button
           type="button"
           onClick={() => setShowGoalModal(true)}
-          className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer border-t border-[#F0F0F0]"
+          className="w-full flex items-center gap-3 py-3.5 text-left cursor-pointer border-t border-[#E4EFD1]"
         >
-          <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-full bg-[#CFE0C2] text-[#1E6B57] flex items-center justify-center shrink-0">
             <Target size={16} />
           </span>
           <span className="flex-1 min-w-0">
-            <span className="block text-sm font-bold text-[#0C3B2E]">내 나눔 목표</span>
-            <span className="block text-2xs text-[#6F8377] mt-0.5">
+            <span className="block text-sm font-bold text-[#0C342C]">내 나눔 목표</span>
+            <span className="block text-2xs text-[#4E7568] mt-0.5">
               이번 달 묵상 {monthMeditations}/{medTarget}회 · 감사 {monthGratitudes}/{gratTarget}회
               {hasPrevMonth ? ` (지난달 묵상 ${prevMonthMeditations}회·감사 ${prevMonthGratitudes}회)` : ""}
             </span>
           </span>
-          <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
+          <ChevronRight size={17} className="text-[#4E7568] shrink-0" />
         </button>
       </div>
 
       {/* Filter and Search controls */}
-      <div className="bg-[#F9F9F9] rounded-[32px] p-4 space-y-3">
+      <div className="bg-[#EFF6E2] rounded-[32px] p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Keyword Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3.5 text-[#6F8377]" size={16} />
+            <Search className="absolute left-3 top-3.5 text-[#4E7568]" size={16} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="내 기록 내용 및 구절 검색..."
-              className="w-full pl-9 pr-4 py-2.5 bg-white rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] text-xs font-semibold"
+              className="w-full pl-9 pr-4 py-2.5 bg-white rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#1E6B57] text-[#0B2A20] text-xs font-semibold"
             />
           </div>
 
         </div>
 
         {/* Record Type Category Pills — 좁은 화면에서도 세 칩이 한 줄에 들어가야 한다 */}
-        <div data-guide="my-filters" className="flex gap-1 border-t border-[#F0F0F0] pt-3 text-xs font-bold">
+        <div className="flex gap-1 border-t border-[#E4EFD1] pt-3 text-xs font-bold">
           <button
             onClick={() => setRecordTypeFilter('meditation')}
             className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${
               recordTypeFilter === 'meditation'
                 ? "grad-forest text-white"
-                : "bg-white text-[#6F8377] hover:text-[#0C3B2E]"
+                : "bg-white text-[#4E7568] hover:text-[#0C342C]"
             }`}
           >
             <span className="whitespace-nowrap">말씀 묵상</span>
@@ -528,7 +528,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${
               recordTypeFilter === 'gratitude'
                 ? "grad-forest text-white"
-                : "bg-white text-[#6F8377] hover:text-[#072A20]"
+                : "bg-white text-[#4E7568] hover:text-[#06231D]"
             }`}
           >
             <span className="whitespace-nowrap">감사 칭찬</span>
@@ -542,16 +542,16 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[32px] border-2 border-[#4A6B57] p-5 shadow-md"
+          className="bg-white rounded-[32px] border-2 border-[#1E6B57] p-5 shadow-md"
         >
-          <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3 mb-4">
-            <h4 className="font-bold text-[#0C3B2E] text-sm flex items-center gap-1.5">
-              <Edit2 size={16} className="text-[#4A6B57]" />
+          <div className="flex justify-between items-center border-b border-[#DEE9D2] pb-3 mb-4">
+            <h4 className="font-bold text-[#0C342C] text-sm flex items-center gap-1.5">
+              <Edit2 size={16} className="text-[#1E6B57]" />
               내 묵상 기록 수정하기
             </h4>
             <button
               onClick={() => setEditingId(null)}
-              className="text-[#6F8377] hover:text-[#4A6B57] cursor-pointer"
+              className="text-[#4E7568] hover:text-[#1E6B57] cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -563,45 +563,45 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             )}
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] mb-1">말씀 구절</label>
+              <label className="block text-2xs font-bold text-[#4E7568] mb-1">말씀 구절</label>
               <input
                 type="text"
                 value={editVerseTitle}
                 onChange={(e) => setEditVerseTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] font-semibold"
+                className="w-full text-xs px-3 py-2 bg-[#EEF5E1] rounded-xl bg-[#E4EFD1] text-[#0B2A20] font-semibold"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] mb-1">묵상 제목</label>
+              <label className="block text-2xs font-bold text-[#4E7568] mb-1">묵상 제목</label>
               <input
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] font-semibold"
+                className="w-full text-xs px-3 py-2 bg-[#EEF5E1] rounded-xl bg-[#E4EFD1] text-[#0B2A20] font-semibold"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] mb-1">묵상 고백 및 적용</label>
+              <label className="block text-2xs font-bold text-[#4E7568] mb-1">묵상 고백 및 적용</label>
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={6}
-                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] leading-relaxed font-medium"
+                className="w-full text-xs px-3 py-2 bg-[#EEF5E1] rounded-xl bg-[#E4EFD1] text-[#0B2A20] leading-relaxed font-medium"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] mb-1">나의 동역자 중보기도 제목 (선택)</label>
+              <label className="block text-2xs font-bold text-[#4E7568] mb-1">나의 동역자 중보기도 제목 (선택)</label>
               <input
                 type="text"
                 value={editPrayer}
                 onChange={(e) => setEditPrayer(e.target.value)}
-                className="w-full text-xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-[#F0F0F0] text-[#14261E] font-medium"
+                className="w-full text-xs px-3 py-2 bg-[#EEF5E1] rounded-xl bg-[#E4EFD1] text-[#0B2A20] font-medium"
               />
             </div>
 
@@ -609,14 +609,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               <button
                 type="button"
                 onClick={() => setEditingId(null)}
-                className="px-3.5 py-1.5 text-[#4A6B57] hover:bg-[#F5F5F5] transition font-bold rounded-xl cursor-pointer"
+                className="px-3.5 py-1.5 text-[#1E6B57] hover:bg-[#EEF5E1] transition font-bold rounded-xl cursor-pointer"
               >
                 취소
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-1.5 bg-[#4A6B57] hover:bg-[#072A20] text-white font-bold rounded-xl transition cursor-pointer"
+                className="px-4 py-1.5 bg-[#1E6B57] hover:bg-[#06231D] text-white font-bold rounded-xl transition cursor-pointer"
               >
                 {submitting ? "수정 중..." : "수정 완료"}
               </button>
@@ -627,12 +627,12 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
       {/* Unified Records List */}
       <div>
-        <p className="text-2xs font-bold text-[#6F8377] tracking-wider mb-2.5 ml-1.5">내가 쓴 글</p>
+        <p className="text-2xs font-bold text-[#4E7568] tracking-wider mb-2.5 ml-1.5">내가 쓴 글</p>
         <div className="space-y-3">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader className="animate-spin text-[#4A6B57] mb-2" size={24} />
-            <p className="text-xs text-[#6F8377]">내 영성 기록을 불러오고 있습니다...</p>
+            <Loader className="animate-spin text-[#1E6B57] mb-2" size={24} />
+            <p className="text-xs text-[#4E7568]">내 영성 기록을 불러오고 있습니다...</p>
           </div>
         ) : combinedItems.length > 0 ? (
           combinedItems.map((item) => {
@@ -647,16 +647,16 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#F9F9F9] rounded-[22px] p-5 space-y-2.5 transition-colors"
+                  className="bg-[#EFF6E2] rounded-[22px] p-5 space-y-2.5 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] font-bold rounded-full flex items-center justify-center text-xs shrink-0">
+                      <div className="w-9 h-9 bg-[#CFE0C2] text-[#1E6B57] font-bold rounded-full flex items-center justify-center text-xs shrink-0">
                         {currentUser.name.slice(-1)}
                       </div>
                       <div>
-                        <span className="font-bold text-[#0C3B2E] text-xs block">{currentUser.name}</span>
-                        <div className="flex items-center gap-1 text-2xs text-[#6F8377] mt-0.5 font-medium">
+                        <span className="font-bold text-[#0C342C] text-xs block">{currentUser.name}</span>
+                        <div className="flex items-center gap-1 text-2xs text-[#4E7568] mt-0.5 font-medium">
                           <Clock size={10} />
                           <span>{med.date} {new Date(med.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -666,14 +666,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditClick(med)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#4A6B57] hover:bg-white rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#4E7568] hover:text-[#1E6B57] hover:bg-white rounded-xl transition cursor-pointer"
                         title="수정"
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
                         onClick={() => handleDeleteMeditation(med.id)}
-                        className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-white rounded-xl transition cursor-pointer"
+                        className="p-1.5 text-[#4E7568] hover:text-[#B3261E] hover:bg-white rounded-xl transition cursor-pointer"
                         title="삭제"
                       >
                         <Trash2 size={13} />
@@ -682,20 +682,20 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   </div>
 
                   <div className="space-y-1.5">
-                    <p className="text-xs font-bold text-[#4A6B57]">{med.verseTitle}</p>
-                    <h4 className="text-sm font-bold text-[#0C3B2E]">{med.title}</h4>
+                    <p className="text-xs font-bold text-[#1E6B57]">{med.verseTitle}</p>
+                    <h4 className="text-sm font-bold text-[#0C342C]">{med.title}</h4>
                     {(() => {
                       // 앞머리의 골라 온 성경 구절만 굵게, 박스 없이 카드 배경 위에 그대로
                       const { quote, body } = splitLeadingVerses(med.content);
                       return (
                         <>
                           {quote && (
-                            <p className="text-xs font-bold text-[#0C3B2E] leading-relaxed whitespace-pre-line">
+                            <p className="text-xs font-bold text-[#0C342C] leading-relaxed whitespace-pre-line">
                               {quote}
                             </p>
                           )}
                           {body && (
-                            <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
+                            <p className="text-sm text-[#0B2A20] leading-relaxed whitespace-pre-line">
                               {body}
                             </p>
                           )}
@@ -706,19 +706,19 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
                   {med.prayer && (
                     <div className="bg-white rounded-3xl p-4 text-2xs">
-                      <span className="font-bold text-[#0C3B2E] block mb-1">기도제목</span>
-                      <p className="text-[#4A6B57] leading-relaxed font-medium italic">
+                      <span className="font-bold text-[#0C342C] block mb-1">기도제목</span>
+                      <p className="text-[#1E6B57] leading-relaxed font-medium italic">
                         "{med.prayer}"
                       </p>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between border-t border-[#EDEDED] pt-3">
+                  <div className="flex items-center justify-between border-t border-[#E7EFDC] pt-3">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeToggle(med.id, false)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          hasLiked ? "text-[#B3261E]" : "text-[#6F8377] hover:text-[#B3261E]"
+                          hasLiked ? "text-[#B3261E]" : "text-[#4E7568] hover:text-[#B3261E]"
                         }`}
                       >
                         <Heart size={14} className={hasLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
@@ -728,7 +728,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                       <button
                         onClick={() => toggleCommentsExpanded(med.id)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          commentsOpen ? "text-[#0C3B2E]" : "text-[#6F8377] hover:text-[#0C3B2E]"
+                          commentsOpen ? "text-[#0C342C]" : "text-[#4E7568] hover:text-[#0C342C]"
                         }`}
                       >
                         <MessageSquare size={14} />
@@ -737,7 +737,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </div>
 
                     {med.likes.length > 0 && (
-                      <div className="text-2xs text-[#6F8377] font-medium">
+                      <div className="text-2xs text-[#4E7568] font-medium">
                         {med.likes.length}명의 지체가 격려 중입니다
                       </div>
                     )}
@@ -750,15 +750,15 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           {med.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] p-3 rounded-3xl">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#EFF6E2] p-3 rounded-3xl">
                                 <div className="text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
-                                    <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
-                                    <span className="text-2xs text-[#6F8377]">
+                                    <strong className="font-bold text-[#0C342C]">{comment.userName}</strong>
+                                    <span className="text-2xs text-[#4E7568]">
                                       {new Date(comment.createdAt).toLocaleDateString()}
                                     </span>
                                   </div>
-                                  <p className="text-[#4A6B57] leading-relaxed font-medium">
+                                  <p className="text-[#1E6B57] leading-relaxed font-medium">
                                     {comment.content}
                                   </p>
                                 </div>
@@ -766,7 +766,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                                 {isMyComment && (
                                   <button
                                     onClick={() => handleDeleteComment(med.id, comment.id, false)}
-                                    className="text-[#AFC0B2] hover:text-[#B3261E] p-0.5 rounded cursor-pointer"
+                                    className="text-[#7C9A87] hover:text-[#B3261E] p-0.5 rounded cursor-pointer"
                                     title="댓글 삭제"
                                   >
                                     <X size={12} />
@@ -777,7 +777,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-2xs text-[#6F8377] text-center py-2">
+                        <p className="text-2xs text-[#4E7568] text-center py-2">
                           아직 달린 댓글이 없습니다. 지체들과 은혜로운 댓글을 나눠보세요! 💬
                         </p>
                       )}
@@ -788,7 +788,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           value={commentInputs[med.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
                           placeholder="은혜로운 답글을 남겨보세요..."
-                          className="flex-1 text-2xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                          className="flex-1 text-2xs px-3 py-2 bg-[#EEF5E1] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#1E6B57] text-[#0B2A20]"
                         />
                         <button
                           onClick={() => handleAddComment(med.id, false)}
@@ -813,23 +813,23 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#F9F9F9] rounded-[32px] p-5 space-y-4 transition-colors"
+                  className="bg-[#EFF6E2] rounded-[32px] p-5 space-y-4 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-[#D2DDD3] text-[#4A6B57] font-bold rounded-full flex items-center justify-center text-xs shrink-0">
+                      <div className="w-9 h-9 bg-[#CFE0C2] text-[#1E6B57] font-bold rounded-full flex items-center justify-center text-xs shrink-0">
                         <HeartHandshake size={16} />
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-[#0C3B2E] text-xs">
+                          <span className="font-bold text-[#0C342C] text-xs">
                             {grat.isAnonymous ? "익명 (감사 지체)" : currentUser.name}
                           </span>
-                          <span className="bg-white text-[#0C3B2E] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles size={10} className="text-[#4A6B57]" /> 감사칭찬
+                          <span className="bg-white text-[#0C342C] text-2xs font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Sparkles size={10} className="text-[#1E6B57]" /> 감사칭찬
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-2xs text-[#6F8377] mt-0.5 font-medium">
+                        <div className="flex items-center gap-1 text-2xs text-[#4E7568] mt-0.5 font-medium">
                           <Clock size={10} />
                           <span>{grat.date} {new Date(grat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -838,23 +838,23 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
 
                     <button
                       onClick={() => handleDeleteGratitude(grat.id)}
-                      className="p-1.5 text-[#6F8377] hover:text-[#B3261E] hover:bg-[#FDF3F3] rounded-xl transition cursor-pointer"
+                      className="p-1.5 text-[#4E7568] hover:text-[#B3261E] hover:bg-[#FDF3F3] rounded-xl transition cursor-pointer"
                       title="삭제"
                     >
                       <Trash2 size={13} />
                     </button>
                   </div>
 
-                  <p className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line">
+                  <p className="text-sm text-[#0B2A20] leading-relaxed whitespace-pre-line">
                     {grat.content}
                   </p>
 
-                  <div className="flex items-center justify-between border-t border-[#EDEDED] pt-3">
+                  <div className="flex items-center justify-between border-t border-[#E7EFDC] pt-3">
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleLikeToggle(grat.id, true)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          hasLiked ? "text-[#B3261E]" : "text-[#6F8377] hover:text-[#B3261E]"
+                          hasLiked ? "text-[#B3261E]" : "text-[#4E7568] hover:text-[#B3261E]"
                         }`}
                       >
                         <Heart size={14} className={hasLiked ? "fill-[#B3261E] text-[#B3261E]" : ""} />
@@ -864,7 +864,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                       <button
                         onClick={() => toggleCommentsExpanded(grat.id)}
                         className={`flex items-center gap-1.5 text-2xs font-bold transition cursor-pointer ${
-                          commentsOpen ? "text-[#0C3B2E]" : "text-[#6F8377] hover:text-[#0C3B2E]"
+                          commentsOpen ? "text-[#0C342C]" : "text-[#4E7568] hover:text-[#0C342C]"
                         }`}
                       >
                         <MessageSquare size={14} />
@@ -873,7 +873,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     </div>
 
                     {grat.likes.length > 0 && (
-                      <div className="text-2xs text-[#6F8377] font-medium">
+                      <div className="text-2xs text-[#4E7568] font-medium">
                         {grat.likes.length}명이 이 감사에 함께하고 있습니다
                       </div>
                     )}
@@ -886,15 +886,15 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           {grat.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] p-3 rounded-3xl">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#EFF6E2] p-3 rounded-3xl">
                                 <div className="text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
-                                    <strong className="font-bold text-[#14261E]">{comment.userName}</strong>
-                                    <span className="text-2xs text-[#6F8377]">
+                                    <strong className="font-bold text-[#0B2A20]">{comment.userName}</strong>
+                                    <span className="text-2xs text-[#4E7568]">
                                       {new Date(comment.createdAt).toLocaleDateString()}
                                     </span>
                                   </div>
-                                  <p className="text-[#4A6B57] leading-relaxed font-medium">
+                                  <p className="text-[#1E6B57] leading-relaxed font-medium">
                                     {comment.content}
                                   </p>
                                 </div>
@@ -902,7 +902,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                                 {isMyComment && (
                                   <button
                                     onClick={() => handleDeleteComment(grat.id, comment.id, true)}
-                                    className="text-[#AFC0B2] hover:text-[#B3261E] p-0.5 rounded cursor-pointer"
+                                    className="text-[#7C9A87] hover:text-[#B3261E] p-0.5 rounded cursor-pointer"
                                     title="댓글 삭제"
                                   >
                                     <X size={12} />
@@ -913,7 +913,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-2xs text-[#0C3B2E]/70 text-center py-2">
+                        <p className="text-2xs text-[#0C342C]/70 text-center py-2">
                           아직 달린 댓글이 없습니다. 따뜻한 감사 격려 댓글을 남겨보세요! 🙏
                         </p>
                       )}
@@ -924,7 +924,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           value={commentInputs[grat.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [grat.id]: e.target.value }))}
                           placeholder="감사·칭찬에 댓글 남기기..."
-                          className="flex-1 text-2xs px-3 py-2 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                          className="flex-1 text-2xs px-3 py-2 bg-[#EEF5E1] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#1E6B57] text-[#0B2A20]"
                         />
                         <button
                           onClick={() => handleAddComment(grat.id, true)}
@@ -940,10 +940,10 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
             }
           })
         ) : (
-          <div className="bg-[#F9F9F9] rounded-[32px] p-12 text-center text-[#6F8377]">
-            <BookOpen className="mx-auto text-[#6F8377] mb-2" size={32} />
-            <p className="text-xs font-semibold text-[#4A6B57]">기록된 영성 발자취가 없습니다.</p>
-            <p className="text-2xs text-[#6F8377] mt-1">
+          <div className="bg-[#EFF6E2] rounded-[32px] p-12 text-center text-[#4E7568]">
+            <BookOpen className="mx-auto text-[#4E7568] mb-2" size={32} />
+            <p className="text-xs font-semibold text-[#1E6B57]">기록된 영성 발자취가 없습니다.</p>
+            <p className="text-2xs text-[#4E7568] mt-1">
               말씀 묵상 또는 감사·칭찬을 나누어 매일의 은혜를 기록해 보세요!
             </p>
           </div>
@@ -966,17 +966,17 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-[32px] max-w-lg w-full max-h-[85vh] p-5 sm:p-6 flex flex-col shadow-2xl"
             >
-              <div className="flex justify-between items-start gap-2 border-b border-[#E3E9E2] pb-3 mb-3">
+              <div className="flex justify-between items-start gap-2 border-b border-[#DEE9D2] pb-3 mb-3">
                 <div>
-                  <h4 className="font-bold text-[#0C3B2E] text-base">말씀 체크리스트</h4>
-                  <p className="text-xs text-[#6F8377] font-medium mt-0.5">
+                  <h4 className="font-bold text-[#0C342C] text-base">말씀 체크리스트</h4>
+                  <p className="text-xs text-[#4E7568] font-medium mt-0.5">
                     성경을 읽다 마음에 닿아 눌러 두신 구절입니다. ({savedVerses.length}개)
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowSavedModal(false)}
-                  className="text-[#85888F] hover:text-[#4A6B57] cursor-pointer shrink-0"
+                  className="text-[#77857A] hover:text-[#1E6B57] cursor-pointer shrink-0"
                 >
                   <X size={18} />
                 </button>
@@ -985,34 +985,34 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-slate-200">
                 {savedVerses.length === 0 ? (
                   <div className="py-12 text-center">
-                    <BookOpen className="mx-auto text-[#6F8377] mb-2" size={28} />
-                    <p className="text-xs font-bold text-[#4A6B57]">아직 체크한 말씀이 없습니다.</p>
-                    <p className="text-2xs text-[#6F8377] mt-1 leading-relaxed">
+                    <BookOpen className="mx-auto text-[#4E7568] mb-2" size={28} />
+                    <p className="text-xs font-bold text-[#1E6B57]">아직 체크한 말씀이 없습니다.</p>
+                    <p className="text-2xs text-[#4E7568] mt-1 leading-relaxed">
                       오늘말씀이나 성경통독에서 마음에 닿는 구절을 눌러보세요.
                     </p>
                   </div>
                 ) : (
                   savedVerses.map((v) => (
-                    <div key={v.id} className="bg-[#F5F5F5] rounded-3xl p-3.5">
+                    <div key={v.id} className="bg-[#EEF5E1] rounded-3xl p-3.5">
                       <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <span className="text-xs font-bold text-[#0C3B2E] bg-[#FFF6DC] px-2 py-0.5 rounded-lg">
+                        <span className="text-xs font-bold text-[#0C342C] bg-[#F7FCDD] px-2 py-0.5 rounded-lg">
                           {v.book} {v.chapter}:{v.verseNum}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-2xs text-[#6F8377] font-medium">
+                          <span className="text-2xs text-[#4E7568] font-medium">
                             {new Date(v.createdAt).toLocaleDateString()}
                           </span>
                           <button
                             type="button"
                             onClick={() => removeSavedVerse(v.id)}
-                            className="text-[#85888F] hover:text-[#B3261E] cursor-pointer"
+                            className="text-[#77857A] hover:text-[#B3261E] cursor-pointer"
                             title="체크 해제"
                           >
                             <Trash2 size={13} />
                           </button>
                         </div>
                       </div>
-                      <p className="text-xs sm:text-sm text-[#333333] leading-relaxed scripture-font">
+                      <p className="text-xs sm:text-sm text-[#22302A] leading-relaxed scripture-font">
                         {v.text}
                       </p>
                     </div>
@@ -1036,26 +1036,26 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-[32px] max-w-md w-full p-6 space-y-4 shadow-2xl"
             >
-              <div className="flex justify-between items-center border-b border-[#E3E9E2] pb-3">
-                <h4 className="font-bold text-[#0C3B2E] text-base">내 나눔 목표</h4>
+              <div className="flex justify-between items-center border-b border-[#DEE9D2] pb-3">
+                <h4 className="font-bold text-[#0C342C] text-base">내 나눔 목표</h4>
                 <button
                   type="button"
                   onClick={() => setShowGoalModal(false)}
-                  className="text-[#85888F] hover:text-[#4A6B57] cursor-pointer"
+                  className="text-[#77857A] hover:text-[#1E6B57] cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <p className="text-xs text-[#6F8377] font-medium leading-relaxed">
+              <p className="text-xs text-[#4E7568] font-medium leading-relaxed">
                 한 주에 몇 번 나눌지 정해 보세요. 이번 달 진행률은 <strong>주간 목표 × 4주</strong> 로 계산됩니다.
               </p>
 
               <form onSubmit={handleSaveGoal} className="space-y-4 text-xs">
                 <div>
-                  <label className="block font-bold text-[#0C3B2E] mb-1.5">
+                  <label className="block font-bold text-[#0C342C] mb-1.5">
                     묵상 나눔 · 주 {goalMed}회
-                    <span className="text-[#6F8377] font-medium"> (한 달 {goalMed * 4}회)</span>
+                    <span className="text-[#4E7568] font-medium"> (한 달 {goalMed * 4}회)</span>
                   </label>
                   <input
                     type="range"
@@ -1063,14 +1063,14 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     max={14}
                     value={goalMed}
                     onChange={(e) => setGoalMed(Number(e.target.value))}
-                    className="w-full accent-[#0C3B2E] cursor-pointer"
+                    className="w-full accent-[#0C342C] cursor-pointer"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#0C3B2E] mb-1.5">
+                  <label className="block font-bold text-[#0C342C] mb-1.5">
                     감사·칭찬 · 주 {goalGrat}회
-                    <span className="text-[#6F8377] font-medium"> (한 달 {goalGrat * 4}회)</span>
+                    <span className="text-[#4E7568] font-medium"> (한 달 {goalGrat * 4}회)</span>
                   </label>
                   <input
                     type="range"
@@ -1078,15 +1078,15 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                     max={14}
                     value={goalGrat}
                     onChange={(e) => setGoalGrat(Number(e.target.value))}
-                    className="w-full accent-[#0C3B2E] cursor-pointer"
+                    className="w-full accent-[#0C342C] cursor-pointer"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#E3E9E2]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-[#DEE9D2]">
                   <button
                     type="button"
                     onClick={() => setShowGoalModal(false)}
-                    className="px-4 py-2 text-[#6F8377] rounded-3xl font-bold cursor-pointer"
+                    className="px-4 py-2 text-[#4E7568] rounded-3xl font-bold cursor-pointer"
                   >
                     취소
                   </button>

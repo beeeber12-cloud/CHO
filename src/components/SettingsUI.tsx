@@ -13,7 +13,7 @@ import ModalPortal from "./ModalPortal";
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2.5 ml-1.5">
+    <p className="text-2xs font-black text-[#076653] tracking-[0.1em] mb-2.5 ml-1.5">
       {children}
     </p>
   );
@@ -36,8 +36,6 @@ interface RowProps {
   /** 오른쪽 화살표를 보일지 (누르면 열리는 줄) */
   chevron?: boolean;
   danger?: boolean;
-  /** 앱 사용법 안내가 짚을 자리 (AppGuide 의 data-guide) */
-  guide?: string;
 }
 
 export function Row({
@@ -48,15 +46,16 @@ export function Row({
   right,
   onClick,
   chevron,
-  danger = false,
-  guide
+  danger = false
 }: RowProps) {
   const showChevron = chevron ?? (!!onClick && !right);
   const body = (
     <>
       <span
         className={`w-[34px] h-[34px] rounded-full flex items-center justify-center shrink-0 ${
-          danger ? "bg-[#FBE6E4] text-[#B3261E]" : "bg-[#D2DDD3] text-[#4A6B57]"
+          danger
+            ? "bg-[#FBE6E4] text-[#B3261E]"
+            : "bg-[linear-gradient(140deg,#E2FBCE,#BFE9A6)] text-[#076653]"
         }`}
       >
         {icon}
@@ -64,43 +63,34 @@ export function Row({
       <span className="flex-1 min-w-0 text-left">
         <span
           className={`block text-sm font-semibold truncate ${
-            danger ? "text-[#B3261E]" : "text-[#14261E]"
+            danger ? "text-[#B3261E]" : "text-[#0B2A20]"
           }`}
         >
           {title}
         </span>
-        {sub && <span className="block text-2xs text-[#6F8377] mt-px">{sub}</span>}
+        {sub && <span className="block text-2xs text-[#4E7568] mt-px">{sub}</span>}
       </span>
       {badge && (
-        <span className="text-2xs font-bold text-[#4A3600] bg-[#FFBA00] px-2 py-0.5 rounded-full shrink-0">
+        <span className="text-2xs font-bold text-[#0C342C] bg-[#E3EF26] px-2 py-0.5 rounded-full shrink-0">
           {badge}
         </span>
       )}
       {right}
-      {showChevron && <ChevronRight size={17} className="text-[#6F8377] shrink-0" />}
+      {showChevron && <ChevronRight size={17} className="text-[#4E7568] shrink-0" />}
     </>
   );
 
   const cls =
-    "w-full flex items-center gap-3 p-3 bg-[#F9F9F9] rounded-[18px] transition hover:bg-[#F0F0F0]";
+    "w-full flex items-center gap-3 p-3 bg-[#EFF6E2] rounded-[18px] transition hover:bg-[#E4EFD1]";
 
   if (onClick) {
     return (
-      <button
-        type="button"
-        data-guide={guide}
-        onClick={onClick}
-        className={`${cls} cursor-pointer text-left`}
-      >
+      <button type="button" onClick={onClick} className={`${cls} cursor-pointer text-left`}>
         {body}
       </button>
     );
   }
-  return (
-    <div data-guide={guide} className={cls}>
-      {body}
-    </div>
-  );
+  return <div className={cls}>{body}</div>;
 }
 
 /** 켜고 끄는 작은 스위치 (시안의 .switch) */
@@ -124,7 +114,7 @@ export function Switch({
       disabled={disabled}
       onClick={onChange}
       className={`relative w-[42px] h-[25px] rounded-full shrink-0 transition cursor-pointer disabled:opacity-50 ${
-        checked ? "bg-[#4A6B57]" : "bg-[#D8DED9]"
+        checked ? "bg-[#1E6B57]" : "bg-[#D6E1CA]"
       }`}
     >
       <span
@@ -178,13 +168,13 @@ export function SettingModal({
           >
             <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3.5">
               <div className="min-w-0">
-                <h4 className="font-bold text-[#0C3B2E] text-base">{title}</h4>
-                {sub && <p className="text-2xs text-[#6F8377] mt-0.5 leading-relaxed">{sub}</p>}
+                <h4 className="font-bold text-[#0C342C] text-base">{title}</h4>
+                {sub && <p className="text-2xs text-[#4E7568] mt-0.5 leading-relaxed">{sub}</p>}
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-[#F9F9F9] hover:bg-[#F0F0F0] flex items-center justify-center text-[#6F8377] shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-[#EFF6E2] hover:bg-[#E4EFD1] flex items-center justify-center text-[#4E7568] shrink-0 cursor-pointer"
                 aria-label="닫기"
               >
                 <X size={17} />

@@ -47,7 +47,7 @@ function parseVerses(raw: string): Verse[] {
 }
 
 const colorOf = (key: BibleVersionKey) =>
-  BIBLE_VERSIONS.find((v) => v.key === key)?.color || "#333333";
+  BIBLE_VERSIONS.find((v) => v.key === key)?.color || "#22302A";
 
 export default function DualBibleText({
   panes,
@@ -116,11 +116,11 @@ export default function DualBibleText({
             } ${
               // 고른 구절은 은은한 금빛 배경으로 표시
               isPicked
-                ? "bg-[#FFFBEE]"
+                ? "bg-[#FFFDEE]"
                 : isHighlighted
-                ? "bg-[#F5F5F5]"
+                ? "bg-[#EEF5E1]"
                 : canPick
-                ? "hover:bg-[#FAFAFA]"
+                ? "hover:bg-[#F5F9EA]"
                 : ""
             }`}
           >
@@ -129,7 +129,7 @@ export default function DualBibleText({
             <div className="flex gap-1.5">
               <span
                 className={`font-sans font-normal text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
-                  isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
+                  isPicked ? "text-[#4F5E00] font-bold" : "text-[#77857A]"
                 }`}
               >
                 {v.num}

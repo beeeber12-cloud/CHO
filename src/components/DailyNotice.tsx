@@ -394,9 +394,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     // 화면 어디를 눌러도 말씀이 화면에 맞춰진다 (버튼·팝업은 제외 — alignReader 참고)
     <div onClick={alignReader}>
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
-        <div className="min-w-0" data-guide="notice-title">
-          <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl">오늘의 말씀</h3>
-          <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">
+        <div className="min-w-0">
+          <h3 className="font-bold text-[#0C342C] text-xl sm:text-2xl">오늘의 말씀</h3>
+          <p className="text-xs sm:text-sm text-[#4E7568] mt-0.5">
             {notice ? `${notice.verseTitle} · ${formatKoreanDate(notice.date)}` : "매일 아침 새 말씀이 공지됩니다"}
           </p>
         </div>
@@ -405,9 +405,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           {onVerseSelect && notice && (
             <button
               onClick={() => onVerseSelect(notice.verseTitle)}
-              className="flex items-center gap-1 text-xs text-[#0C3B2E] bg-[#F9F9F9] hover:bg-[#F0F0F0] px-2.5 py-1.5 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap"
+              className="flex items-center gap-1 text-xs text-[#0C342C] bg-[#EFF6E2] hover:bg-[#E4EFD1] px-2.5 py-1.5 rounded-3xl font-bold cursor-pointer transition whitespace-nowrap"
             >
-              <BookOpen size={13} className="text-[#195C50]" />
+              <BookOpen size={13} className="text-[#076653]" />
               <span>성경통독에서 보기</span>
             </button>
           )}
@@ -420,27 +420,26 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
         <button
           type="button"
           onClick={() => setShowPlannerConfig(true)}
-          data-guide="notice-admin"
-          className="w-full flex items-center gap-3 mb-4 p-3.5 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-3xl transition cursor-pointer text-left"
+          className="w-full flex items-center gap-3 mb-4 p-3.5 bg-[#EFF6E2] hover:bg-[#E4EFD1] rounded-3xl transition cursor-pointer text-left"
         >
           <span className="flex-1 min-w-0">
             <span className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm font-bold text-[#14261E] truncate">오늘의 말씀 설정</span>
+              <span className="text-sm font-bold text-[#0B2A20] truncate">오늘의 말씀 설정</span>
               {plannerActive ? (
-                <span className="shrink-0 bg-[#D2DDD3] text-[#0C3B2E] text-2xs px-2 py-0.5 rounded-full font-bold">
+                <span className="shrink-0 bg-[#CFE0C2] text-[#0C342C] text-2xs px-2 py-0.5 rounded-full font-bold">
                   자동 공지 켜짐
                 </span>
               ) : (
-                <span className="shrink-0 bg-[#EDEDED] text-[#6F8377] text-2xs px-2 py-0.5 rounded-full font-bold">
+                <span className="shrink-0 bg-[#E7EFDC] text-[#4E7568] text-2xs px-2 py-0.5 rounded-full font-bold">
                   자동 공지 꺼짐
                 </span>
               )}
             </span>
-            <span className="block text-2xs text-[#6F8377] mt-0.5 truncate">
+            <span className="block text-2xs text-[#4E7568] mt-0.5 truncate">
               말씀 수정 · {plannerMode === "readingJesus" ? READING_JESUS_TITLE : "한 장씩 자동 공지"}
             </span>
           </span>
-          <span className="w-9 h-9 rounded-full bg-white text-[#4A6B57] flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-full bg-white text-[#1E6B57] flex items-center justify-center shrink-0">
             <Settings size={17} />
           </span>
         </button>
@@ -462,27 +461,27 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 setShowPlannerConfig(false);
                 setIsEditing(true);
               }}
-              className="w-full flex items-center gap-3 p-3 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-2xl transition cursor-pointer text-left"
+              className="w-full flex items-center gap-3 p-3 bg-[#EFF6E2] hover:bg-[#E4EFD1] rounded-2xl transition cursor-pointer text-left"
             >
-              <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
+              <span className="w-9 h-9 rounded-full bg-[#CFE0C2] text-[#1E6B57] flex items-center justify-center shrink-0">
                 {notice ? <Edit3 size={17} /> : <Plus size={17} />}
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block text-sm font-bold text-[#14261E] truncate">
+                <span className="block text-sm font-bold text-[#0B2A20] truncate">
                   {notice ? "오늘 말씀 직접 수정" : "새 말씀 직접 공지"}
                 </span>
-                <span className="block text-2xs text-[#6F8377] mt-px truncate">
+                <span className="block text-2xs text-[#4E7568] mt-px truncate">
                   {notice ? `${notice.verseTitle} · 구절과 본문을 손으로 고칩니다` : "구절을 적으면 본문을 찾아 채워 줍니다"}
                 </span>
               </span>
-              <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
+              <ChevronRight size={16} className="text-[#4E7568] shrink-0" />
             </button>
 
-            <div className="pt-1 border-t border-[#EDEDED]" />
+            <div className="pt-1 border-t border-[#E7EFDC]" />
 
             {/* 어떤 방식으로 자동 공지할지 */}
             <div>
-              <label className="block text-2xs font-bold text-[#6F8377] mb-1.5">자동 공지 방식</label>
+              <label className="block text-2xs font-bold text-[#4E7568] mb-1.5">자동 공지 방식</label>
               <div className="grid grid-cols-2 gap-2">
                 {([
                   { key: "chapter" as const, label: "한 장씩 자동 공지" },
@@ -495,7 +494,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                     className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition cursor-pointer ${
                       plannerMode === m.key
                         ? "grad-forest text-white"
-                        : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                        : "bg-[#EFF6E2] text-[#1E6B57] hover:bg-[#E4EFD1]"
                     }`}
                   >
                     {m.label}
@@ -504,7 +503,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               </div>
             </div>
 
-            <p className="text-[#6F8377] leading-relaxed">
+            <p className="text-[#4E7568] leading-relaxed">
               {plannerMode === "readingJesus"
                 ? "교회 리딩지저스 통독표를 그대로 따릅니다. 고른 날짜부터 하루하루 그날 분량 전체(예: 마태복음 1~3장)가 오늘의 말씀으로 올라갑니다. 강해 영상만 있는 주일과 특별주간처럼 읽을 분량이 없는 날은 앞 공지가 그대로 남습니다."
                 : "설정한 성경책에서 매일 새로운 하루가 시작될 때 한 장씩 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다)."}
@@ -527,24 +526,24 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
 
             <div className={`grid grid-cols-2 gap-3 ${plannerMode === "readingJesus" ? "hidden" : ""}`}>
               <div>
-                <label className="block text-2xs font-bold text-[#6F8377] mb-1">성경 책 설정 (한글명)</label>
+                <label className="block text-2xs font-bold text-[#4E7568] mb-1">성경 책 설정 (한글명)</label>
                 <input
                   type="text"
                   value={plannerBook}
                   onChange={(e) => setPlannerBook(e.target.value)}
                   placeholder="예: 요한복음, 창세기, 시편"
-                  className="w-full text-xs px-3 py-2.5 bg-[#F9F9F9] rounded-xl text-[#14261E] font-semibold"
+                  className="w-full text-xs px-3 py-2.5 bg-[#EFF6E2] rounded-xl text-[#0B2A20] font-semibold"
                   required={plannerMode !== "readingJesus"}
                 />
               </div>
               <div>
-                <label className="block text-2xs font-bold text-[#6F8377] mb-1">현재/시작 장 번호 (장)</label>
+                <label className="block text-2xs font-bold text-[#4E7568] mb-1">현재/시작 장 번호 (장)</label>
                 <input
                   type="number"
                   min={1}
                   value={plannerChapter}
                   onChange={(e) => setPlannerChapter(Number(e.target.value))}
-                  className="w-full text-xs px-3 py-2.5 bg-[#F9F9F9] rounded-xl text-[#14261E] font-semibold"
+                  className="w-full text-xs px-3 py-2.5 bg-[#EFF6E2] rounded-xl text-[#0B2A20] font-semibold"
                   required={plannerMode !== "readingJesus"}
                 />
               </div>
@@ -556,17 +555,17 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 id="plannerActive"
                 checked={plannerActive}
                 onChange={(e) => setPlannerActive(e.target.checked)}
-                className="w-4 h-4 mt-0.5 rounded border-[#E3E9E2] text-[#4A6B57] focus:ring-[#4A6B57] cursor-pointer shrink-0"
+                className="w-4 h-4 mt-0.5 rounded border-[#DEE9D2] text-[#1E6B57] focus:ring-[#1E6B57] cursor-pointer shrink-0"
               />
-              <label htmlFor="plannerActive" className="font-bold text-[#0C3B2E] cursor-pointer leading-relaxed">
+              <label htmlFor="plannerActive" className="font-bold text-[#0C342C] cursor-pointer leading-relaxed">
                 {plannerMode === "readingJesus"
                   ? "매일 통독표대로 자동 공지하기"
                   : "매일 자동으로 한 장씩 공지하기"}
               </label>
             </div>
 
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#EDEDED]">
-              <span className="text-[#4A6B57] font-bold text-2xs">{plannerMessage}</span>
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#E7EFDC]">
+              <span className="text-[#1E6B57] font-bold text-2xs">{plannerMessage}</span>
               <button
                 type="submit"
                 disabled={plannerSaving}
@@ -582,8 +581,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       <AnimatePresence mode="wait">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-10">
-            <Loader className="animate-spin text-[#4A6B57] mb-2" size={24} />
-            <p className="text-sm text-[#6F8377]">말씀을 불러오고 있습니다...</p>
+            <Loader className="animate-spin text-[#1E6B57] mb-2" size={24} />
+            <p className="text-sm text-[#4E7568]">말씀을 불러오고 있습니다...</p>
           </div>
         ) : isEditing ? (
           <motion.form
@@ -597,7 +596,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             {error && <div className="text-sm text-[#B3261E] bg-[#FDF3F3] p-2.5 rounded-xl">{error}</div>}
 
             <div>
-              <label className="block text-xs font-semibold text-[#6F8377] mb-1">성경 구절</label>
+              <label className="block text-xs font-semibold text-[#4E7568] mb-1">성경 구절</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -617,13 +616,13 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                     }
                   }}
                   placeholder="예: 이사야 41:10"
-                  className="flex-1 text-sm px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-medium"
+                  className="flex-1 text-sm px-3 py-2 bg-[#EEF5E1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1E6B57] text-[#0B2A20] font-medium"
                 />
                 <button
                   type="button"
                   disabled={fetchingVerse || !verseTitle.trim()}
                   onClick={() => handleFetchVerse()}
-                  className="px-3.5 py-2 bg-[#4A6B57] hover:bg-[#072A20] disabled:bg-[#D2DDD3] disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2 bg-[#1E6B57] hover:bg-[#06231D] disabled:bg-[#CFE0C2] disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer"
                 >
                   {fetchingVerse ? (
                     <>
@@ -638,20 +637,20 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                   )}
                 </button>
               </div>
-              <p className="text-2xs text-[#6F8377] mt-1.5 leading-relaxed">
+              <p className="text-2xs text-[#4E7568] mt-1.5 leading-relaxed">
                 💡 성경 구절(예: <strong>이사야 41:10</strong>, <strong>시편 23</strong>)만 입력하고 <strong>[본문 자동 완성]</strong> 버튼을 누르거나 빈 곳을 클릭하면, 성경 본문과 가이드가 자동으로 개역개정으로 완성됩니다.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#6F8377] mb-1">성경 말씀 본문</label>
+              <label className="block text-xs font-semibold text-[#4E7568] mb-1">성경 말씀 본문</label>
               <textarea
                 required
                 rows={4}
                 value={verseText}
                 onChange={(e) => setVerseText(e.target.value)}
                 placeholder="성경 본문을 기입하세요..."
-                className="w-full text-sm px-3 py-2 bg-[#F5F5F5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] leading-relaxed"
+                className="w-full text-sm px-3 py-2 bg-[#EEF5E1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1E6B57] text-[#0B2A20] leading-relaxed"
               />
             </div>
 
@@ -661,14 +660,14 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-[#4A6B57] bg-white hover:bg-[#F5F5F5] transition cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-[#1E6B57] bg-white hover:bg-[#EEF5E1] transition cursor-pointer"
               >
                 취소
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-[#4A6B57] hover:bg-[#072A20] transition cursor-pointer"
+                className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-[#1E6B57] hover:bg-[#06231D] transition cursor-pointer"
               >
                 {submitting ? "등록 중..." : "말씀 공지하기"}
               </button>
@@ -687,16 +686,13 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             <div ref={readerRef} className="scroll-mt-4" />
 
             <div className="scripture-font py-3.5">
-              <div className="mb-2.5" data-guide="notice-versions">
+              <div className="mb-2.5">
                 <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
               </div>
 
               {/* 화면 높이에 맞춰 본문을 길게 보여준다. 예전에는 288px 로 고정이라
                   몇 줄 못 보고 계속 스크롤해야 했다. */}
-              <div
-                data-guide="notice-text"
-                className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200"
-              >
+              <div className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}
@@ -706,8 +702,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
 
               {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
               {onSelectVerseForMeditation && (
-                <div className="mt-4 pt-3 border-t border-[#E3E9E2] flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs sm:text-sm text-[#6F8377] font-medium">
+                <div className="mt-4 pt-3 border-t border-[#DEE9D2] flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm text-[#4E7568] font-medium">
                     {pickedVerses.size > 0
                       ? `${pickedVerses.size}개 구절을 골랐어요`
                       : "마음에 닿은 구절을 눌러보세요"}
@@ -717,7 +713,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                       <button
                         type="button"
                         onClick={() => setPickedVerses(new Map())}
-                        className="text-xs font-bold text-[#6F8377] hover:text-[#0C3B2E] cursor-pointer"
+                        className="text-xs font-bold text-[#4E7568] hover:text-[#0C342C] cursor-pointer"
                       >
                         선택 해제
                       </button>
@@ -734,7 +730,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                           picked || (noticePanes[0]?.text || notice.verseText).slice(0, 200)
                         );
                       }}
-                      data-guide="notice-meditate"
                       className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={13} />
@@ -755,10 +750,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             */}
 
             {/* Read/Unread Toggle Checkbox */}
-            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-[#E3E9E2] mt-2">
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-[#DEE9D2] mt-2">
               <button
                 onClick={handleToggleRead}
-                data-guide="notice-read"
                 className={`grad-forest flex items-center justify-center gap-2 px-4 py-2.5 rounded-3xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-white whitespace-nowrap ${
                   hasRead ? "brightness-90" : "hover:brightness-110"
                 }`}
@@ -770,35 +764,35 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               <button
                 type="button"
                 onClick={() => setShowReaders((v) => !v)}
-                className="flex items-center gap-1.5 text-xs text-[#6F8377] whitespace-nowrap cursor-pointer hover:text-[#195C50] transition"
+                className="flex items-center gap-1.5 text-xs text-[#4E7568] whitespace-nowrap cursor-pointer hover:text-[#076653] transition"
               >
-                <UserCheck size={16} className="text-[#4A6B57] shrink-0" />
+                <UserCheck size={16} className="text-[#1E6B57] shrink-0" />
                 <span>
-                  읽음 체크: <strong className="text-[#14261E] font-bold">{notice.readBy.length}명</strong>
+                  읽음 체크: <strong className="text-[#0B2A20] font-bold">{notice.readBy.length}명</strong>
                 </span>
               </button>
             </div>
 
             {/* List of readers — 기본은 접어두고, 눌러야 이름이 보인다 */}
             {notice.readBy.length > 0 && showReaders && (
-              <div className="bg-[#F9F9F9] rounded-2xl px-3 py-2 text-2xs">
-                <span className="font-bold text-[#0C3B2E] block mb-0.5 whitespace-nowrap">
+              <div className="bg-[#EFF6E2] rounded-2xl px-3 py-2 text-2xs">
+                <span className="font-bold text-[#0C342C] block mb-0.5 whitespace-nowrap">
                   체크인 한 동역자들 ({notice.readBy.length}명 / {allUsers.length}명 읽음)
                 </span>
-                <p className="text-[#6F8377] leading-relaxed">
+                <p className="text-[#4E7568] leading-relaxed">
                   {readersNames}
                 </p>
               </div>
             )}
           </motion.div>
         ) : (
-          <div className="text-center py-10 bg-[#F5F5F5] rounded-3xl">
-            <HelpCircle className="mx-auto text-[#6F8377] mb-2" size={28} />
-            <p className="text-sm text-[#4A6B57]">등록된 오늘의 말씀 공지가 없습니다.</p>
+          <div className="text-center py-10 bg-[#EEF5E1] rounded-3xl">
+            <HelpCircle className="mx-auto text-[#4E7568] mb-2" size={28} />
+            <p className="text-sm text-[#1E6B57]">등록된 오늘의 말씀 공지가 없습니다.</p>
             {currentUser.role === "admin" && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="mt-3 text-xs font-bold text-[#4A6B57] bg-white px-3 py-1.5 rounded-xl hover:bg-[#F5F5F5] cursor-pointer"
+                className="mt-3 text-xs font-bold text-[#1E6B57] bg-white px-3 py-1.5 rounded-xl hover:bg-[#EEF5E1] cursor-pointer"
               >
                 첫 말씀 등록하기
               </button>

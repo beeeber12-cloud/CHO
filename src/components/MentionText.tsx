@@ -18,7 +18,7 @@ export default function MentionText({ text, names, className = "" }: MentionText
         p.isMention ? (
           <span
             key={i}
-            className="font-bold text-[#0C3B2E] bg-[#E8F0E9] rounded-md px-1 py-0.5 whitespace-nowrap"
+            className="font-bold text-[#0C342C] bg-[#E7F6D8] rounded-md px-1 py-0.5 whitespace-nowrap"
           >
             {p.text}
           </span>

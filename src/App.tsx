@@ -360,22 +360,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
+    <div className="min-h-screen bg-white text-[#0B2A20] pb-[calc(6.25rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
       <PWAInstallPrompt />
       {/* 처음 오신 분께 탭을 하나씩 소개한다 (건너뛸 수 있다) */}
       {guideOpen && (
         <AppGuide
           onClose={() => setGuideOpen(false)}
           isAdmin={currentUser?.role === "admin"}
-          /* 안내가 짚을 버튼이 있는 화면으로 먼저 데려간다 */
-          onNavigate={({ tab, settings }) => {
-            if (settings) {
-              setShowSettings(true);
-              return;
-            }
-            setShowSettings(false);
-            if (tab && isTabKey(tab) && visibleTabs.includes(tab)) setActiveTab(tab);
-          }}
         />
       )}
       {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
@@ -389,8 +380,8 @@ export default function App() {
             자동으로 더 준다. 기종마다 값이 달라서 숫자를 못박지 않는다. */}
         <div className="relative z-10 max-w-4xl mx-auto px-[18px] pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-8 flex justify-between items-center gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <BrandMark size={19} className="shrink-0 text-[#F2F6F3]" />
-            <h1 className="text-sm sm:text-base font-bold tracking-[0.01em] truncate text-[#F2F6F3]">
+            <BrandMark size={19} className="shrink-0 text-[#F4FBEA]" />
+            <h1 className="text-sm sm:text-base font-bold tracking-[0.01em] truncate text-[#F4FBEA]">
               {brandTitle}
             </h1>
           </div>
@@ -402,7 +393,6 @@ export default function App() {
                 setShowAccountMenu(false);
                 setShowSettings(true);
               }}
-              data-guide="header-settings"
               className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition cursor-pointer shrink-0"
               title="설정"
             >
@@ -415,8 +405,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setShowAccountMenu((v) => !v)}
-              data-guide="header-account"
-              className="w-8 h-8 rounded-full bg-[#FFBA00] text-[#4A3600] font-bold text-xs flex items-center justify-center cursor-pointer hover:brightness-105 transition shrink-0"
+              className="w-8 h-8 rounded-full bg-[#E3EF26] text-[#0C342C] font-bold text-xs flex items-center justify-center cursor-pointer hover:brightness-105 transition shrink-0"
               title={`${currentUser.name} 계정`}
               aria-haspopup="menu"
               aria-expanded={showAccountMenu}
@@ -444,8 +433,8 @@ export default function App() {
                   role="menu"
                 >
                   <div className="px-4 py-2.5">
-                    <p className="text-sm font-bold text-[#14261E] truncate">{currentUser.name}</p>
-                    <p className="text-2xs text-[#6F8377] mt-0.5 truncate">
+                    <p className="text-sm font-bold text-[#0B2A20] truncate">{currentUser.name}</p>
+                    <p className="text-2xs text-[#4E7568] mt-0.5 truncate">
                       {currentUser.role === "admin" ? "관리자" : "성도님"} · {communityName}
                     </p>
                   </div>
@@ -484,9 +473,9 @@ export default function App() {
                         setShowAccountMenu(false);
                         item.run();
                       }}
-                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-[#14261E] hover:bg-[#F9F9F9] transition cursor-pointer border-t border-[#F2F2F2]"
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-[#0B2A20] hover:bg-[#EFF6E2] transition cursor-pointer border-t border-[#E9F1DC]"
                     >
-                      <span className="text-[#4A6B57] shrink-0">{item.icon}</span>
+                      <span className="text-[#1E6B57] shrink-0">{item.icon}</span>
                       {item.label}
                     </button>
                   ))}
@@ -512,21 +501,23 @@ export default function App() {
       {/* z-index 를 일부러 주지 않는다.
           숫자를 주면 이 안에서 여는 팝업이 아무리 높은 값을 써도 이 층을 넘지 못해
           하단 탭 바(z-50) 아래에 깔린다. 겹침(머리말 위로 올라오는 것)은 DOM 순서만으로도 된다. */}
-      <main className="relative -mt-[18px] bg-white rounded-t-[22px] max-w-4xl mx-auto px-[18px] pt-[22px] pb-[30px]">
+      {/* 내용이 짧아도 흰 시트가 화면 아래까지 내려가게 한다 — 밑에 바탕색이 남으면
+          떠 있는 탭 막대 뒤가 지저분해 보인다 */}
+      <main className="relative -mt-[18px] bg-white rounded-t-[22px] max-w-4xl mx-auto px-[18px] pt-[22px] pb-[30px] min-h-[calc(100vh-88px)]">
         {showSettings ? (
           <div className="space-y-4 sm:space-y-5">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowSettings(false)}
-                className="w-9 h-9 rounded-full bg-[#F9F9F9] hover:bg-[#F0F0F0] flex items-center justify-center text-[#14261E] transition cursor-pointer shrink-0"
+                className="w-9 h-9 rounded-full bg-[#EFF6E2] hover:bg-[#E4EFD1] flex items-center justify-center text-[#0B2A20] transition cursor-pointer shrink-0"
                 aria-label="나의 기록으로 돌아가기"
               >
                 <ChevronLeft size={18} />
               </button>
               <div className="min-w-0">
-                <h2 className="font-bold text-xl sm:text-2xl text-[#0C3B2E]">설정</h2>
-                <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">글씨 크기 · 알림 · 우리 공동체</p>
+                <h2 className="font-bold text-xl sm:text-2xl text-[#0C342C]">설정</h2>
+                <p className="text-xs sm:text-sm text-[#4E7568] mt-0.5">글씨 크기 · 알림 · 우리 공동체</p>
               </div>
             </div>
 
@@ -549,7 +540,6 @@ export default function App() {
               <SectionLabel>안내</SectionLabel>
               <RowGroup>
                 <Row
-                  guide="settings-guide"
                   icon={<HelpCircle size={17} />}
                   title="앱 사용법 다시 보기"
                   sub="화면마다 버튼을 하나씩 짚어 드립니다"
@@ -571,13 +561,13 @@ export default function App() {
             </div>
 
             {/* 앱 버전 — 휴대폰에 옛 화면이 남아 있는지 확인할 때 쓴다 */}
-            <p className="text-2xs text-[#A8B3A9] text-center pt-1">앱 버전 {__BUILD_TIME__}</p>
+            <p className="text-2xs text-[#5E7F71] text-center pt-1">앱 버전 {__BUILD_TIME__}</p>
           </div>
         ) : (
         <>
         {/* PC 탭 — 아래 모바일 바와 같은 목록(visibleTabs)에서 그린다 */}
         <div
-          className="hidden md:grid gap-1.5 bg-[#F9F9F9] p-1 rounded-3xl"
+          className="hidden md:grid gap-1.5 bg-[#EFF6E2] p-1 rounded-3xl"
           style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
         >
           {visibleTabs.map((key) => {
@@ -588,7 +578,7 @@ export default function App() {
                 key={key}
                 onClick={() => openTab(key)}
                 className={`flex items-center justify-center gap-1.5 py-2.5 rounded-3xl text-xs font-bold transition cursor-pointer ${
-                  on ? "grad-forest text-white" : "text-[#6F8377] hover:text-[#0C3B2E]"
+                  on ? "grad-forest text-white" : "text-[#4E7568] hover:text-[#0C342C]"
                 }`}
               >
                 <t.icon size={15} />
@@ -706,28 +696,50 @@ export default function App() {
 
       {/* 모바일 하단 바 — 위 PC 탭과 같은 목록에서 그린다. 설정 화면에서는 숨긴다(탭이 아니므로) */}
       {!showSettings && (
-        <div
-          data-guide="nav-tabs"
-          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#DEE3E6] px-1 pt-2 flex items-stretch overflow-x-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-        >
-          {visibleTabs.map((key) => {
-            const t = TAB_DEFS[key];
-            const on = activeTab === key;
-            return (
-              <button
-                key={key}
-                onClick={() => openTab(key)}
-                className={`flex-1 flex flex-col items-center gap-[3px] px-0.5 py-1.5 transition cursor-pointer min-w-[50px] ${
-                  on ? "text-[#226347]" : "text-[#6F8377]"
-                }`}
-              >
-                <t.icon size={19} className={on ? "-translate-y-px" : ""} />
-                <span className="text-2xs font-semibold">{t.short}</span>
-                {/* 지금 보고 있는 탭에만 켜지는 작은 금색 점 (시안의 .dot-active) */}
-                <span className={`w-1 h-1 rounded-full bg-[#FFBA00] transition-opacity ${on ? "opacity-100" : "opacity-0"}`} />
-              </button>
-            );
-          })}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] pointer-events-none">
+          {/* 화면 아래 끝이 하얗게 잘려 보이지 않도록 막대 뒤로 옅은 그라데이션을 깐다 */}
+          <div className="absolute inset-x-0 bottom-0 h-[130%] bg-gradient-to-t from-white via-white/85 to-transparent -z-10" />
+          <div className="pointer-events-auto tabbar-float mx-auto max-w-md rounded-[26px] p-1.5 flex items-stretch">
+            {visibleTabs.map((key) => {
+              const t = TAB_DEFS[key];
+              const on = activeTab === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => openTab(key)}
+                  className="relative flex-1 min-w-0 flex flex-col items-center justify-center gap-[3px] py-2 rounded-[20px] cursor-pointer"
+                  aria-current={on ? "page" : undefined}
+                >
+                  {/* 고른 탭을 따라 미끄러지듯 옮겨 가는 알약 (아이폰 탭 바의 그 움직임) */}
+                  {on && (
+                    <motion.span
+                      layoutId="tabbar-pill"
+                      transition={{ type: "spring", stiffness: 430, damping: 36, mass: 0.7 }}
+                      className="absolute inset-0 rounded-[20px] bg-white/12"
+                      style={{ boxShadow: "inset 0 1px 0 rgba(227,239,38,0.28)" }}
+                    />
+                  )}
+                  <motion.span
+                    className="relative z-10 flex flex-col items-center gap-[3px]"
+                    animate={{ y: on ? -1 : 0, scale: on ? 1.04 : 1 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                  >
+                    <t.icon
+                      size={19}
+                      className={on ? "text-[#E3EF26]" : "text-[#9DBFAC]"}
+                    />
+                    <span
+                      className={`text-[0.63rem] leading-none tracking-tight ${
+                        on ? "font-extrabold text-[#E3EF26]" : "font-semibold text-[#9DBFAC]"
+                      }`}
+                    >
+                      {t.short}
+                    </span>
+                  </motion.span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
