@@ -2509,6 +2509,62 @@ async function startServer() {
   });
 
   // --- Bible Plan Settings APIs ---
+  /*
+    앱 색 (설정 → 앱 색 꾸미기).
+
+    관리자가 정하면 공동체 모두가 같은 색으로 본다.
+    화면에 그대로 들어가는 값이라 **색으로 생긴 것만** 담는다 —
+    아무 글이나 담기면 그 글이 스타일 자리에 그대로 들어간다.
+  */
+  const THEME_COLOR_KEYS = [
+    "page", "card", "box", "soft", "mint", "line",
+    "title", "body", "muted", "faint", "scripture",
+    "accent", "accent2", "point", "ink"
+  ];
+  const THEME_GRADIENT_KEYS = ["gradMain", "gradSub", "gradBar"];
+  const THEME_FONTS = ["sans", "serif", "myeongjo"];
+  const isThemeHex = (v: unknown): v is string =>
+    typeof v === "string" && /^#[0-9A-Fa-f]{6}$/.test(v);
+
+  function cleanTheme(raw: any): Record<string, unknown> | null {
+    if (!raw || typeof raw !== "object") return null;
+    const out: Record<string, unknown> = {};
+    for (const k of THEME_COLOR_KEYS) {
+      if (isThemeHex(raw[k])) out[k] = String(raw[k]).toUpperCase();
+    }
+    for (const k of THEME_GRADIENT_KEYS) {
+      const g = raw[k];
+      if (!g || typeof g !== "object") continue;
+      if (!isThemeHex(g.from) || !isThemeHex(g.to)) continue;
+      const angle = Number(g.angle);
+      out[k] = {
+        from: String(g.from).toUpperCase(),
+        to: String(g.to).toUpperCase(),
+        angle: Number.isFinite(angle) ? Math.min(360, Math.max(0, Math.round(angle))) : 135
+      };
+    }
+    if (THEME_FONTS.includes(raw.font)) out.font = raw.font;
+    return Object.keys(out).length ? out : null;
+  }
+
+  /** 로그인 전(로그인 화면)에도 색이 맞아야 하므로 누구나 읽을 수 있다 */
+  app.get("/api/theme", (req: Request, res: Response) => {
+    const db = dbOf(req);
+    res.json(db.theme || null);
+  });
+
+  app.post("/api/theme", (req: Request, res: Response) => {
+    if (!requireAdmin(req, res)) return;
+    const db = dbOf(req);
+    const cleaned = cleanTheme(req.body);
+    if (!cleaned) {
+      return res.status(400).json({ error: "색 값이 올바르지 않습니다." });
+    }
+    db.theme = cleaned;
+    saveDb(db);
+    res.json(db.theme);
+  });
+
   app.get("/api/bible-plan", (req: Request, res: Response) => {
     const db = dbOf(req);
     res.json(db.biblePlan || { book: "요한복음", currentChapter: 1, active: false });

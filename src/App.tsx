@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog } from "lucide-react";
+import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette } from "lucide-react";
 import BrandMark from "./components/BrandMark";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
@@ -18,6 +18,8 @@ import ProfileModal from "./components/ProfileModal";
 import { SectionLabel, RowGroup, Row } from "./components/SettingsUI";
 import ChallengeTab from "./components/ChallengeTab";
 import AppGuide, { guideSeen } from "./components/AppGuide";
+import ThemeStudio from "./components/ThemeStudio";
+import { AppTheme, DEFAULT_THEME, applyTheme, cacheTheme, cachedTheme, normalizeTheme } from "./lib/theme";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
 import { useSwipe } from "./lib/useSwipe";
 
@@ -106,6 +108,27 @@ export default function App() {
   const [challengeOn, setChallengeOn] = useState<boolean>(false);
   /** 처음 들어오신 분께 보여드리는 앱 사용 안내 */
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
+
+  /**
+   * 앱 색. 관리자가 정해 두면 공동체 모두가 같은 색으로 본다.
+   * 기기에 기억해 둔 값으로 먼저 그리고(main.tsx), 서버 값이 오면 맞춘다.
+   */
+  const [theme, setTheme] = useState<AppTheme>(() => cachedTheme() || DEFAULT_THEME);
+  const [themeOpen, setThemeOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetch("/api/theme")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((raw) => {
+        const next = raw ? normalizeTheme(raw) : DEFAULT_THEME;
+        setTheme(next);
+        applyTheme(next);
+        cacheTheme(raw ? next : null);
+      })
+      .catch(() => {
+        // 연결이 안 되면 기억해 둔 색 그대로 쓴다
+      });
+  }, [currentUser?.id]);
 
   const refreshChallenge = React.useCallback(() => {
     fetch("/api/challenges/current")
@@ -369,6 +392,14 @@ export default function App() {
           isAdmin={currentUser?.role === "admin"}
         />
       )}
+      {/* 앱 색 꾸미기 — 뒤로 앱이 보이는 채로 색을 고른다 */}
+      <ThemeStudio
+        open={themeOpen}
+        saved={theme}
+        onClose={() => setThemeOpen(false)}
+        onSaved={setTheme}
+      />
+
       {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
           안내를 보는 동안에는 겹치지 않게 미뤄 둔다 */}
       {!guideOpen && <GoalSummaryPopup currentUser={currentUser} />}
@@ -534,6 +565,22 @@ export default function App() {
               }}
               onLogout={handleLogout}
             />
+
+            {/* 꾸미기 — 관리자가 정하면 공동체 모두의 앱 색이 바뀐다 */}
+            {currentUser.role === "admin" && (
+              <div>
+                <SectionLabel>꾸미기</SectionLabel>
+                <RowGroup>
+                  <Row
+                    icon={<Palette size={17} />}
+                    title="앱 색 꾸미기"
+                    sub="상자 · 글씨 · 그라데이션 색을 직접 고릅니다"
+                    badge="관리자"
+                    onClick={() => setThemeOpen(true)}
+                  />
+                </RowGroup>
+              </div>
+            )}
 
             {/* 안내 */}
             <div>

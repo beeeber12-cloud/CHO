@@ -4,10 +4,14 @@ import App from './App.tsx';
 import './index.css';
 import { FontSizeProvider } from './context/FontSizeContext.tsx';
 import { installApiInterceptor } from './lib/session.ts';
+import { bootTheme } from './lib/theme.ts';
 
 // 서버로 가는 모든 요청에 로그인 증표와 공동체 표시를 자동으로 붙인다.
 // (화면 곳곳의 fetch 를 하나하나 고치지 않아도 되고, 빠뜨릴 자리도 없다)
 installApiInterceptor();
+
+// 이 기기에 기억해 둔 앱 색을 먼저 입힌다 (서버 값을 기다리면 기본색이 한 번 번쩍인다)
+bootTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

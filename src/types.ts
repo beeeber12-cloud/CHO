@@ -318,6 +318,11 @@ export interface DatabaseSchema {
   /** 로그인 증표에 서명하는 비밀키. 이게 바뀌면 모두 다시 로그인해야 한다 */
   sessionSecret?: string;
   /**
+   * 관리자가 정한 앱 색 (설정 → 앱 색 꾸미기).
+   * 값의 생김새는 src/lib/theme.ts 의 AppTheme 하나뿐이고, 서버는 색 값만 걸러 담는다.
+   */
+  theme?: Record<string, unknown>;
+  /**
    * 비밀번호 재설정을 이미 적용했다는 표시.
    * 콘솔의 환경변수를 지우지 않고 두더라도, 서버가 다시 뜰 때마다
    * 비밀번호가 옛 값으로 되돌아가는 일을 막는다.
