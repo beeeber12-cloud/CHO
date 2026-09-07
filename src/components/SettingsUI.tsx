@@ -36,6 +36,8 @@ interface RowProps {
   /** 오른쪽 화살표를 보일지 (누르면 열리는 줄) */
   chevron?: boolean;
   danger?: boolean;
+  /** 앱 사용법 안내가 짚을 자리 (AppGuide 의 data-guide) */
+  guide?: string;
 }
 
 export function Row({
@@ -46,7 +48,8 @@ export function Row({
   right,
   onClick,
   chevron,
-  danger = false
+  danger = false,
+  guide
 }: RowProps) {
   const showChevron = chevron ?? (!!onClick && !right);
   const body = (
@@ -83,12 +86,21 @@ export function Row({
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={`${cls} cursor-pointer text-left`}>
+      <button
+        type="button"
+        data-guide={guide}
+        onClick={onClick}
+        className={`${cls} cursor-pointer text-left`}
+      >
         {body}
       </button>
     );
   }
-  return <div className={cls}>{body}</div>;
+  return (
+    <div data-guide={guide} className={cls}>
+      {body}
+    </div>
+  );
 }
 
 /** 켜고 끄는 작은 스위치 (시안의 .switch) */

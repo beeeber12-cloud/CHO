@@ -211,6 +211,7 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
           setIsAnonymous(false);
           setError("");
         }}
+        data-guide="gratitude-write"
         className="grad-forest w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-bold rounded-3xl transition cursor-pointer text-xs hover:brightness-110"
       >
         {showForm ? <X size={16} /> : <Plus size={16} />}

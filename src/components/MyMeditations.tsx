@@ -458,7 +458,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
       </div>
 
       {/* 말씀 체크리스트 · 내 나눔 목표 — 시안의 .nav-card (플레인 행 두 개, 아이콘+글+꺾쇠) */}
-      <div className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] px-3 sm:px-4">
+      <div data-guide="my-checklist" className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] px-3 sm:px-4">
         <button
           type="button"
           onClick={openSavedVerses}
@@ -511,7 +511,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
         </div>
 
         {/* Record Type Category Pills — 좁은 화면에서도 세 칩이 한 줄에 들어가야 한다 */}
-        <div className="flex gap-1 border-t border-[#F0F0F0] pt-3 text-xs font-bold">
+        <div data-guide="my-filters" className="flex gap-1 border-t border-[#F0F0F0] pt-3 text-xs font-bold">
           <button
             onClick={() => setRecordTypeFilter('meditation')}
             className={`flex-1 px-1.5 py-1.5 rounded-3xl transition cursor-pointer flex items-center justify-center gap-1 ${

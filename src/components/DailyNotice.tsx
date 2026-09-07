@@ -394,7 +394,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     // 화면 어디를 눌러도 말씀이 화면에 맞춰진다 (버튼·팝업은 제외 — alignReader 참고)
     <div onClick={alignReader}>
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
-        <div className="min-w-0">
+        <div className="min-w-0" data-guide="notice-title">
           <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl">오늘의 말씀</h3>
           <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">
             {notice ? `${notice.verseTitle} · ${formatKoreanDate(notice.date)}` : "매일 아침 새 말씀이 공지됩니다"}
@@ -420,6 +420,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
         <button
           type="button"
           onClick={() => setShowPlannerConfig(true)}
+          data-guide="notice-admin"
           className="w-full flex items-center gap-3 mb-4 p-3.5 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-3xl transition cursor-pointer text-left"
         >
           <span className="flex-1 min-w-0">
@@ -686,13 +687,16 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             <div ref={readerRef} className="scroll-mt-4" />
 
             <div className="scripture-font py-3.5">
-              <div className="mb-2.5">
+              <div className="mb-2.5" data-guide="notice-versions">
                 <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
               </div>
 
               {/* 화면 높이에 맞춰 본문을 길게 보여준다. 예전에는 288px 로 고정이라
                   몇 줄 못 보고 계속 스크롤해야 했다. */}
-              <div className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200">
+              <div
+                data-guide="notice-text"
+                className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200"
+              >
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}
@@ -730,6 +734,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                           picked || (noticePanes[0]?.text || notice.verseText).slice(0, 200)
                         );
                       }}
+                      data-guide="notice-meditate"
                       className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={13} />
@@ -753,6 +758,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-[#E3E9E2] mt-2">
               <button
                 onClick={handleToggleRead}
+                data-guide="notice-read"
                 className={`grad-forest flex items-center justify-center gap-2 px-4 py-2.5 rounded-3xl text-xs sm:text-sm font-bold transition-all cursor-pointer text-white whitespace-nowrap ${
                   hasRead ? "brightness-90" : "hover:brightness-110"
                 }`}

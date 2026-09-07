@@ -754,6 +754,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             type="button"
             disabled={switchingMode}
             onClick={() => switchPlanMode(isRJ ? "normal" : "readingJesus")}
+            data-guide="bible-rj"
             className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-3xl text-2xs sm:text-xs font-bold transition cursor-pointer disabled:opacity-60 ${
               isRJ
                 ? "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
@@ -774,6 +775,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           <button
             type="button"
             onClick={() => setShowProgressModal(true)}
+            data-guide="bible-progress"
             // 상자 안 어디를 눌러도 열린다 (글씨·막대·빈 자리 모두 이 단추 안이다)
             className="w-full flex items-center gap-3 bg-white rounded-2xl p-3.5 text-left cursor-pointer transition hover:bg-[#F4F4F4]"
           >
@@ -811,6 +813,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               setPendingScroll(true);
               handleSelectBookChapter(book, userProgress?.lastReadChapter || 1);
             }}
+            data-guide="bible-continue"
             className="w-full flex items-center justify-between gap-2 px-1.5 transition cursor-pointer text-left"
           >
             <span className="min-w-0">
@@ -827,7 +830,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         )}
 
         {/* 구약 / 신약 — 누르면 권·장·절 선택 팝업이 열린다 */}
-        <div className={`grid grid-cols-2 gap-2.5 ${currentUser ? "pt-4 border-t border-[#EDEDED]" : ""}`}>
+        <div
+          data-guide="bible-testaments"
+          className={`grid grid-cols-2 gap-2.5 ${currentUser ? "pt-4 border-t border-[#EDEDED]" : ""}`}
+        >
           <button
             type="button"
             onClick={() => openNavModal('OT')}
@@ -906,6 +912,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 // pan-y 로 두면 세로 훑기는 브라우저가 그대로 처리하고,
                 // 가로로 미는 동작만 우리가 받아 장을 넘길 수 있다
                 style={{ touchAction: "pan-y" }}
+                data-guide="bible-text"
                 className="scripture-font py-2 max-h-[calc(100vh-14rem)] min-h-[560px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
                 {/* 바깥층: 손가락을 따라 밀린다 (놓으면 제자리로 튕겨 돌아온다) */}
@@ -983,6 +990,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     <button
                       type="button"
                       onClick={() => handleToggleChapterComplete(currentChapterKey)}
+                      data-guide="bible-complete"
                       className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-3xl font-bold text-xs transition cursor-pointer whitespace-nowrap shrink-0 ${
                         isCurrentChapterCompleted
                           ? "grad-forest text-white hover:brightness-110"

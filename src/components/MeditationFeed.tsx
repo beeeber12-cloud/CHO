@@ -596,6 +596,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             setEditingId(null);
             setFormError("");
           }}
+          data-guide="feed-write"
           className="grad-forest flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
         >
           {showWriteForm ? <X size={15} /> : <Plus size={15} />}
@@ -604,6 +605,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         </button>
         <button
           onClick={() => setShowJournal(true)}
+          data-guide="feed-journal"
           className="grad-teal flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
         >
           <Lock size={15} />
@@ -612,7 +614,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
       </div>
 
       {/* 방 고르기 — 시안의 .room-filter: 감싸는 상자 없이 작은 알약만 한 줄로 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      <div data-guide="feed-sok" className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {/* Public All Tab */}
         <button
           onClick={() => setSelectedSokTab("all")}
@@ -787,7 +789,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
             <p className="text-sm">묵상 나눔을 가져오고 있습니다...</p>
           </div>
         ) : filteredMeditations.length > 0 ? (
-          filteredMeditations.map((med) => {
+          filteredMeditations.map((med, medIndex) => {
             const hasLiked = med.likes.includes(currentUser.id);
             const isMyMed = med.userId === currentUser.id;
             const commentsOpen = expandedComments[med.id] || false;
@@ -800,6 +802,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
+                /* 앱 사용법 안내가 첫 글 한 장을 짚어 보여 준다 */
+                data-guide={medIndex === 0 ? "feed-first-post" : undefined}
                 className="bg-[#F9F9F9] rounded-[22px] p-5 space-y-3 transition-all duration-300"
               >
                 {/* Header — 이름 / 날짜 · 방 배지 (시안의 .post-head) */}

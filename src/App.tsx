@@ -367,6 +367,15 @@ export default function App() {
         <AppGuide
           onClose={() => setGuideOpen(false)}
           isAdmin={currentUser?.role === "admin"}
+          /* 안내가 짚을 버튼이 있는 화면으로 먼저 데려간다 */
+          onNavigate={({ tab, settings }) => {
+            if (settings) {
+              setShowSettings(true);
+              return;
+            }
+            setShowSettings(false);
+            if (tab && isTabKey(tab) && visibleTabs.includes(tab)) setActiveTab(tab);
+          }}
         />
       )}
       {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
@@ -393,6 +402,7 @@ export default function App() {
                 setShowAccountMenu(false);
                 setShowSettings(true);
               }}
+              data-guide="header-settings"
               className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition cursor-pointer shrink-0"
               title="설정"
             >
@@ -405,6 +415,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setShowAccountMenu((v) => !v)}
+              data-guide="header-account"
               className="w-8 h-8 rounded-full bg-[#FFBA00] text-[#4A3600] font-bold text-xs flex items-center justify-center cursor-pointer hover:brightness-105 transition shrink-0"
               title={`${currentUser.name} 계정`}
               aria-haspopup="menu"
@@ -538,6 +549,7 @@ export default function App() {
               <SectionLabel>안내</SectionLabel>
               <RowGroup>
                 <Row
+                  guide="settings-guide"
                   icon={<HelpCircle size={17} />}
                   title="앱 사용법 다시 보기"
                   sub="화면마다 버튼을 하나씩 짚어 드립니다"
@@ -694,7 +706,10 @@ export default function App() {
 
       {/* 모바일 하단 바 — 위 PC 탭과 같은 목록에서 그린다. 설정 화면에서는 숨긴다(탭이 아니므로) */}
       {!showSettings && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#DEE3E6] px-1 pt-2 flex items-stretch overflow-x-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div
+          data-guide="nav-tabs"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#DEE3E6] px-1 pt-2 flex items-stretch overflow-x-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        >
           {visibleTabs.map((key) => {
             const t = TAB_DEFS[key];
             const on = activeTab === key;

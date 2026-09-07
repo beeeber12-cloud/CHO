@@ -290,7 +290,7 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* 글씨 크기 */}
-      <div>
+      <div data-guide="settings-font">
         <SectionLabel>글씨 크기</SectionLabel>
         <FontSizeSegment />
       </div>
@@ -301,6 +301,7 @@ export default function NotificationSettings({ currentUser }: NotificationSettin
         <RowGroup>
           {pushUsable ? (
             <Row
+              guide="settings-alarm"
               icon={<Smartphone size={17} />}
               title="휴대폰 알림"
               sub={pushOn ? "이 기기에서 켜져 있습니다" : "앱을 닫아두셔도 새 소식이 도착합니다"}
