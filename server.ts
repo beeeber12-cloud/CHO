@@ -10,11 +10,11 @@ import webpush from "web-push";
 import { DatabaseSchema, User, Notice, Meditation, WeeklySummary, AlarmConfig, Comment, GratitudeNote, BibleQA, UserBibleProgress, SokGroup, PushSubscriptionRecord, ReactionType, BiblePlan, Community, ReadingChallenge, JournalEntry } from "./src/types";
 import { parseAndGenerateBibleText, saveChapterData, preloadAllBooks, getDailyVerse, preloadAllNivBooks, getNivText, getWmText, preloadAllWmBooks, BIBLE_BOOKS } from "./server/bibleData.js";
 import {
-  rjChaptersOf,
-  rjDayFor,
+  buildRjSchedule,
+  rjDayOn,
+  rjNormalizeSettings,
   rjRangeLabel,
-  rjValidAnchor,
-  RJAnchor
+  RJSettings
 } from "./src/lib/readingJesus.js";
 import {
   fetchFromFirestore,
@@ -1523,12 +1523,13 @@ async function ensureTodayNotice(cid: string = DEFAULT_COMMUNITY_ID): Promise<No
   }
 }
 
-/** 통독표 설정에서 시작 자리를 꺼낸다 (안 정해 뒀으면 null → 통독표 첫날 기준) */
-function readingJesusAnchor(db: DatabaseSchema): RJAnchor | null {
+/** 공동체가 정한 통독 일정 (시작날·읽는 요일·방학). 시작날이 없으면 null */
+function readingJesusSettings(db: DatabaseSchema): RJSettings | null {
   const plan = db.biblePlan;
-  return rjValidAnchor({
-    planDate: plan?.rjPlanDate || "",
-    startDate: plan?.rjStartDate || ""
+  return rjNormalizeSettings({
+    startDate: plan?.rjStartDate || "",
+    readingDays: plan?.rjReadingDays,
+    breaks: plan?.rjBreaks
   });
 }
 
@@ -1543,25 +1544,27 @@ function readingJesusAnchor(db: DatabaseSchema): RJAnchor | null {
  */
 async function autoPostReadingJesus(db: DatabaseSchema, todayStr: string): Promise<Notice | null> {
   const plan = db.biblePlan!;
-  const [y, m, d] = todayStr.split("-").map(Number);
-  const day = rjDayFor(new Date(y, m - 1, d), readingJesusAnchor(db));
-  const chapters = rjChaptersOf(day);
-
-  if (chapters.length === 0) {
-    console.log(
-      `[리딩지저스] ${todayStr} 은 읽을 분량이 없는 날입니다 (${day.section || day.special || day.label}). 공지를 만들지 않습니다.`
-    );
+  const settings = readingJesusSettings(db);
+  if (!settings) {
+    console.log("[리딩지저스] 통독 시작날이 정해지지 않아 공지를 만들지 않습니다.");
     return null;
   }
 
-  const verseTitle = rjRangeLabel(day);
+  const day = rjDayOn(buildRjSchedule(settings), todayStr);
+  if (!day) {
+    console.log(`[리딩지저스] ${todayStr} 은 읽는 날이 아닙니다 (쉬는 요일·방학·통독 기간 밖). 공지를 만들지 않습니다.`);
+    return null;
+  }
+
+  const chapters = day.chapters;
+  const verseTitle = rjRangeLabel(day.entry);
   const verseText = buildPassageText(chapters);
   if (!verseText.trim()) {
     console.warn(`[리딩지저스] ${verseTitle} 본문을 찾지 못해 공지를 건너뜁니다.`);
     return null;
   }
 
-  console.log(`[리딩지저스] ${todayStr} 통독표 ${day.date} → ${verseTitle} (${chapters.length}장)`);
+  console.log(`[리딩지저스] ${todayStr} 통독표 ${day.entry.week}주 ${day.index + 1}일차 → ${verseTitle} (${chapters.length}장)`);
 
   let content = `리딩지저스 통독표에 따라 오늘 읽을 말씀은 ${verseTitle} 입니다. 한 절씩 천천히 읽으며 주님의 마음을 헤아려 보세요.`;
 
@@ -2513,7 +2516,7 @@ async function startServer() {
 
   app.post("/api/bible-plan", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { book, currentChapter, active, mode, rjPlanDate, rjStartDate } = req.body;
+    const { book, currentChapter, active, mode, rjStartDate, rjReadingDays, rjBreaks } = req.body;
     const planMode = mode === "readingJesus" ? "readingJesus" : "chapter";
     // 통독표 방식에서는 진도(권·장)를 쓰지 않으므로 책 이름을 요구하지 않는다
     if (planMode === "chapter" && !book) {
@@ -2536,12 +2539,37 @@ async function startServer() {
       // 그래야 공지 이력에 따른 자동 보정이 관리자의 지정을 덮어쓰지 않는다.
       lastUpdatedDate: moved ? undefined : prev?.lastUpdatedDate,
       mode: planMode,
-      // 통독표에서 고른 시작 자리. 새로 고르면 그날부터 다시 센다.
-      ...(typeof rjPlanDate === "string" && rjPlanDate ? { rjPlanDate } : prev?.rjPlanDate ? { rjPlanDate: prev.rjPlanDate } : {}),
+      // 통독 일정 — 보내온 것이 있으면 그것으로, 없으면 쓰던 것을 그대로 둔다
       ...(typeof rjStartDate === "string" && rjStartDate
         ? { rjStartDate }
         : prev?.rjStartDate
         ? { rjStartDate: prev.rjStartDate }
+        : {}),
+      ...(Array.isArray(rjReadingDays)
+        ? {
+            rjReadingDays: Array.from(new Set(rjReadingDays.map(Number)))
+              .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+              .sort((a, b) => a - b)
+          }
+        : prev?.rjReadingDays
+        ? { rjReadingDays: prev.rjReadingDays }
+        : {}),
+      ...(Array.isArray(rjBreaks)
+        ? {
+            rjBreaks: rjBreaks
+              .filter(
+                (b: any) =>
+                  b && typeof b.from === "string" && typeof b.to === "string" &&
+                  /^\d{4}-\d{2}-\d{2}$/.test(b.from) && /^\d{4}-\d{2}-\d{2}$/.test(b.to)
+              )
+              .map((b: any) => ({
+                from: b.from <= b.to ? b.from : b.to,
+                to: b.from <= b.to ? b.to : b.from,
+                ...(typeof b.label === "string" && b.label.trim() ? { label: b.label.trim().slice(0, 40) } : {})
+              }))
+          }
+        : prev?.rjBreaks
+        ? { rjBreaks: prev.rjBreaks }
         : {}),
       updatedAt: new Date().toISOString()
     };
@@ -2552,10 +2580,12 @@ async function startServer() {
       (관리자가 손으로 쓴 공지는 createdBy 가 다르므로 건드리지 않는다)
     */
     const prevMode = prev?.mode === "readingJesus" ? "readingJesus" : "chapter";
+    const sameList = (a?: unknown[], b?: unknown[]) => JSON.stringify(a || null) === JSON.stringify(b || null);
     const anchorChanged =
       prevMode !== planMode ||
-      prev?.rjPlanDate !== db.biblePlan.rjPlanDate ||
-      prev?.rjStartDate !== db.biblePlan.rjStartDate;
+      prev?.rjStartDate !== db.biblePlan.rjStartDate ||
+      !sameList(prev?.rjReadingDays, db.biblePlan.rjReadingDays) ||
+      !sameList(prev?.rjBreaks, db.biblePlan.rjBreaks);
     // 한 장씩 방식은 진도를 이력으로 바로잡으므로 다시 만들 이유가 없다
     if (db.biblePlan.active && planMode === "readingJesus" && anchorChanged) {
       const today = getKSTDateString();

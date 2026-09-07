@@ -1,33 +1,50 @@
 import {
-  READING_JESUS_DAYS,
+  READING_JESUS_ENTRIES,
+  READING_JESUS_PER_WEEK,
   READING_JESUS_TOTAL_CHAPTERS,
-  ReadingJesusDay
+  READING_JESUS_WEEKS,
+  ReadingJesusEntry
 } from "../data/readingJesus";
 
 /**
- * 리딩지저스 통독표를 날짜에 맞춰 읽는 도구.
+ * 리딩지저스 통독표를 달력에 얹는다.
  *
- * 통독표는 **52주(364일)를 한 바퀴**로 돌린다. 364는 정확히 52주라서
- * 한 바퀴를 돌아도 요일이 그대로 맞는다 — 주일에 강해 영상이 오고 월~토에 읽는
- * 통독표의 짜임새가 해가 바뀌어도 흐트러지지 않는다.
+ * 통독표 자체에는 날짜가 없다 — **읽는 순서만** 있다(270개 = 45주 × 6일).
+ * 공동체가 아래 세 가지를 정하면 그 순서가 날짜에 차례대로 얹힌다.
  *
- * 시작점(anchor)을 정해 두면 "통독표의 이 날부터, 실제로는 이 날에 시작"으로 맞춘다.
- * 관리자가 오늘의 말씀에서 통독표의 한 날을 고르면 그것이 시작점이 된다.
- * 정해 두지 않으면 통독표 첫날(1월 1일)을 그 해 1월 1일에 맞춘 것으로 본다.
+ *   ① 시작날     — 공동체마다 다르다
+ *   ② 읽는 요일  — 월~금만, 월~토만, 또는 정한 요일만
+ *   ③ 방학       — 그 기간은 통째로 건너뛴다 (뒤가 그만큼 밀린다)
+ *
+ * 하루를 못 읽어도 계획이 앞당겨지거나 밀리지 않는다. 통독표 순서와 날짜는
+ * 이 세 가지로만 정해지므로, 공동체 전체가 늘 같은 날 같은 본문을 본다.
  */
 
-/** 한 바퀴 = 52주. 요일이 그대로 맞아떨어지는 길이다 */
-export const RJ_CYCLE = 364;
-
-export const RJ_DAYS = READING_JESUS_DAYS;
+export const RJ_ENTRIES = READING_JESUS_ENTRIES;
+export const RJ_PER_WEEK = READING_JESUS_PER_WEEK;
+export const RJ_WEEKS = READING_JESUS_WEEKS;
 export const RJ_TOTAL_CHAPTERS = READING_JESUS_TOTAL_CHAPTERS;
+export const RJ_TOTAL_DAYS = READING_JESUS_ENTRIES.length;
 
-/** 통독표에서 시작할 자리 */
-export interface RJAnchor {
-  /** 통독표의 날짜 ("2025-08-24") */
-  planDate: string;
-  /** 그 자리를 실제로 시작한 날 ("2026-09-06") */
+export const RJ_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+/** 통독표가 6일씩 묶여 있으니 월~토가 기본이다 */
+export const RJ_DEFAULT_READING_DAYS = [1, 2, 3, 4, 5, 6];
+
+/** 쉬는 기간 (방학·특별주간). 양쪽 끝 날짜를 포함한다 */
+export interface RJBreak {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+/** 공동체가 정하는 통독 일정 */
+export interface RJSettings {
+  /** 통독을 시작하는 날 ("2026-09-14") */
   startDate: string;
+  /** 읽는 요일 (0=일 … 6=토) */
+  readingDays: number[];
+  /** 쉬는 기간들 */
+  breaks: RJBreak[];
 }
 
 export interface RJChapter {
@@ -37,74 +54,125 @@ export interface RJChapter {
   key: string;
 }
 
-const MS_DAY = 86400000;
+/** 통독표 한 줄이 실제 날짜에 얹힌 것 */
+export interface RJDay {
+  /** 통독표 순서 (0부터) */
+  index: number;
+  entry: ReadingJesusEntry;
+  date: Date;
+  dateKey: string;
+  chapters: RJChapter[];
+}
+
+// ── 날짜 도구 ────────────────────────────────────────────────
 
 export function rjDateKey(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-function parseKey(key: string): Date | null {
+export function rjParseDate(key: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key || "");
   if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** 자정 기준으로만 뺀다 — 시각이 섞이면 하루가 어긋난다 */
-function daysBetween(from: Date, to: Date): number {
-  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
-  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime();
-  return Math.round((b - a) / MS_DAY);
+/** "2026년 9월 14일 (월)" */
+export function rjDateLabel(d: Date): string {
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${RJ_DAY_LABELS[d.getDay()]})`;
 }
 
-/** 음수도 한 바퀴 안으로 접는다 */
-const wrap = (n: number) => ((n % RJ_CYCLE) + RJ_CYCLE) % RJ_CYCLE;
-
-const INDEX_OF_PLAN_DATE = new Map(RJ_DAYS.map((d, i) => [d.date, i]));
-
-export function rjIndexOfPlanDate(planDate: string): number {
-  return INDEX_OF_PLAN_DATE.get(planDate) ?? 0;
+/** "9월 14일" */
+export function rjShortDate(d: Date): string {
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
-/** 시작점이 제대로 갖춰졌는지 */
-export function rjValidAnchor(a?: RJAnchor | null): RJAnchor | null {
-  if (!a?.planDate || !a?.startDate) return null;
-  if (!INDEX_OF_PLAN_DATE.has(a.planDate) || !parseKey(a.startDate)) return null;
-  return a;
+// ── 설정 ─────────────────────────────────────────────────────
+
+/** 설정이 쓸 만한지 보고, 빠진 곳은 기본값으로 채운다 */
+export function rjNormalizeSettings(raw?: Partial<RJSettings> | null): RJSettings | null {
+  const start = rjParseDate(raw?.startDate || "");
+  if (!start) return null;
+
+  const days = Array.from(
+    new Set((raw?.readingDays || RJ_DEFAULT_READING_DAYS).map(Number))
+  )
+    .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+    .sort((a, b) => a - b);
+  if (days.length === 0) return null;
+
+  const breaks = (raw?.breaks || [])
+    .filter((b) => b && rjParseDate(b.from) && rjParseDate(b.to))
+    // 거꾸로 적었어도 알아서 바로잡는다
+    .map((b) => (b.from <= b.to ? b : { ...b, from: b.to, to: b.from }))
+    .sort((a, b) => a.from.localeCompare(b.from));
+
+  return { startDate: rjDateKey(start), readingDays: days, breaks };
 }
 
-/** 실제 날짜 → 통독표의 몇 번째 날인지 */
-export function rjIndexFor(real: Date, anchor?: RJAnchor | null): number {
-  const a = rjValidAnchor(anchor);
-  if (a) {
-    const start = parseKey(a.startDate)!;
-    return wrap(rjIndexOfPlanDate(a.planDate) + daysBetween(start, real));
+/** 그날이 쉬는 기간에 들어 있으면 그 기간을 돌려준다 */
+export function rjBreakOn(settings: RJSettings | null, dateKey: string): RJBreak | null {
+  if (!settings) return null;
+  return settings.breaks.find((b) => b.from <= dateKey && dateKey <= b.to) || null;
+}
+
+// ── 통독표를 달력에 얹기 ─────────────────────────────────────
+
+/** 하루씩 걸어가다 끝없이 돌지 않도록 하는 울타리 (270일치를 다 얹기엔 넉넉하다) */
+const MAX_SPAN_DAYS = 4000;
+
+/**
+ * 통독표 270일치를 실제 날짜에 차례대로 얹는다.
+ * 읽는 요일이 아니거나 방학인 날은 건너뛴다.
+ */
+export function buildRjSchedule(settings: RJSettings | null): RJDay[] {
+  const start = settings && rjParseDate(settings.startDate);
+  if (!settings || !start) return [];
+
+  const out: RJDay[] = [];
+  const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+
+  for (let step = 0; step < MAX_SPAN_DAYS && out.length < RJ_ENTRIES.length; step++) {
+    const key = rjDateKey(cursor);
+    if (settings.readingDays.includes(cursor.getDay()) && !rjBreakOn(settings, key)) {
+      const entry = RJ_ENTRIES[out.length];
+      out.push({
+        index: out.length,
+        entry,
+        date: new Date(cursor),
+        dateKey: key,
+        chapters: rjChaptersOf(entry)
+      });
+    }
+    cursor.setDate(cursor.getDate() + 1);
   }
-  // 시작점이 없으면 통독표 첫날을 그 해 1월 1일에 맞춘 것으로 본다
-  const first = parseKey(RJ_DAYS[0].date)!;
-  return wrap(daysBetween(first, real));
+  return out;
 }
 
-export function rjDayAt(index: number): ReadingJesusDay {
-  return RJ_DAYS[wrap(index)];
+/** 날짜로 그날의 통독표를 찾는다 (읽는 날이 아니면 null) */
+export function rjDayOn(schedule: RJDay[], dateKey: string): RJDay | null {
+  return schedule.find((d) => d.dateKey === dateKey) || null;
 }
 
-export function rjDayFor(real: Date, anchor?: RJAnchor | null): ReadingJesusDay {
-  return rjDayAt(rjIndexFor(real, anchor));
+/** 아직 안 읽은 첫 날 (다 읽었으면 null) */
+export function rjNextUnread(schedule: RJDay[], completed: Set<string>): RJDay | null {
+  return schedule.find((d) => !d.chapters.every((c) => completed.has(c.key))) || null;
 }
 
-/** 그날 읽을 장들 */
-export function rjChaptersOf(day: ReadingJesusDay | null | undefined): RJChapter[] {
+// ── 읽을 범위 ────────────────────────────────────────────────
+
+export function rjChaptersOf(entry: ReadingJesusEntry | null | undefined): RJChapter[] {
   const out: RJChapter[] = [];
-  for (const [book, from, to] of day?.ranges || []) {
+  for (const [book, from, to] of entry?.ranges || []) {
     for (let c = from; c <= to; c++) out.push({ book, chapter: c, key: `${book} ${c}장` });
   }
   return out;
 }
 
 /** "마가복음 11~16장" / 권이 바뀌면 "요엘 1장 ~ 아모스 3장" */
-export function rjRangeLabel(day: ReadingJesusDay | null | undefined): string {
-  const ranges = day?.ranges || [];
+export function rjRangeLabel(entry: ReadingJesusEntry | null | undefined): string {
+  const ranges = entry?.ranges || [];
   if (ranges.length === 0) return "";
   if (ranges.length === 1) {
     const [book, from, to] = ranges[0];
@@ -115,89 +183,123 @@ export function rjRangeLabel(day: ReadingJesusDay | null | undefined): string {
   return `${first[0]} ${first[1]}장 ~ ${last[0]} ${last[2]}장`;
 }
 
-/** 화면에 한 줄로 적을 문구 — 읽을 분량이 없는 날은 통독표에 적힌 말을 그대로 */
-export function rjDayLabel(day: ReadingJesusDay | null | undefined): string {
-  if (!day) return "";
-  return rjRangeLabel(day) || day.section || day.special || day.label || "쉬는 날";
-}
+// ── 이번 주 표 ───────────────────────────────────────────────
 
-/** 성경 본문을 열 때 쓸 검색어 (그날 첫 장) */
-export function rjFirstChapter(day: ReadingJesusDay | null | undefined): RJChapter | null {
-  return rjChaptersOf(day)[0] || null;
-}
+/** 읽는 날이 아닌 칸에 무엇이라고 적을지 */
+export type RJRestReason = "break" | "off" | "before" | "after";
 
 export interface RJWeekRow {
   date: Date;
   dateKey: string;
   /** 0=일 … 6=토 */
   weekday: number;
-  index: number;
-  day: ReadingJesusDay;
-  chapters: RJChapter[];
-  /** 그날 읽을 장을 다 읽었는지 (읽을 분량이 없는 날은 false) */
-  done: boolean;
   when: "past" | "today" | "future";
+  /** 그날 읽을 통독표 (읽는 날이 아니면 null) */
+  day: RJDay | null;
+  /** 읽는 날이 아닐 때 그 까닭 */
+  rest: RJRestReason | null;
+  /** 쉬는 기간이면 그 이름 */
+  restLabel?: string;
+  done: boolean;
 }
 
-/** 이번 주 월요일 0시 */
+/** 그 주의 월요일 0시 */
 function startOfWeek(today: Date): Date {
   const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return d;
 }
 
-/** 이번 주 월~일 — 리딩지저스 모드에서 늘 보여주는 표 */
-export function rjWeek(
+/** 이번 주 월~일 */
+export function rjWeekRows(
+  schedule: RJDay[],
+  settings: RJSettings | null,
   today: Date,
-  anchor: RJAnchor | null,
   completed: Set<string>
 ): RJWeekRow[] {
   const monday = startOfWeek(today);
   const todayKey = rjDateKey(today);
-  const rows: RJWeekRow[] = [];
+  const first = schedule[0]?.dateKey;
+  const last = schedule[schedule.length - 1]?.dateKey;
 
+  const rows: RJWeekRow[] = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
-    const index = rjIndexFor(date, anchor);
-    const day = rjDayAt(index);
-    const chapters = rjChaptersOf(day);
     const key = rjDateKey(date);
+    const day = rjDayOn(schedule, key);
+
+    let rest: RJRestReason | null = null;
+    let restLabel: string | undefined;
+    if (!day) {
+      const br = rjBreakOn(settings, key);
+      if (br) {
+        rest = "break";
+        restLabel = br.label;
+      } else if (first && key < first) rest = "before";
+      else if (last && key > last) rest = "after";
+      else rest = "off";
+    }
+
     rows.push({
       date,
       dateKey: key,
       weekday: date.getDay(),
-      index,
+      when: key === todayKey ? "today" : key < todayKey ? "past" : "future",
       day,
-      chapters,
-      done: chapters.length > 0 && chapters.every((c) => completed.has(c.key)),
-      when: key === todayKey ? "today" : key < todayKey ? "past" : "future"
+      rest,
+      restLabel,
+      done: !!day && day.chapters.every((c) => completed.has(c.key))
     });
   }
   return rows;
 }
 
-export interface RJMonth {
-  /** 1~12 */
-  month: number;
-  rows: { index: number; day: ReadingJesusDay }[];
+/** 읽는 날이 아닌 칸에 적을 말 */
+export function rjRestText(row: RJWeekRow): string {
+  switch (row.rest) {
+    case "break":
+      return row.restLabel || "쉬는 기간";
+    case "before":
+      return "통독 시작 전";
+    case "after":
+      return "통독 마침";
+    default:
+      return "쉬는 날";
+  }
 }
 
-/** 통독표 전체를 달별로 (전체 스케줄 확인 / 시작할 날 고르기 팝업) */
-export function rjMonths(): RJMonth[] {
-  const months: RJMonth[] = [];
-  RJ_DAYS.forEach((day, index) => {
-    const month = Number(day.date.slice(5, 7));
-    let bucket = months[months.length - 1];
-    if (!bucket || bucket.month !== month) {
-      bucket = { month, rows: [] };
-      months.push(bucket);
+// ── 전체 스케줄 ──────────────────────────────────────────────
+
+export interface RJWeekBlock {
+  /** 1부터 */
+  week: number;
+  /** 그 주의 제목 ("시편") */
+  section: string;
+  days: RJDay[];
+}
+
+/** 통독표 전체를 주별로 묶는다 (전체 스케줄 팝업) */
+export function rjWeekBlocks(schedule: RJDay[]): RJWeekBlock[] {
+  const blocks: RJWeekBlock[] = [];
+  for (const day of schedule) {
+    let bucket = blocks[blocks.length - 1];
+    if (!bucket || bucket.week !== day.entry.week) {
+      bucket = { week: day.entry.week, section: day.entry.section, days: [] };
+      blocks.push(bucket);
     }
-    bucket.rows.push({ index, day });
-  });
-  return months;
+    bucket.days.push(day);
+  }
+  return blocks;
 }
 
-/** "9월 7일" */
-export function rjPlanDateLabel(day: ReadingJesusDay): string {
-  return `${Number(day.date.slice(5, 7))}월 ${Number(day.date.slice(8, 10))}일`;
+/** 통독표를 마치는 날 */
+export function rjFinishDate(schedule: RJDay[]): Date | null {
+  return schedule[schedule.length - 1]?.date || null;
 }
+
+/** 자주 쓰는 읽는 요일 묶음 */
+export const RJ_DAY_PRESETS = [
+  { label: "월~금", days: [1, 2, 3, 4, 5] },
+  { label: "월~토", days: [1, 2, 3, 4, 5, 6] },
+  { label: "월~일 (매일)", days: [0, 1, 2, 3, 4, 5, 6] }
+] as const;

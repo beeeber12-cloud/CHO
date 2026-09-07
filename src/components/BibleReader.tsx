@@ -23,18 +23,22 @@ import {
   PlanScope
 } from "../lib/readingPlan";
 import {
-  rjChaptersOf,
-  rjDayFor,
-  rjDayLabel,
-  rjIndexFor,
-  rjMonths,
-  rjPlanDateLabel,
+  buildRjSchedule,
+  rjDateKey,
+  rjDayOn,
+  rjFinishDate,
+  rjNormalizeSettings,
   rjRangeLabel,
-  rjValidAnchor,
-  rjWeek,
-  RJAnchor,
+  rjRestText,
+  rjShortDate,
+  rjWeekBlocks,
+  rjWeekRows,
   RJChapter,
-  RJ_TOTAL_CHAPTERS
+  RJSettings,
+  RJ_DAY_LABELS,
+  RJ_TOTAL_CHAPTERS,
+  RJ_TOTAL_DAYS,
+  RJ_WEEKS
 } from "../lib/readingJesus";
 import { READING_JESUS_TITLE } from "../data/readingJesus";
 
@@ -98,11 +102,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
    */
   const [planMode, setPlanMode] = useState<"normal" | "readingJesus">("normal");
   const [switchingMode, setSwitchingMode] = useState<boolean>(false);
-  /** 교회가 통독표의 어느 날부터 시작했는지 (오늘의 말씀 설정에서 관리자가 정한다) */
-  const [rjAnchor, setRjAnchor] = useState<RJAnchor | null>(null);
+  /** 공동체가 정한 통독 일정 (오늘의 말씀 설정에서 관리자가 정한다) */
+  const [rjSettings, setRjSettings] = useState<RJSettings | null>(null);
   const [showRjScheduleModal, setShowRjScheduleModal] = useState<boolean>(false);
-  /** 전체 스케줄 팝업에서 보고 있는 달 (1~12) */
-  const [rjMonth, setRjMonth] = useState<number>(new Date().getMonth() + 1);
+  /** 전체 스케줄을 열면 이번 주가 바로 보이도록 */
+  const rjCurrentWeekRef = useRef<HTMLDivElement>(null);
 
   // 원터치 성경 네비게이터 (구약/신약 탭 → 팝업에서 권 → 장 → 절)
   const [showNavModal, setShowNavModal] = useState<boolean>(false);
@@ -164,15 +168,21 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     }
   }, [currentUser?.id]);
 
-  // 통독표의 시작 자리는 교회 전체가 같아야 한다 — 오늘의 말씀 설정에 정해 둔 것을 그대로 쓴다
+  // 통독 일정은 공동체 전체가 같아야 한다 — 오늘의 말씀 설정에 정해 둔 것을 그대로 쓴다
   useEffect(() => {
     fetch("/api/bible-plan")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d) return;
-        setRjAnchor(rjValidAnchor({ planDate: d.rjPlanDate || "", startDate: d.rjStartDate || "" }));
+        setRjSettings(
+          rjNormalizeSettings({
+            startDate: d.rjStartDate || "",
+            readingDays: d.rjReadingDays,
+            breaks: d.rjBreaks
+          })
+        );
       })
-      .catch(() => { /* 못 받아오면 통독표 첫날 기준으로 본다 */ });
+      .catch(() => { /* 못 받아오면 통독표가 아직 안 짜인 것으로 본다 */ });
   }, []);
 
   useEffect(() => {
@@ -589,14 +599,32 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     [userProgress?.completedChapters]
   );
 
-  /** 이번 주 월~일 통독표 (리딩지저스 모드에서 늘 보인다) */
+  /** 통독표를 달력에 얹은 것 (270일치) */
+  const rjSchedule = React.useMemo(() => buildRjSchedule(rjSettings), [rjSettings]);
+  /** 이번 주 월~일 */
   const rjRows = React.useMemo(
-    () => rjWeek(new Date(), rjAnchor, completedSet),
-    [rjAnchor, completedSet]
+    () => rjWeekRows(rjSchedule, rjSettings, new Date(), completedSet),
+    [rjSchedule, rjSettings, completedSet]
   );
-  const rjToday = React.useMemo(() => rjDayFor(new Date(), rjAnchor), [rjAnchor]);
-  const rjTodayIndex = React.useMemo(() => rjIndexFor(new Date(), rjAnchor), [rjAnchor]);
-  const rjMonthList = React.useMemo(() => rjMonths(), []);
+  const rjToday = React.useMemo(
+    () => rjDayOn(rjSchedule, rjDateKey(new Date())),
+    [rjSchedule]
+  );
+  const rjBlocks = React.useMemo(() => rjWeekBlocks(rjSchedule), [rjSchedule]);
+  const rjFinish = React.useMemo(() => rjFinishDate(rjSchedule), [rjSchedule]);
+  /** 이번 주가 몇째 주인지 (전체 스케줄에서 표시하고 그리로 스크롤한다) */
+  const rjCurrentWeek = React.useMemo(() => {
+    const todayKey = rjDateKey(new Date());
+    const soon = rjSchedule.find((d) => d.dateKey >= todayKey);
+    return soon?.entry.week ?? 0;
+  }, [rjSchedule]);
+
+  // 전체 스케줄을 열면 이번 주가 바로 눈에 들어오게 내려 준다
+  useEffect(() => {
+    if (!showRjScheduleModal) return;
+    const t = setTimeout(() => rjCurrentWeekRef.current?.scrollIntoView({ block: "start" }), 60);
+    return () => clearTimeout(t);
+  }, [showRjScheduleModal, rjCurrentWeek]);
 
   const bookInfoOf = (name: string) => BIBLE_BOOKS.find((b) => b.name === name) || null;
 
@@ -644,7 +672,13 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">성경 통독</h2>
           <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5 truncate">
             {isRJ
-              ? `${READING_JESUS_TITLE} · 통독표 ${rjPlanDateLabel(rjToday)}`
+              ? `${READING_JESUS_TITLE} · ${
+                  rjToday
+                    ? `${rjToday.entry.week}주 ${rjToday.entry.section}`
+                    : rjSchedule.length === 0
+                    ? "일정이 아직 정해지지 않았습니다"
+                    : "오늘은 쉬는 날"
+                }`
               : `${goalTitleShown} · 하루 ${userProgress?.dailyTarget || 3}장`}
           </p>
         </div>
@@ -1158,7 +1192,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             <div className="flex justify-between items-center text-2xs text-[#6F8377] mt-2.5 font-medium">
               <span>
                 {isRJ
-                  ? `오늘 ${rjChaptersOf(rjToday).length > 0 ? rjRangeLabel(rjToday) : rjDayLabel(rjToday)}`
+                  ? `오늘 ${rjToday ? rjRangeLabel(rjToday.entry) : "쉬는 날"}`
                   : `하루 권장 ${userProgress?.dailyTarget || 3}장`}
               </span>
               <span>남은 분량 {Math.max(0, targetCount - completedCount)}장</span>
@@ -1171,65 +1205,77 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             <div>
               <div className="flex items-baseline justify-between gap-2 mb-2 ml-1">
                 <p className="text-2xs font-bold text-[#6F8377] tracking-[0.08em]">이번 주 통독표</p>
-                <p className="text-2xs text-[#6F8377]">통독표 {rjPlanDateLabel(rjToday)} 기준</p>
+                <p className="text-2xs text-[#6F8377]">
+                  {rjCurrentWeek > 0 ? `${rjCurrentWeek}주차 / ${RJ_WEEKS}주` : ""}
+                </p>
               </div>
-            <div className="flex flex-col gap-1.5">
-              {rjRows.map((row) => {
-                const empty = row.chapters.length === 0;
-                return (
-                  <button
-                    key={row.dateKey}
-                    type="button"
-                    disabled={empty}
-                    onClick={() => startRjRow(row.chapters)}
-                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
-                      empty ? "bg-[#FBFBFB] cursor-default" : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
-                    } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
-                  >
-                    {/* 다 읽은 날은 요일 동그라미에 불이 들어온다 */}
-                    <span
-                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                        row.done
-                          ? "grad-forest text-white"
-                          : row.when === "today"
-                          ? "bg-[#FFBA00] text-[#4A3600]"
-                          : "bg-[#EDEDED] text-[#6F8377]"
-                      }`}
-                    >
-                      {DAY_LABELS[row.weekday]}
-                    </span>
 
-                    <span className="flex-1 min-w-0">
-                      {/* 아직 안 읽은 날은 연하게, 읽은 날은 읽은 색으로 */}
+              {rjSchedule.length === 0 ? (
+                <p className="text-xs text-[#6F8377] bg-[#F9F9F9] rounded-2xl p-3.5 text-center leading-relaxed">
+                  아직 통독 일정이 정해지지 않았습니다.
+                  <br />
+                  관리자가 오늘의 말씀 설정에서 시작날을 정하면 여기에 나옵니다.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {rjRows.map((row) => (
+                    <button
+                      key={row.dateKey}
+                      type="button"
+                      disabled={!row.day}
+                      onClick={() => row.day && startRjRow(row.day.chapters)}
+                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
+                        !row.day
+                          ? "bg-[#FBFBFB] cursor-default"
+                          : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
+                      } ${row.when === "today" ? "ring-2 ring-[#4A6B57]" : ""}`}
+                    >
+                      {/* 다 읽은 날은 요일 동그라미에 불이 들어온다 */}
                       <span
-                        className={`block text-sm font-bold truncate ${
-                          empty ? "text-[#C7CFC8]" : row.done ? "text-[#195C50]" : "text-[#A8B3A9]"
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                          row.done
+                            ? "grad-forest text-white"
+                            : row.when === "today"
+                            ? "bg-[#FFBA00] text-[#4A3600]"
+                            : "bg-[#EDEDED] text-[#6F8377]"
                         }`}
                       >
-                        {rjDayLabel(row.day)}
+                        {RJ_DAY_LABELS[row.weekday]}
                       </span>
-                      {(row.done || row.when === "today" || empty) && (
+
+                      <span className="flex-1 min-w-0">
+                        {/* 아직 안 읽은 날은 연하게, 읽은 날은 읽은 색으로 */}
                         <span
-                          className={`block text-2xs mt-px font-bold ${
-                            row.done ? "text-[#195C50]" : "text-[#6F8377]"
+                          className={`block text-sm font-bold truncate ${
+                            !row.day
+                              ? "text-[#C7CFC8]"
+                              : row.done
+                              ? "text-[#195C50]"
+                              : "text-[#A8B3A9]"
                           }`}
                         >
-                          {row.done ? "완료" : empty ? (row.day.video ? "강해 영상" : "쉬는 날") : "오늘"}
+                          {row.day ? rjRangeLabel(row.day.entry) : rjRestText(row)}
                         </span>
-                      )}
-                    </span>
+                        {(row.done || row.when === "today") && (
+                          <span
+                            className={`block text-2xs mt-px font-bold ${
+                              row.done ? "text-[#195C50]" : "text-[#6F8377]"
+                            }`}
+                          >
+                            {row.done ? "완료" : "오늘"}
+                          </span>
+                        )}
+                      </span>
 
-                    {row.done ? (
-                      <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
-                    ) : empty ? (
-                      <Video size={15} className="text-[#C7CFC8] shrink-0" />
-                    ) : (
-                      <BookOpen size={15} className="text-[#6F8377] shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      {row.done ? (
+                        <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
+                      ) : row.day ? (
+                        <BookOpen size={15} className="text-[#6F8377] shrink-0" />
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1319,7 +1365,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               <button
                 type="button"
                 onClick={() => {
-                  setRjMonth(Number(rjToday.date.slice(5, 7)));
                   setShowProgressModal(false);
                   setShowRjScheduleModal(true);
                 }}
@@ -1356,83 +1401,99 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         </div>
       </SettingModal>
 
-      {/* 리딩지저스 전체 스케줄 — 달을 골라 한 해 통독표를 통째로 본다.
-          한 줄을 누르면 그 말씀으로 바로 넘어간다. */}
+      {/* 리딩지저스 전체 스케줄 — 45주 전체를 주별로 본다.
+          열면 이번 주로 내려가고, 한 줄을 누르면 그 말씀으로 바로 넘어간다. */}
       <SettingModal
         open={showRjScheduleModal}
         onClose={() => setShowRjScheduleModal(false)}
         title="리딩지저스 전체 스케줄"
-        sub={`${READING_JESUS_TITLE} 통독표 · 오늘은 ${rjPlanDateLabel(rjToday)}자 분량입니다`}
+        sub={
+          rjSchedule.length === 0
+            ? "아직 통독 일정이 정해지지 않았습니다"
+            : `${RJ_WEEKS}주 ${RJ_TOTAL_DAYS}일 · 마치는 날 ${rjFinish ? rjShortDate(rjFinish) : "-"}`
+        }
       >
-        <div className="space-y-3">
-          {/* 달 고르기 */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-200">
-            {rjMonthList.map((m) => (
-              <button
-                key={m.month}
-                type="button"
-                onClick={() => setRjMonth(m.month)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition cursor-pointer ${
-                  rjMonth === m.month
-                    ? "grad-forest text-white"
-                    : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
-                }`}
+        <div className="space-y-4">
+          {rjBlocks.map((block) => {
+            const isThisWeek = block.week === rjCurrentWeek;
+            return (
+              <div
+                key={block.week}
+                ref={isThisWeek ? rjCurrentWeekRef : undefined}
+                className="scroll-mt-2"
               >
-                {m.month}월
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            {(rjMonthList.find((m) => m.month === rjMonth)?.rows || []).map(({ index, day }) => {
-              const chapters = rjChaptersOf(day);
-              const empty = chapters.length === 0;
-              const done = !empty && chapters.every((c) => completedSet.has(c.key));
-              const isToday = index === rjTodayIndex;
-              return (
-                <button
-                  key={day.date}
-                  type="button"
-                  disabled={empty}
-                  onClick={() => startRjRow(chapters)}
-                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition ${
-                    empty ? "bg-[#FBFBFB] cursor-default" : "bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer"
-                  } ${isToday ? "ring-2 ring-[#4A6B57]" : ""}`}
-                >
-                  <span
-                    className={`w-11 h-8 rounded-full flex items-center justify-center shrink-0 text-2xs font-bold ${
-                      done ? "grad-forest text-white" : isToday ? "bg-[#FFBA00] text-[#4A3600]" : "bg-[#EDEDED] text-[#6F8377]"
+                <div className="flex items-baseline justify-between gap-2 mb-1.5 ml-1">
+                  <p
+                    className={`text-2xs font-bold tracking-[0.08em] ${
+                      isThisWeek ? "text-[#195C50]" : "text-[#6F8377]"
                     }`}
                   >
-                    {Number(day.date.slice(8, 10))}일
-                  </span>
+                    {block.week}주 · {block.section}
+                    {isThisWeek && <span className="ml-1.5 text-[#FFBA00]">이번 주</span>}
+                  </p>
+                  <p className="text-2xs text-[#6F8377] shrink-0">
+                    {rjShortDate(block.days[0].date)} ~ {rjShortDate(block.days[block.days.length - 1].date)}
+                  </p>
+                </div>
 
-                  <span className="flex-1 min-w-0">
-                    <span
-                      className={`block text-sm font-bold truncate ${
-                        empty ? "text-[#C7CFC8]" : done ? "text-[#195C50]" : "text-[#A8B3A9]"
-                      }`}
-                    >
-                      {rjDayLabel(day)}
-                    </span>
-                    {(day.section || day.special) && (
-                      <span className="block text-2xs text-[#6F8377] mt-px truncate">
-                        {day.section ? `${day.section} 강해` : day.special}
-                      </span>
-                    )}
-                  </span>
+                <div className="flex flex-col gap-1.5">
+                  {block.days.map((day) => {
+                    const done = day.chapters.every((c) => completedSet.has(c.key));
+                    const isToday = day.dateKey === rjDateKey(new Date());
+                    return (
+                      <button
+                        key={day.dateKey}
+                        type="button"
+                        onClick={() => startRjRow(day.chapters)}
+                        className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition bg-[#F9F9F9] hover:bg-[#F0F0F0] cursor-pointer ${
+                          isToday ? "ring-2 ring-[#4A6B57]" : ""
+                        }`}
+                      >
+                        <span
+                          className={`w-14 h-8 rounded-full flex items-center justify-center shrink-0 text-2xs font-bold ${
+                            done
+                              ? "grad-forest text-white"
+                              : isToday
+                              ? "bg-[#FFBA00] text-[#4A3600]"
+                              : "bg-[#EDEDED] text-[#6F8377]"
+                          }`}
+                        >
+                          {rjShortDate(day.date)}
+                        </span>
 
-                  {done ? (
-                    <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
-                  ) : empty ? (
-                    <Video size={15} className="text-[#C7CFC8] shrink-0" />
-                  ) : (
-                    <BookOpen size={15} className="text-[#6F8377] shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                        <span className="flex-1 min-w-0">
+                          <span
+                            className={`block text-sm font-bold truncate ${
+                              done ? "text-[#195C50]" : "text-[#A8B3A9]"
+                            }`}
+                          >
+                            {rjRangeLabel(day.entry)}
+                          </span>
+                          <span className="block text-2xs text-[#6F8377] mt-px">
+                            {RJ_DAY_LABELS[day.date.getDay()]}요일
+                          </span>
+                        </span>
+
+                        {done ? (
+                          <Check size={17} className="text-[#195C50] stroke-[3px] shrink-0" />
+                        ) : (
+                          <BookOpen size={15} className="text-[#6F8377] shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {rjSchedule.length === 0 && (
+            <p className="text-xs text-[#6F8377] bg-[#F9F9F9] rounded-2xl p-4 text-center leading-relaxed">
+              관리자가 오늘의 말씀 설정에서 통독 시작날과 읽는 요일을 정하면
+              <br />
+              여기에 45주 전체 계획이 나옵니다.
+            </p>
+          )}
         </div>
       </SettingModal>
 

@@ -121,10 +121,16 @@ export interface BiblePlan {
    *  - readingJesus: 리딩지저스 통독표를 따라 그날 분량 전체
    */
   mode?: 'chapter' | 'readingJesus';
-  /** 리딩지저스 통독표에서 고른 시작 자리 ("2025-08-24") */
-  rjPlanDate?: string;
-  /** 그 자리를 실제로 시작한 날 ("2026-09-06") */
+  /**
+   * 리딩지저스 통독표 일정 — 공동체가 정한다.
+   * 통독표에는 날짜가 없다(읽는 순서만 있다). 아래 셋으로 날짜에 얹는다.
+   */
+  /** 통독을 시작하는 날 ("2026-09-14") */
   rjStartDate?: string;
+  /** 읽는 요일 (0=일 … 6=토). 없으면 월~토 */
+  rjReadingDays?: number[];
+  /** 쉬는 기간 (방학·특별주간). 양쪽 끝 날짜를 포함한다 */
+  rjBreaks?: { from: string; to: string; label?: string }[];
 }
 
 export interface UserBibleProgress {

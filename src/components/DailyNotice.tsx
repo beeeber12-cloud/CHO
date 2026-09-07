@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Notice, User } from "../types";
-import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send, CalendarDays, Video, ChevronRight, Settings } from "lucide-react";
+import { BookOpen, Check, Edit3, Plus, UserCheck, HelpCircle, Loader, Sparkles, Send, ChevronRight, Settings, Trash2 } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
 import {
-  rjChaptersOf,
+  buildRjSchedule,
   rjDateKey,
-  rjDayFor,
-  rjDayLabel,
-  rjIndexFor,
-  rjMonths,
-  rjPlanDateLabel,
-  rjValidAnchor,
-  RJAnchor
+  rjDateLabel,
+  rjDayOn,
+  rjFinishDate,
+  rjNormalizeSettings,
+  rjRangeLabel,
+  RJBreak,
+  RJSettings,
+  RJ_DAY_LABELS,
+  RJ_DAY_PRESETS,
+  RJ_DEFAULT_READING_DAYS,
+  RJ_TOTAL_DAYS,
+  RJ_WEEKS
 } from "../lib/readingJesus";
 import { READING_JESUS_TITLE } from "../data/readingJesus";
 import { motion, AnimatePresence } from "motion/react";
@@ -199,26 +204,31 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
    *  - readingJesus: 교회 리딩지저스 통독표를 따라 그날 분량 전체
    */
   const [plannerMode, setPlannerMode] = useState<"chapter" | "readingJesus">("chapter");
-  /** 통독표에서 고른 시작 자리 (통독표의 날짜) */
-  const [rjPlanDate, setRjPlanDate] = useState<string>("");
-  /** 그 자리를 실제로 시작한 날 */
+  /** 통독을 시작하는 날 */
   const [rjStartDate, setRjStartDate] = useState<string>("");
-  const [showRjPicker, setShowRjPicker] = useState<boolean>(false);
-  const [rjPickMonth, setRjPickMonth] = useState<number>(new Date().getMonth() + 1);
+  /** 읽는 요일 (0=일 … 6=토) */
+  const [rjReadingDays, setRjReadingDays] = useState<number[]>([...RJ_DEFAULT_READING_DAYS]);
+  /** 쉬는 기간 (방학·특별주간) */
+  const [rjBreaks, setRjBreaks] = useState<RJBreak[]>([]);
 
-  const rjMonthList = React.useMemo(() => rjMonths(), []);
-  const rjAnchor: RJAnchor | null = React.useMemo(
-    () => rjValidAnchor({ planDate: rjPlanDate, startDate: rjStartDate }),
-    [rjPlanDate, rjStartDate]
+  /** 지금 설정대로 통독표를 달력에 얹어 본 것 */
+  const rjSettings: RJSettings | null = React.useMemo(
+    () => rjNormalizeSettings({ startDate: rjStartDate, readingDays: rjReadingDays, breaks: rjBreaks }),
+    [rjStartDate, rjReadingDays, rjBreaks]
   );
-  /** 지금 설정대로면 오늘 어떤 말씀이 올라가는지 */
-  const rjTodayDay = React.useMemo(() => rjDayFor(new Date(), rjAnchor), [rjAnchor]);
-  const rjTodayIndex = React.useMemo(() => rjIndexFor(new Date(), rjAnchor), [rjAnchor]);
-  /** 통독표에서 고른 그 날 (안 골랐으면 오늘 자리) */
-  const rjAnchorDay = React.useMemo(
-    () => rjMonthList.flatMap((m) => m.rows).find((r) => r.day.date === rjPlanDate)?.day || rjTodayDay,
-    [rjMonthList, rjPlanDate, rjTodayDay]
+  const rjSchedule = React.useMemo(() => buildRjSchedule(rjSettings), [rjSettings]);
+  const rjTodayDay = React.useMemo(
+    () => rjDayOn(rjSchedule, rjDateKey(new Date())),
+    [rjSchedule]
   );
+  const rjFinish = React.useMemo(() => rjFinishDate(rjSchedule), [rjSchedule]);
+
+  const toggleRjDay = (day: number) =>
+    setRjReadingDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
+    );
+  const updateRjBreak = (i: number, patch: Partial<RJBreak>) =>
+    setRjBreaks((prev) => prev.map((b, k) => (k === i ? { ...b, ...patch } : b)));
 
   useEffect(() => {
     fetchTodayNotice();
@@ -266,8 +276,13 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
         setPlannerChapter(data.currentChapter);
         setPlannerActive(data.active);
         setPlannerMode(data.mode === "readingJesus" ? "readingJesus" : "chapter");
-        setRjPlanDate(data.rjPlanDate || "");
         setRjStartDate(data.rjStartDate || "");
+        setRjReadingDays(
+          Array.isArray(data.rjReadingDays) && data.rjReadingDays.length > 0
+            ? data.rjReadingDays
+            : [...RJ_DEFAULT_READING_DAYS]
+        );
+        setRjBreaks(Array.isArray(data.rjBreaks) ? data.rjBreaks : []);
       }
     } catch (err) {
       console.error("Failed to fetch bible plan:", err);
@@ -287,8 +302,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           currentChapter: plannerChapter,
           active: plannerActive,
           mode: plannerMode,
-          rjPlanDate,
-          rjStartDate
+          rjStartDate,
+          rjReadingDays,
+          // 날짜를 다 채운 것만 보낸다
+          rjBreaks: rjBreaks.filter((b) => b.from && b.to)
         })
       });
       if (res.ok) {
@@ -491,37 +508,146 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 : "설정한 성경책에서 매일 새로운 하루가 시작될 때 한 장씩 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다)."}
             </p>
 
-            {/* 리딩지저스 — 통독표에서 시작할 날을 고른다 */}
+            {/* 리딩지저스 — 시작날 · 읽는 요일 · 방학만 정하면 통독표가 날짜에 얹힌다 */}
             {plannerMode === "readingJesus" && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRjPickMonth(Number((rjPlanDate || rjTodayDay.date).slice(5, 7)));
-                    setShowRjPicker(true);
-                  }}
-                  className="w-full flex items-center gap-3 p-3 bg-[#F9F9F9] hover:bg-[#F0F0F0] rounded-2xl transition cursor-pointer text-left"
-                >
-                  <span className="w-9 h-9 rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                    <CalendarDays size={17} />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-2xs text-[#6F8377]">시작할 통독표 날짜</span>
-                    <span className="block text-xs font-bold text-[#14261E] truncate">
-                      {rjAnchor
-                        ? `통독표 ${rjPlanDateLabel(rjAnchorDay)}부터 · ${rjStartDate} 시작`
-                        : "아직 고르지 않음 (통독표 1월 1일 기준)"}
-                    </span>
-                  </span>
-                  <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
-                </button>
+              <div className="space-y-3.5">
+                {/* ① 시작날 */}
+                <div>
+                  <label className="block text-2xs font-bold text-[#6F8377] mb-1">통독 시작날</label>
+                  <input
+                    type="date"
+                    value={rjStartDate}
+                    onChange={(e) => setRjStartDate(e.target.value)}
+                    className="w-full text-xs px-3 py-2.5 bg-[#F9F9F9] rounded-xl text-[#14261E] font-semibold"
+                  />
+                  <p className="mt-1 text-2xs text-[#6F8377]">
+                    이 날 1주차 첫 분량(창세기 1~4장)부터 시작합니다.
+                  </p>
+                </div>
 
-                {/* 지금 설정대로면 오늘 무엇이 올라가는지 바로 보여준다 */}
-                <p className="mt-2 text-2xs text-[#4A6B57] bg-[#F9F9F9] rounded-xl px-3 py-2 font-bold">
-                  오늘 올라갈 말씀: {rjChaptersOf(rjTodayDay).length > 0
-                    ? rjDayLabel(rjTodayDay)
-                    : `${rjDayLabel(rjTodayDay)} (읽을 분량 없음 — 공지하지 않습니다)`}
-                </p>
+                {/* ② 읽는 요일 */}
+                <div>
+                  <label className="block text-2xs font-bold text-[#6F8377] mb-1">읽는 요일</label>
+                  <div className="grid grid-cols-7 gap-1.5 mb-2">
+                    {RJ_DAY_LABELS.map((label, day) => {
+                      const on = rjReadingDays.includes(day);
+                      const weekend = day === 0 || day === 6;
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleRjDay(day)}
+                          className={`h-10 rounded-2xl text-sm font-bold transition cursor-pointer ${
+                            on
+                              ? "grad-forest text-white"
+                              : weekend
+                              ? "bg-[#F9F9F9] text-[#B3261E] hover:bg-[#F0F0F0]"
+                              : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {RJ_DAY_PRESETS.map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setRjReadingDays([...preset.days])}
+                        className="px-3 py-1.5 rounded-full bg-[#F9F9F9] hover:bg-[#D2DDD3] text-2xs font-bold text-[#4A6B57] transition cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                  {rjReadingDays.length === 0 && (
+                    <p className="text-2xs text-[#8F1E17] mt-1.5">읽는 요일을 하나 이상 골라 주세요.</p>
+                  )}
+                </div>
+
+                {/* ③ 방학 — 그 기간은 통째로 건너뛰고 뒤가 그만큼 밀린다 */}
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <label className="text-2xs font-bold text-[#6F8377]">쉬는 기간 (방학 · 특별주간)</label>
+                    <button
+                      type="button"
+                      onClick={() => setRjBreaks((prev) => [...prev, { from: "", to: "", label: "" }])}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F9F9F9] hover:bg-[#D2DDD3] text-2xs font-bold text-[#4A6B57] transition cursor-pointer"
+                    >
+                      <Plus size={12} />
+                      기간 추가
+                    </button>
+                  </div>
+
+                  {rjBreaks.length === 0 ? (
+                    <p className="text-2xs text-[#6F8377] bg-[#F9F9F9] rounded-xl px-3 py-2.5">
+                      쉬는 기간이 없습니다. 방학이나 특별주간을 넣으면 그만큼 통독이 미뤄집니다.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {rjBreaks.map((br, idx) => (
+                        <div key={idx} className="bg-[#F9F9F9] rounded-2xl p-2.5 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={br.label || ""}
+                              onChange={(e) => updateRjBreak(idx, { label: e.target.value })}
+                              placeholder="이름 (예: 여름 방학)"
+                              className="flex-1 min-w-0 text-xs px-3 py-2 bg-white rounded-xl text-[#14261E] font-semibold"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setRjBreaks((prev) => prev.filter((_, k) => k !== idx))}
+                              className="w-8 h-8 rounded-full bg-white text-[#B3261E] flex items-center justify-center shrink-0 hover:bg-[#FBE6E4] transition cursor-pointer"
+                              aria-label="이 기간 지우기"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="date"
+                              value={br.from}
+                              onChange={(e) => updateRjBreak(idx, { from: e.target.value })}
+                              className="flex-1 min-w-0 text-xs px-2.5 py-2 bg-white rounded-xl text-[#14261E] font-semibold"
+                            />
+                            <span className="text-2xs text-[#6F8377] shrink-0">~</span>
+                            <input
+                              type="date"
+                              value={br.to}
+                              onChange={(e) => updateRjBreak(idx, { to: e.target.value })}
+                              className="flex-1 min-w-0 text-xs px-2.5 py-2 bg-white rounded-xl text-[#14261E] font-semibold"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 지금 설정대로 짜이는 계획을 바로 보여준다 */}
+                <div className="bg-[#F9F9F9] rounded-2xl px-3 py-2.5 space-y-1">
+                  {rjSchedule.length === 0 ? (
+                    <p className="text-2xs text-[#8F1E17] font-bold">
+                      시작날과 읽는 요일을 정하면 여기에 계획이 나옵니다.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-2xs text-[#4A6B57] font-bold">
+                        오늘 올라갈 말씀:{" "}
+                        {rjTodayDay
+                          ? `${rjRangeLabel(rjTodayDay.entry)} (${rjTodayDay.entry.week}주 ${rjTodayDay.index + 1}일차)`
+                          : "없음 — 오늘은 읽는 날이 아닙니다"}
+                      </p>
+                      <p className="text-2xs text-[#6F8377]">
+                        {RJ_WEEKS}주 {RJ_TOTAL_DAYS}일 계획 ·{" "}
+                        마치는 날 {rjFinish ? rjDateLabel(rjFinish) : "-"}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
@@ -576,89 +702,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               </button>
             </div>
           </form>
-        </SettingModal>
-      )}
-
-      {/* 통독표에서 시작할 날 고르기 — 고른 날짜부터 오늘의 말씀이 그날 분량으로 올라간다 */}
-      {currentUser.role === "admin" && (
-        <SettingModal
-          open={showRjPicker}
-          onClose={() => setShowRjPicker(false)}
-          title="시작할 통독표 날짜 선택"
-          sub="고른 날의 분량이 오늘 올라가고, 그 다음 날부터 통독표를 하루씩 따라갑니다."
-        >
-          <div className="space-y-3">
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-200">
-              {rjMonthList.map((m) => (
-                <button
-                  key={m.month}
-                  type="button"
-                  onClick={() => setRjPickMonth(m.month)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-2xs font-bold transition cursor-pointer ${
-                    rjPickMonth === m.month
-                      ? "grad-forest text-white"
-                      : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
-                  }`}
-                >
-                  {m.month}월
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              {(rjMonthList.find((m) => m.month === rjPickMonth)?.rows || []).map(({ index, day }) => {
-                const empty = rjChaptersOf(day).length === 0;
-                const picked = rjPlanDate === day.date;
-                const isToday = index === rjTodayIndex;
-                return (
-                  <button
-                    key={day.date}
-                    type="button"
-                    onClick={() => {
-                      setRjPlanDate(day.date);
-                      setRjStartDate(rjDateKey(new Date()));
-                      setShowRjPicker(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-2xl text-left transition cursor-pointer ${
-                      picked ? "grad-forest text-white" : "bg-[#F9F9F9] hover:bg-[#F0F0F0]"
-                    } ${!picked && isToday ? "ring-2 ring-[#4A6B57]" : ""}`}
-                  >
-                    <span
-                      className={`w-11 h-8 rounded-full flex items-center justify-center shrink-0 text-2xs font-bold ${
-                        picked ? "bg-white/25 text-white" : "bg-[#EDEDED] text-[#6F8377]"
-                      }`}
-                    >
-                      {Number(day.date.slice(8, 10))}일
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span
-                        className={`block text-sm font-bold truncate ${
-                          picked ? "text-white" : empty ? "text-[#C7CFC8]" : "text-[#14261E]"
-                        }`}
-                      >
-                        {rjDayLabel(day)}
-                      </span>
-                      {(day.section || day.special) && (
-                        <span
-                          className={`block text-2xs mt-px truncate ${
-                            picked ? "text-white/80" : "text-[#6F8377]"
-                          }`}
-                        >
-                          {day.section ? `${day.section} 강해` : day.special}
-                        </span>
-                      )}
-                    </span>
-                    {empty && (
-                      <Video
-                        size={15}
-                        className={picked ? "text-white/80 shrink-0" : "text-[#C7CFC8] shrink-0"}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </SettingModal>
       )}
 
