@@ -363,7 +363,12 @@ export default function App() {
     <div className="min-h-screen bg-white text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
       <PWAInstallPrompt />
       {/* 처음 오신 분께 탭을 하나씩 소개한다 (건너뛸 수 있다) */}
-      {guideOpen && <AppGuide onClose={() => setGuideOpen(false)} />}
+      {guideOpen && (
+        <AppGuide
+          onClose={() => setGuideOpen(false)}
+          isAdmin={currentUser?.role === "admin"}
+        />
+      )}
       {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
           안내를 보는 동안에는 겹치지 않게 미뤄 둔다 */}
       {!guideOpen && <GoalSummaryPopup currentUser={currentUser} />}
@@ -535,7 +540,7 @@ export default function App() {
                 <Row
                   icon={<HelpCircle size={17} />}
                   title="앱 사용법 다시 보기"
-                  sub="각 탭이 무엇을 하는 곳인지 안내해 드립니다"
+                  sub="화면마다 버튼을 하나씩 짚어 드립니다"
                   onClick={() => {
                     setShowSettings(false);
                     setGuideOpen(true);
