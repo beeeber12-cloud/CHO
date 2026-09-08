@@ -2571,6 +2571,9 @@ async function startServer() {
   });
 
   app.post("/api/bible-plan", (req: Request, res: Response) => {
+    // 공동체 전체의 통독·자동 공지를 정하는 자리다 — 관리자만 (2026-09-08 추가).
+    // 성경통독 화면에서도 이 길로 정하게 되어 열어 두면 아무나 바꿀 수 있다.
+    if (!requireAdmin(req, res)) return;
     const db = dbOf(req);
     const { book, currentChapter, active, mode, rjStartDate, rjReadingDays, rjBreaks } = req.body;
     const planMode = mode === "readingJesus" ? "readingJesus" : "chapter";

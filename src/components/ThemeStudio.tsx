@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, RotateCcw, Check, Palette, Loader, ChevronDown, ChevronUp } from "lucide-react";
 import ModalPortal from "./ModalPortal";
 import {
+  APP_DEFAULT_THEME,
   AppTheme,
   COLOR_ROLES,
   DEFAULT_THEME,
@@ -28,65 +29,108 @@ import {
  * 따로 짜 둔 색을 쓴다 — 그래서 어둡게 쓰는 분이 열면 잠시 밝은 화면으로 보여 드린다.
  */
 
-/** 미리 만든 색 */
+/**
+ * 미리 만든 색 넷 — 목사님이 주신 색상표(colours.cafe #336 · #186 · #341 · #54)를
+ * 앱의 갈래에 맞춰 옮긴 것이다.
+ *
+ * 표의 색을 그대로 쓰지 못하는 자리가 있다: '보조 강조'는 흰 글씨를 얹는 단추 바탕이라
+ * 너무 밝으면 글씨가 사라진다. 그런 자리는 같은 색조에서 한두 단계 내려 썼다.
+ */
 const PRESETS: { name: string; theme: AppTheme }[] = [
-  { name: "기본 초록", theme: DEFAULT_THEME },
   {
-    name: "라임 연둣빛",
+    // #336 — 465062 · DBE2E9 · F5F5F1 · 26D07C
+    name: "민트 그린",
     theme: {
-      page: "#F6FBE9",
+      page: "#F5F5F1",
       card: "#FFFFFF",
-      box: "#EFF6E2",
-      soft: "#EEF5E1",
-      mint: "#CFE0C2",
-      line: "#E7EFDC",
-      title: "#0C342C",
-      body: "#0B2A20",
-      muted: "#4E7568",
-      faint: "#5E7F71",
-      scripture: "#22302A",
-      accent: "#076653",
-      accent2: "#1E6B57",
-      point: "#E3EF26",
-      ink: "#06231D",
-      gradMain: { from: "#0B7A62", to: "#06231D", angle: 135 },
-      gradSub: { from: "#0F8F72", to: "#076653", angle: 135 },
+      box: "#F0F3F6",
+      soft: "#F6F7F5",
+      mint: "#DBE2E9",
+      line: "#E4E9EE",
+      title: "#34404E",
+      body: "#3A4652",
+      muted: "#6B7885",
+      faint: "#9AA6B2",
+      scripture: "#333B43",
+      accent: "#0F7A4C",
+      accent2: "#16915C",
+      point: "#26D07C",
+      ink: "#232C35",
+      gradMain: { from: "#3B4A5C", to: "#232C35", angle: 135 },
+      gradSub: { from: "#16915C", to: "#0F7A4C", angle: 135 },
       font: "sans"
     }
   },
   {
-    name: "크림 · 먹초록",
+    // #186 — 313D53 · E3E3E3 · F88181 · EDE2C8
+    name: "코랄 크림",
     theme: {
-      ...DEFAULT_THEME,
-      page: "#FFFDEE",
-      card: "#FFFEF7",
-      box: "#F6F2DC",
-      soft: "#FBF8E9",
-      mint: "#E4E3BC",
-      line: "#EDE8CE",
-      title: "#0C342C",
-      accent: "#076653",
-      accent2: "#2C6B4F",
-      point: "#D8B54A",
-      gradMain: { from: "#0C342C", to: "#06231D", angle: 135 },
-      gradSub: { from: "#3F7A5C", to: "#0C342C", angle: 135 }
+      page: "#FFFFFF",
+      card: "#FFFFFF",
+      box: "#F6F6F6",
+      soft: "#F7F2E6",
+      mint: "#EDE2C8",
+      line: "#E3E3E3",
+      title: "#313D53",
+      body: "#2C3648",
+      muted: "#6E7787",
+      faint: "#A2AAB8",
+      scripture: "#333333",
+      accent: "#3A4A66",
+      accent2: "#445576",
+      point: "#F88181",
+      ink: "#1F2836",
+      gradMain: { from: "#3E5070", to: "#232D3E", angle: 135 },
+      gradSub: { from: "#556A8E", to: "#3A4A66", angle: 135 },
+      font: "sans"
     }
   },
   {
-    name: "깊은 숲",
+    // #341 — 3F88EB · 404F68 · D1D9DE · 3AAB87
+    name: "바다 파랑",
     theme: {
-      ...DEFAULT_THEME,
-      page: "#E7EEE8",
-      box: "#EFF4F0",
-      soft: "#E9F0EA",
-      mint: "#C6DCC9",
-      line: "#DDE7DE",
-      title: "#06231D",
-      accent: "#0B5C4B",
-      accent2: "#1E6B57",
-      point: "#C9E04A",
-      gradMain: { from: "#076653", to: "#06231D", angle: 160 },
-      gradSub: { from: "#2C8C74", to: "#076653", angle: 160 }
+      page: "#F7F9FA",
+      card: "#FFFFFF",
+      box: "#F1F4F6",
+      soft: "#E9EEF1",
+      mint: "#D1D9DE",
+      line: "#E2E8EC",
+      title: "#2F3A4D",
+      body: "#333F52",
+      muted: "#6A7686",
+      faint: "#9AA5B2",
+      scripture: "#333333",
+      accent: "#2F72CF",
+      accent2: "#2E9074",
+      point: "#3F88EB",
+      ink: "#1E2836",
+      gradMain: { from: "#3573C9", to: "#26314A", angle: 135 },
+      gradSub: { from: "#2E9074", to: "#1F6B57", angle: 135 },
+      font: "sans"
+    }
+  },
+  {
+    // #54 — CFC4B6 · FFC440 · EBE0D6 · 9BB4C1
+    name: "모래 노랑",
+    theme: {
+      page: "#FAF7F3",
+      card: "#FFFFFF",
+      box: "#F3EEE7",
+      soft: "#EFE7DC",
+      mint: "#E2D9CC",
+      line: "#E6DED4",
+      title: "#4A4034",
+      body: "#3E3730",
+      muted: "#7A6E60",
+      faint: "#A99C8C",
+      scripture: "#3A342D",
+      accent: "#5A7180",
+      accent2: "#6B8391",
+      point: "#FFC440",
+      ink: "#2E2A24",
+      gradMain: { from: "#6B8391", to: "#37434C", angle: 135 },
+      gradSub: { from: "#8AA0AD", to: "#5A7180", angle: 135 },
+      font: "sans"
     }
   }
 ];
@@ -485,7 +529,7 @@ export default function ThemeStudio({
               >
                 <button
                   type="button"
-                  onClick={() => setDraft(DEFAULT_THEME)}
+                  onClick={() => setDraft(APP_DEFAULT_THEME)}
                   className={`flex items-center gap-1.5 px-3.5 py-3 rounded-2xl ${UI.row} ${UI.text} text-xs font-bold cursor-pointer shrink-0`}
                 >
                   <RotateCcw size={15} /> 기본색

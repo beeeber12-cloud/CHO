@@ -17,10 +17,12 @@ import { useSwipe } from "../lib/useSwipe";
  * 순서는 아래 탭 순서와 같다 — 오늘 말씀 → 성경통독 → 묵상일기 → 감사칭찬 → 나의 기록.
  * 한 번 보시면 다시 뜨지 않는다 (설정 → 안내 → '앱 사용법 다시 보기' 로 언제든 열 수 있다).
  *
- * ⚠️ 이 화면의 색은 **앱 색 꾸미기·어두운 화면이 건드리지 않는다**.
- *    안내는 늘 진초록 한 판에 흰 글씨여야 하는데, 색이 뒤집히면 글씨가 사라진다.
- *    그래서 여기 쓰는 값은 일부러 src/lib/theme.ts 의 ROLE_HEXES 에 없는 값이다
- *    (#0C3C2F 처럼 끝자리만 다른 같은 색). 색을 고칠 때 그 표에 있는 값으로 바꾸지 말 것.
+ * 색은 **지금 앱이 입고 있는 색을 그대로 따라간다** — 꾸미기에서 색을 바꾸거나
+ * 어둡게로 두면 안내도 같이 바뀐다. 다만 색을 갈래 이름(변수)으로만 쓰고,
+ * 뜻이 어긋나지 않게 짝을 맞춘다:
+ *   바탕 = 머리말 그라데이션(+ 옅은 검은 막) · 그 위 글씨는 늘 흰색
+ *   포인트 = --u-point, 그 위 글씨는 늘 진한 색
+ * 어떤 색을 고르셔도 글씨가 사라지지 않게 하려는 것이니, 값을 직접 박지 말 것.
  */
 
 const SEEN_KEY = "bible_med_guide_seen";
@@ -44,18 +46,22 @@ export function markGuideSeen(): void {
 }
 
 /* ── 예시 그림에 쓰는 색 ────────────────────────────────────
-   앱 색 꾸미기·어두운 화면이 건드리지 않는 값만 쓴다.
-   (예시 그림은 '앱은 이렇게 생겼습니다' 를 보여 주는 것이라 늘 같아야 한다) */
+   지금 앱이 입고 있는 색을 그대로 가져다 쓴다 (꾸미기·어둡게가 그대로 반영된다).
+   괄호 안은 색을 아직 못 읽었을 때 쓸 값. */
 const M = {
-  paper: "#FCFDFC",
-  ink: "#12261F",
-  sub: "#6E8478",
-  box: "#F7F8F6",
-  line: "#E6EBE5",
-  green: "#2E7458",
-  greenDeep: "#1B4636",
-  gold: "#FFBB01",
-  goldSoft: "#FFF5D8"
+  paper: "var(--u-card, #FFFFFF)",
+  ink: "var(--u-title, #0C3B2E)",
+  sub: "var(--u-muted, #6F8377)",
+  box: "var(--u-box, #F9F9F9)",
+  line: "var(--u-line, #E3E9E2)",
+  /** 아이콘·초록 단추 (흰 글씨를 얹어도 읽히는 색) */
+  green: "var(--u-accent2, #4A6B57)",
+  /** 포인트 색 위에 얹는 글씨 — 어떤 포인트 색이든 읽히도록 늘 진하게 */
+  greenDeep: "#2A2213",
+  gold: "var(--u-point, #FFBA00)",
+  goldSoft: "var(--u-soft, #FFF6DC)",
+  /** 머리말·기본 단추 그라데이션 */
+  grad: "var(--u-grad-main, linear-gradient(135deg, #2F7358, #153A2B))"
 };
 
 /** 번호표 — 예시 그림의 왼쪽 칸에 선다 */
@@ -94,7 +100,7 @@ function Screen({ children }: { children: React.ReactNode }) {
       {/* 미니 머리말 */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ backgroundImage: `linear-gradient(135deg, ${M.green}, ${M.greenDeep})` }}
+        style={{ backgroundImage: M.grad }}
       >
         <span className="flex items-center gap-1 text-[9px] font-bold text-white/90">
           <BrandMark size={10} /> 우리 공동체
@@ -147,7 +153,7 @@ function Btn({ children, tone = "green" }: { children: React.ReactNode; tone?: "
       ? { background: M.gold, color: M.greenDeep }
       : tone === "soft"
       ? { background: M.box, color: M.ink }
-      : { backgroundImage: `linear-gradient(135deg, ${M.green}, ${M.greenDeep})`, color: "#fff" };
+      : { backgroundImage: M.grad, color: "#fff" };
   return (
     <span
       className="flex-1 text-[9px] font-bold px-2 py-1.5 rounded-xl flex items-center justify-center gap-1 whitespace-nowrap"
@@ -194,7 +200,7 @@ function MockNotice() {
             className="block text-[9px] leading-snug rounded-md px-1 py-0.5"
             style={{ color: M.ink, background: M.goldSoft }}
           >
-            <span style={{ color: "#8F6B00", fontWeight: 700 }}>16 </span>
+            <span style={{ color: M.green, fontWeight: 700 }}>16 </span>
             하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니
           </span>
         </span>
@@ -222,7 +228,7 @@ function MockBible() {
           <MockTitle title="성경 통독" sub="1년 1독 · 하루 3장" />
           <span
             className="text-[8px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shrink-0"
-            style={{ backgroundImage: `linear-gradient(135deg, ${M.green}, ${M.greenDeep})`, color: "#fff" }}
+            style={{ backgroundImage: M.grad, color: "#fff" }}
           >
             <Sparkles size={8} /> 리딩지저스
           </span>
@@ -240,7 +246,7 @@ function MockBible() {
           <span className="block h-1 rounded-full mt-1" style={{ background: M.line }}>
             <span
               className="block h-1 rounded-full"
-              style={{ width: "38%", backgroundImage: `linear-gradient(90deg, ${M.green}, ${M.gold})` }}
+              style={{ width: "38%", backgroundImage: `linear-gradient(90deg, ${M.green}, ${M.gold})`, }}
             />
           </span>
         </Box>
@@ -621,12 +627,18 @@ export default function AppGuide({ onClose }: Props) {
   const Mock = s.mock;
 
   return (
-    <div className="fixed inset-0 z-[80] bg-[#0C3C2F] flex flex-col text-white">
+    <div
+      className="fixed inset-0 z-[80] flex flex-col text-white"
+      style={{ backgroundImage: M.grad, backgroundColor: "#0C3C2F" }}
+    >
+      {/* 어떤 색을 고르셔도 흰 글씨가 읽히도록 옅은 검은 막을 한 겹 깐다 */}
+      <div className="absolute inset-0 bg-black/30 pointer-events-none" />
+
       {/* 건너뛰기 */}
-      <div className="flex justify-end p-4 pt-[max(1rem,env(safe-area-inset-top))] shrink-0">
+      <div className="relative flex justify-end p-4 pt-[max(1rem,env(safe-area-inset-top))] shrink-0">
         <button
           onClick={finish}
-          className="text-sm font-semibold text-[#AFC1B3] hover:text-white px-3 py-1.5 cursor-pointer"
+          className="text-sm font-semibold text-white/70 hover:text-white px-3 py-1.5 cursor-pointer"
         >
           건너뛰기
         </button>
@@ -634,7 +646,7 @@ export default function AppGuide({ onClose }: Props) {
 
       {/* 내용 — 옆으로 밀어 넘긴다 (내용이 길면 위아래로 굴려 본다) */}
       <div
-        className="flex-1 overflow-y-auto overflow-x-hidden px-6 scrollbar-thin"
+        className="relative flex-1 overflow-y-auto overflow-x-hidden px-6 scrollbar-thin"
         style={{ touchAction: "pan-y" }}
         {...swipeHandlers}
       >
@@ -648,11 +660,14 @@ export default function AppGuide({ onClose }: Props) {
               transition={{ duration: 0.22 }}
             >
               {s.tab ? (
-                <span className="inline-block text-2xs font-black tracking-[0.15em] text-[#FFBB01] mb-1.5">
+                <span
+                  className="inline-block text-2xs font-black tracking-[0.15em] mb-1.5"
+                  style={{ color: M.gold }}
+                >
                   {s.tab}
                 </span>
               ) : (
-                <div className="w-14 h-14 rounded-3xl bg-[#0F4B3A] flex items-center justify-center mb-5">
+                <div className="w-14 h-14 rounded-3xl bg-white/15 flex items-center justify-center mb-5">
                   <s.icon size={26} className="text-white" />
                 </div>
               )}
@@ -673,11 +688,11 @@ export default function AppGuide({ onClose }: Props) {
                     <li key={k} className="flex gap-2.5">
                       <span
                         className="shrink-0 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[11px] font-black mt-px"
-                        style={{ background: "#FFBB01", color: "#1B4636" }}
+                        style={{ background: M.gold, color: M.greenDeep }}
                       >
                         {k + 1}
                       </span>
-                      <span className="text-sm text-[#D2DED4] leading-relaxed">{text}</span>
+                      <span className="text-sm text-white/85 leading-relaxed">{text}</span>
                     </li>
                   ))}
                 </ol>
@@ -690,7 +705,7 @@ export default function AppGuide({ onClose }: Props) {
                     line === "" ? (
                       <div key={k} className="h-2" />
                     ) : (
-                      <p key={k} className="text-[#D2DED4] leading-relaxed">
+                      <p key={k} className="text-white/85 leading-relaxed">
                         {line}
                       </p>
                     )
@@ -700,9 +715,9 @@ export default function AppGuide({ onClose }: Props) {
 
               {/* 그 밖에 알아 두시면 좋은 것 */}
               {s.notes && (
-                <div className="mt-4 rounded-2xl bg-[#0F4B3A] px-3.5 py-3 space-y-1.5">
+                <div className="mt-4 rounded-2xl bg-white/12 px-3.5 py-3 space-y-1.5">
                   {s.notes.map((note, k) => (
-                    <p key={k} className="text-2xs text-[#BFD3C6] leading-relaxed">
+                    <p key={k} className="text-2xs text-white/75 leading-relaxed">
                       · {note}
                     </p>
                   ))}
@@ -714,7 +729,7 @@ export default function AppGuide({ onClose }: Props) {
       </div>
 
       {/* 아래 — 점과 버튼 */}
-      <div className="shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 space-y-3 bg-[#0C3C2F]">
+      <div className="relative shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 space-y-3">
         <div className="flex justify-center gap-1.5">
           {SLIDES.map((_, k) => (
             <button
@@ -722,7 +737,7 @@ export default function AppGuide({ onClose }: Props) {
               onClick={() => go(k)}
               aria-label={`${k + 1}번째 안내`}
               className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                k === i ? "w-6 bg-white" : "w-1.5 bg-[#4A6C58]"
+                k === i ? "w-6 bg-white" : "w-1.5 bg-white/30"
               }`}
             />
           ))}
@@ -732,7 +747,7 @@ export default function AppGuide({ onClose }: Props) {
           <button
             onClick={() => go(i - 1)}
             disabled={i === 0}
-            className="p-3 rounded-3xl bg-[#0F4B3A] text-white disabled:opacity-30 cursor-pointer"
+            className="p-3 rounded-3xl bg-white/15 text-white disabled:opacity-30 cursor-pointer"
             aria-label="이전"
           >
             <ChevronLeft size={20} />
@@ -741,14 +756,16 @@ export default function AppGuide({ onClose }: Props) {
           {last ? (
             <button
               onClick={finish}
-              className="flex-1 py-3.5 rounded-3xl bg-[#FCFDFC] text-[#0C3C2F] font-bold cursor-pointer"
+              className="flex-1 py-3.5 rounded-3xl bg-white font-bold cursor-pointer"
+              style={{ color: "var(--u-title-bg, #0C3C2F)" }}
             >
               시작하기
             </button>
           ) : (
             <button
               onClick={() => go(i + 1)}
-              className="flex-1 py-3.5 rounded-3xl bg-[#FFBB01] text-[#33270A] font-bold flex items-center justify-center gap-1 cursor-pointer"
+              className="flex-1 py-3.5 rounded-3xl font-bold flex items-center justify-center gap-1 cursor-pointer"
+              style={{ background: M.gold, color: M.greenDeep }}
             >
               다음
               <ChevronRight size={18} />
@@ -756,7 +773,7 @@ export default function AppGuide({ onClose }: Props) {
           )}
         </div>
 
-        <p className="text-center text-2xs text-[#7F9387]">
+        <p className="text-center text-2xs text-white/60">
           옆으로 밀어서 넘기실 수 있습니다 · {i + 1} / {SLIDES.length}
         </p>
       </div>

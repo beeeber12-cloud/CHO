@@ -78,6 +78,38 @@ export const DEFAULT_THEME: AppTheme = {
 };
 
 /**
+ * **기본색** — 지금 앱이 입고 있는 색.
+ *
+ * DEFAULT_THEME 은 '화면 코드에 박혀 있는 값' 이라 덮어쓰기의 기준으로만 쓰고,
+ * 사람이 보는 기본값은 이쪽이다. 꾸미기 창의 '기본색' 단추가 이 색으로 되돌린다.
+ * (2026-09-08, 은혜교회에서 맞춘 색을 모든 공동체의 기본으로 삼았다)
+ */
+export const APP_DEFAULT_THEME: AppTheme = {
+  page: "#FFFFFF",
+  card: "#FFFFFF",
+  box: "#F8F8F6",
+  soft: "#EFEFEB",
+  mint: "#FFFFFF",
+  line: "#EFEFEB",
+
+  title: "#0C2C3B",
+  body: "#14261E",
+  muted: "#6F8377",
+  faint: "#A8B3A9",
+  scripture: "#333333",
+
+  accent: "#FB835B",
+  accent2: "#2D6161",
+  point: "#FB835B",
+  ink: "#072A20",
+
+  gradMain: { from: "#327777", to: "#2D6161", angle: 360 },
+  gradSub: { from: "#2D6161", to: "#2D6161", angle: 135 },
+
+  font: "sans"
+};
+
+/**
  * 어두운 화면.
  *
  * 같은 갈래가 글씨로도 쓰이고 바탕으로도 쓰이는 자리가 있어서

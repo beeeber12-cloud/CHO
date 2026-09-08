@@ -117,6 +117,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [rjReadingDays, setRjReadingDays] = useState<number[]>([...RJ_DEFAULT_READING_DAYS]);
   const [rjBreaks, setRjBreaks] = useState<RJBreak[]>([]);
   const [showRjMyPlanModal, setShowRjMyPlanModal] = useState<boolean>(false);
+  /** 관리자가 이 일정을 공동체 전체 것으로 정하는 중 */
+  const [savingCommunityRj, setSavingCommunityRj] = useState<boolean>(false);
+  const [rjAdminMessage, setRjAdminMessage] = useState<string>("");
   const [savingRjPlan, setSavingRjPlan] = useState<boolean>(false);
   const [showRjScheduleModal, setShowRjScheduleModal] = useState<boolean>(false);
   /** 전체 스케줄을 열면 이번 주가 바로 보이도록 */
@@ -526,6 +529,72 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       console.error("통독 일정 저장 실패:", err);
     } finally {
       setSavingRjPlan(false);
+    }
+  };
+
+  /** 지금 공동체 일정을 고치기 화면에 올려 둔다 (관리자가 이어서 고칠 수 있게) */
+  const loadCommunityIntoForm = () => {
+    if (!rjCommunity) return;
+    setRjStartDate(rjCommunity.startDate);
+    setRjReadingDays([...rjCommunity.readingDays]);
+    setRjBreaks(rjCommunity.breaks.map((b) => ({ ...b })));
+  };
+
+  /**
+   * 관리자가 이 일정을 **공동체 전체 일정**으로 정한다.
+   *
+   * 이 하나로 두 가지가 함께 정해진다:
+   *  ① 공동체 일정을 따르는 모든 지체의 통독표
+   *  ② <오늘의 말씀> 자동 공지 — 그날 읽을 본문 전체가 매일 아침 올라간다
+   */
+  const saveCommunityRjPlan = async () => {
+    if (currentUser?.role !== "admin") return;
+    if (!rjStartDate) {
+      setRjAdminMessage("시작날을 먼저 정해 주세요.");
+      return;
+    }
+    setSavingCommunityRj(true);
+    setRjAdminMessage("");
+    try {
+      const res = await fetch("/api/bible-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "readingJesus",
+          active: true,
+          rjStartDate,
+          rjReadingDays,
+          rjBreaks: rjBreaks.filter((b) => b.from && b.to)
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "저장하지 못했습니다.");
+      }
+      const plan = await res.json();
+      setRjCommunity(
+        rjNormalizeSettings({
+          startDate: plan.rjStartDate || "",
+          readingDays: plan.rjReadingDays,
+          breaks: plan.rjBreaks
+        })
+      );
+
+      // 정한 사람도 공동체 일정을 따르는 것으로 맞춰 둔다
+      if (currentUser?.id) {
+        const mine = await fetch("/api/bible-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id, rjFollow: "community" })
+        });
+        if (mine.ok) setUserProgress(await mine.json());
+      }
+      setRjFollow("community");
+      setRjAdminMessage("공동체 전체 일정으로 정했습니다. 오늘의 말씀도 이 통독표대로 올라갑니다.");
+    } catch (e: any) {
+      setRjAdminMessage(e?.message || "저장하지 못했습니다.");
+    } finally {
+      setSavingCommunityRj(false);
     }
   };
 
@@ -1511,7 +1580,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 <button
                   key={opt.key}
                   type="button"
-                  onClick={() => setRjFollow(opt.key)}
+                  onClick={() => {
+                    setRjFollow(opt.key);
+                    setRjAdminMessage("");
+                    if (opt.key === "community" && currentUser?.role === "admin") loadCommunityIntoForm();
+                  }}
                   className={`p-3 rounded-2xl text-left transition cursor-pointer ${
                     on ? "grad-forest text-white" : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
                   }`}
@@ -1529,8 +1602,37 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             })}
           </div>
 
-          {/* 공동체 일정을 따르기로 했으면 그 내용을 보여만 준다 (고치는 건 관리자 몫) */}
-          {rjFollow === "community" ? (
+          {/* 관리자는 공동체 일정을 여기서 바로 정한다.
+              한 번 정하면 공동체 일정을 따르는 모든 지체와 <오늘의 말씀>이 이 통독표를 쓴다. */}
+          {rjFollow === "community" && currentUser?.role === "admin" ? (
+            <div className="space-y-3">
+              <div className="bg-[#FFF7E0] rounded-2xl px-3.5 py-3">
+                <p className="text-xs font-bold text-[#0C3B2E] flex items-center gap-1.5">
+                  <Users size={14} /> 공동체 전체 일정
+                </p>
+                <p className="text-2xs text-[#4A6B57] mt-1 leading-relaxed">
+                  여기서 정하면 공동체 일정을 따르는 모든 지체가 같은 날 같은 본문을 읽고,
+                  <b> 오늘의 말씀</b>에도 그날 읽을 본문이 매일 아침 저절로 올라갑니다.
+                </p>
+              </div>
+
+              <ReadingJesusScheduleForm
+                startDate={rjStartDate}
+                onStartDate={setRjStartDate}
+                readingDays={rjReadingDays}
+                onReadingDays={setRjReadingDays}
+                breaks={rjBreaks}
+                onBreaks={setRjBreaks}
+                startHint="이 날 1주차 첫 분량(창세기 1~4장)부터 공동체가 함께 시작합니다."
+              />
+
+              {rjAdminMessage && (
+                <p className="text-2xs font-bold text-[#0F4A39] bg-[#F9F9F9] rounded-xl px-3 py-2 leading-relaxed">
+                  {rjAdminMessage}
+                </p>
+              )}
+            </div>
+          ) : rjFollow === "community" ? (
             <div className="bg-[#F9F9F9] rounded-2xl px-3.5 py-3 space-y-1">
               {rjCommunity ? (
                 <>
@@ -1573,14 +1675,25 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             >
               취소
             </button>
-            <button
-              type="button"
-              disabled={savingRjPlan}
-              onClick={() => saveRjPlan(rjFollow)}
-              className="grad-forest px-5 py-2.5 text-white text-sm font-bold rounded-2xl transition cursor-pointer hover:brightness-110 disabled:opacity-60"
-            >
-              {savingRjPlan ? "저장 중..." : "이 일정으로 하기"}
-            </button>
+            {rjFollow === "community" && currentUser?.role === "admin" ? (
+              <button
+                type="button"
+                disabled={savingCommunityRj}
+                onClick={saveCommunityRjPlan}
+                className="grad-forest px-5 py-2.5 text-white text-sm font-bold rounded-2xl transition cursor-pointer hover:brightness-110 disabled:opacity-60"
+              >
+                {savingCommunityRj ? "정하는 중..." : "공동체 전체 일정으로 정하기"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={savingRjPlan}
+                onClick={() => saveRjPlan(rjFollow)}
+                className="grad-forest px-5 py-2.5 text-white text-sm font-bold rounded-2xl transition cursor-pointer hover:brightness-110 disabled:opacity-60"
+              >
+                {savingRjPlan ? "저장 중..." : "이 일정으로 하기"}
+              </button>
+            )}
           </div>
         </div>
       </SettingModal>

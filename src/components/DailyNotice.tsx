@@ -233,9 +233,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
 
   useEffect(() => {
     fetchTodayNotice();
-    if (currentUser.role === "admin") {
-      fetchBiblePlan();
-    }
+    // 통독 방식은 모두가 알아야 한다 (제목에 '리딩지저스' 를 붙일지 판단한다).
+    // 관리자 설정 화면도 이 값으로 채워진다.
+    fetchBiblePlan();
   }, []);
 
   // 공지를 받아온 뒤, 개역개정 외 번역본을 고른 상태라면 그것도 채워둔다
@@ -395,7 +395,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     <div onClick={alignReader}>
       <div className="flex flex-wrap justify-between items-start gap-2 mb-3.5">
         <div className="min-w-0">
-          <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl">오늘의 말씀</h3>
+          <h3 className="font-bold text-[#0C3B2E] text-xl sm:text-2xl">
+            {/* 공동체가 리딩지저스 통독표로 도는 중이면 제목에 그렇게 적는다 */}
+            {plannerActive && plannerMode === "readingJesus" ? "리딩지저스 오늘의 말씀" : "오늘의 말씀"}
+          </h3>
           <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">
             {notice ? `${notice.verseTitle} · ${formatKoreanDate(notice.date)}` : "매일 아침 새 말씀이 공지됩니다"}
           </p>
