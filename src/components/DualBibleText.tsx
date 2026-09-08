@@ -1,5 +1,5 @@
 import React from "react";
-import { BibleVersionKey, BIBLE_VERSIONS } from "../lib/bibleVersions";
+import { BibleVersionKey } from "../lib/bibleVersions";
 
 /** 화면에 실을 번역본 하나 (위에서부터 순서대로 쌓인다) */
 export interface VersionPane {
@@ -46,8 +46,8 @@ function parseVerses(raw: string): Verse[] {
   });
 }
 
-const colorOf = (key: BibleVersionKey) =>
-  BIBLE_VERSIONS.find((v) => v.key === key)?.color || "#333333";
+/* 본문 색은 index.css 의 [data-bv] 규칙이 정한다 (밝게/어둡게에 따라 달라져야 하므로).
+   여기서는 어느 번역본인지만 표시해 둔다. */
 
 export default function DualBibleText({
   panes,
@@ -137,8 +137,9 @@ export default function DualBibleText({
 
               <div className="flex-1 min-w-0">
                 <p
+                  data-bv={used[0].key}
                   className="text-sm sm:text-base md:text-lg leading-[1.5] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
-                  style={{ color: colorOf(used[0].key), wordBreak: "keep-all", overflowWrap: "break-word" }}
+                  style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
                 >
                   {v.body}
                 </p>
@@ -147,8 +148,9 @@ export default function DualBibleText({
                     어느 번역본인지는 위쪽 선택 칩으로 알 수 있으므로 절마다 이름을 달지 않는다. */}
                 {comparing && second && (
                   <p
+                    data-bv={used[1].key}
                     className="mt-2.5 text-sm sm:text-base md:text-lg leading-[1.5] font-medium scripture-font [word-break:keep-all] [overflow-wrap:break-word]"
-                    style={{ color: colorOf(used[1].key), wordBreak: "keep-all", overflowWrap: "break-word" }}
+                    style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
                   >
                     {second}
                   </p>

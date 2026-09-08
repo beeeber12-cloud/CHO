@@ -96,7 +96,7 @@ export const DARK_THEME: AppTheme = {
   body: "#DDE7E1",
   muted: "#9FB2A8",
   faint: "#7B8D84",
-  scripture: "#E2EAE5",
+  scripture: "#F2F7F3",
 
   accent: "#3FA07C",
   accent2: "#35906F",
