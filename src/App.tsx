@@ -215,11 +215,12 @@ export default function App() {
 
   /**
    * 지금 보여줄 탭 순서.
-   * 감사칭찬은 성경통독 다음, 나의기록 앞에 둔다.
-   * 챌린지가 돌면 그 감사 자리에 들어선다.
+   * 오늘 말씀 → 성경통독 → 묵상일기 순서다. 아침에 말씀을 받고, 이어서 통독하고,
+   * 그러고 나서 묵상을 적는 하루 흐름을 그대로 따랐다.
+   * 감사칭찬은 그 다음, 나의기록 앞에 둔다. 챌린지가 돌면 그 감사 자리에 들어선다.
    */
   const visibleTabs: TabType[] = React.useMemo(() => {
-    const tabs: TabType[] = ["notice", "feed", "bible", challengeOn ? "challenge" : "gratitude", "my"];
+    const tabs: TabType[] = ["notice", "bible", "feed", challengeOn ? "challenge" : "gratitude", "my"];
     if (SHOW_QNA_TAB) tabs.push("qna");
     return tabs;
   }, [challengeOn]);
