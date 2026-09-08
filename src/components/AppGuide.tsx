@@ -1,16 +1,21 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  BookOpen, HeartHandshake, MessageSquare, BookMarked, Calendar, Bell, Trophy, Cross,
-  ChevronLeft, ChevronRight
+  BookOpen, MessageSquare, Heart, User, Cross, Settings,
+  ChevronLeft, ChevronRight, Check, Send, Search, Target, ListChecks, Sparkles
 } from "lucide-react";
+import BrandMark from "./BrandMark";
 import { useSwipe } from "../lib/useSwipe";
 
 /**
- * 처음 들어오신 분께 탭을 하나씩 소개한다.
+ * 처음 들어오신 분께 화면을 하나씩 소개한다.
  *
+ * 화면마다 **그 화면의 예시 그림**을 먼저 보여 주고, 그림 위 번호(①②③)를 아래에서
+ * 하나씩 풀어 설명한다 (앱 소개 화면에서 흔히 쓰는 방식).
  * 옆으로 밀어 넘기고, 언제든 건너뛸 수 있다.
- * 한 번 보시면 다시 뜨지 않는다 (설정에서 '앱 사용법 다시 보기' 로 언제든 열 수 있다).
+ *
+ * 순서는 아래 탭 순서와 같다 — 오늘 말씀 → 성경통독 → 묵상일기 → 감사칭찬 → 나의 기록.
+ * 한 번 보시면 다시 뜨지 않는다 (설정 → 안내 → '앱 사용법 다시 보기' 로 언제든 열 수 있다).
  *
  * ⚠️ 이 화면의 색은 **앱 색 꾸미기·어두운 화면이 건드리지 않는다**.
  *    안내는 늘 진초록 한 판에 흰 글씨여야 하는데, 색이 뒤집히면 글씨가 사라진다.
@@ -20,7 +25,7 @@ import { useSwipe } from "../lib/useSwipe";
 
 const SEEN_KEY = "bible_med_guide_seen";
 /** 안내 내용을 크게 고치면 이 값을 올린다. 그러면 모두에게 한 번 더 보인다. */
-const GUIDE_VERSION = "1";
+const GUIDE_VERSION = "5";
 
 export function guideSeen(): boolean {
   try {
@@ -38,108 +43,552 @@ export function markGuideSeen(): void {
   }
 }
 
+/* ── 예시 그림에 쓰는 색 ────────────────────────────────────
+   앱 색 꾸미기·어두운 화면이 건드리지 않는 값만 쓴다.
+   (예시 그림은 '앱은 이렇게 생겼습니다' 를 보여 주는 것이라 늘 같아야 한다) */
+const M = {
+  paper: "#FCFDFC",
+  ink: "#12261F",
+  sub: "#6E8478",
+  box: "#F7F8F6",
+  line: "#E6EBE5",
+  green: "#2E7458",
+  greenDeep: "#1B4636",
+  gold: "#FFBB01",
+  goldSoft: "#FFF5D8"
+};
+
+/** 번호표 — 예시 그림의 왼쪽 칸에 선다 */
+function Pin({ n }: { n: number }) {
+  return (
+    <span
+      className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+      style={{ background: M.gold, color: M.greenDeep }}
+    >
+      {n}
+    </span>
+  );
+}
+
+/**
+ * 예시 그림의 한 줄.
+ * 왼쪽은 번호 칸(비어 있어도 자리를 지킨다), 오른쪽이 화면 내용이다.
+ */
+function Row({ pin, children }: { pin?: number; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-1.5">
+      <span className="w-[18px] shrink-0 flex justify-center pt-px">{pin ? <Pin n={pin} /> : null}</span>
+      <span className="flex-1 min-w-0 block">{children}</span>
+    </div>
+  );
+}
+
+/** 휴대폰 화면처럼 보이는 종이 */
+function Screen({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-[18px] overflow-hidden select-none"
+      style={{ background: M.paper, boxShadow: "0 10px 30px rgba(0,0,0,0.28)" }}
+      aria-hidden="true"
+    >
+      {/* 미니 머리말 */}
+      <div
+        className="flex items-center justify-between px-3 py-2"
+        style={{ backgroundImage: `linear-gradient(135deg, ${M.green}, ${M.greenDeep})` }}
+      >
+        <span className="flex items-center gap-1 text-[9px] font-bold text-white/90">
+          <BrandMark size={10} /> 우리 공동체
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3.5 h-3.5 rounded-full bg-white/20" />
+          <span
+            className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-black"
+            style={{ background: M.gold, color: M.greenDeep }}
+          >
+            김
+          </span>
+        </span>
+      </div>
+      <div className="p-2.5 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+/** 예시 그림 안의 작은 제목 */
+function MockTitle({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <span className="block">
+      <span className="block text-[13px] font-bold leading-none" style={{ color: M.ink }}>
+        {title}
+      </span>
+      {sub && (
+        <span className="block text-[9px] mt-1 leading-none" style={{ color: M.sub }}>
+          {sub}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Chip({ on, children }: { on?: boolean; children: React.ReactNode }) {
+  return (
+    <span
+      className="text-[9px] font-bold px-2 py-1 rounded-full whitespace-nowrap"
+      style={on ? { background: M.green, color: "#fff" } : { background: M.box, color: M.sub }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Btn({ children, tone = "green" }: { children: React.ReactNode; tone?: "green" | "gold" | "soft" }) {
+  const style =
+    tone === "gold"
+      ? { background: M.gold, color: M.greenDeep }
+      : tone === "soft"
+      ? { background: M.box, color: M.ink }
+      : { backgroundImage: `linear-gradient(135deg, ${M.green}, ${M.greenDeep})`, color: "#fff" };
+  return (
+    <span
+      className="flex-1 text-[9px] font-bold px-2 py-1.5 rounded-xl flex items-center justify-center gap-1 whitespace-nowrap"
+      style={style}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** 옅은 상자 */
+function Box({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="block rounded-xl p-2" style={{ background: M.box }}>
+      {children}
+    </span>
+  );
+}
+
+/* ── 화면마다의 예시 그림 ──────────────────────────────────── */
+
+function MockNotice() {
+  return (
+    <Screen>
+      <Row pin={1}>
+        <MockTitle title="오늘의 말씀" sub="요한복음 3장 · 9월 8일" />
+      </Row>
+
+      <Row pin={2}>
+        <span className="flex gap-1">
+          <Chip on>개역개정</Chip>
+          <Chip>우리말</Chip>
+          <Chip>NIV</Chip>
+        </span>
+      </Row>
+
+      <Row pin={3}>
+        <span className="block space-y-1">
+          <span className="block text-[9px] leading-snug" style={{ color: M.ink }}>
+            <span style={{ color: M.sub }}>15 </span>
+            그를 믿는 자마다 영생을 얻게 하려 하심이니라
+          </span>
+          <span
+            className="block text-[9px] leading-snug rounded-md px-1 py-0.5"
+            style={{ color: M.ink, background: M.goldSoft }}
+          >
+            <span style={{ color: "#8F6B00", fontWeight: 700 }}>16 </span>
+            하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니
+          </span>
+        </span>
+      </Row>
+
+      <Row pin={4}>
+        <span className="flex gap-1.5">
+          <Btn>
+            <Check size={9} /> 읽었습니다
+          </Btn>
+          <Btn tone="gold">
+            <Send size={9} /> 이 말씀으로 묵상
+          </Btn>
+        </span>
+      </Row>
+    </Screen>
+  );
+}
+
+function MockBible() {
+  return (
+    <Screen>
+      <Row pin={2}>
+        <span className="flex items-start justify-between gap-2">
+          <MockTitle title="성경 통독" sub="1년 1독 · 하루 3장" />
+          <span
+            className="text-[8px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shrink-0"
+            style={{ backgroundImage: `linear-gradient(135deg, ${M.green}, ${M.greenDeep})`, color: "#fff" }}
+          >
+            <Sparkles size={8} /> 리딩지저스
+          </span>
+        </span>
+      </Row>
+
+      <Row pin={1}>
+        <Box>
+          <span className="block text-[9px] font-bold" style={{ color: M.ink }}>
+            통독 진행률 38%
+          </span>
+          <span className="block text-[8px]" style={{ color: M.sub }}>
+            452장 / 1189장
+          </span>
+          <span className="block h-1 rounded-full mt-1" style={{ background: M.line }}>
+            <span
+              className="block h-1 rounded-full"
+              style={{ width: "38%", backgroundImage: `linear-gradient(90deg, ${M.green}, ${M.gold})` }}
+            />
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={3}>
+        <span className="block space-y-1.5">
+          <span className="flex items-center justify-between">
+            <span className="text-[8px]" style={{ color: M.sub }}>
+              마지막 읽은 곳 <b style={{ color: M.ink }}>사무엘상 12장</b>
+            </span>
+            <span className="text-[8px] font-bold" style={{ color: M.green }}>
+              이어서 읽기 ›
+            </span>
+          </span>
+          <span className="flex gap-1.5">
+            <Btn>구약 (39권)</Btn>
+            <Btn>신약 (27권)</Btn>
+          </span>
+        </span>
+      </Row>
+
+      <Row pin={4}>
+        <span
+          className="rounded-xl px-2 py-1.5 flex items-center justify-between"
+          style={{ background: M.box }}
+        >
+          <ChevronLeft size={10} color={M.sub} />
+          <span className="text-[8px]" style={{ color: M.sub }}>
+            밀어서 장 넘기기
+          </span>
+          <ChevronRight size={10} color={M.sub} />
+        </span>
+      </Row>
+    </Screen>
+  );
+}
+
+function MockFeed() {
+  return (
+    <Screen>
+      <Row>
+        <MockTitle title="묵상 나눔" sub="오늘 받은 은혜를 함께 나눠요" />
+      </Row>
+
+      <Row pin={2}>
+        <span className="flex gap-1">
+          <Chip on>전체</Chip>
+          <Chip>1속</Chip>
+          <Chip>2속</Chip>
+        </span>
+      </Row>
+
+      <Row pin={3}>
+        <Box>
+          <span className="flex items-center gap-1">
+            <span className="text-[9px] font-bold" style={{ color: M.ink }}>
+              김성도
+            </span>
+            <span className="text-[8px]" style={{ color: M.sub }}>
+              9월 8일
+            </span>
+          </span>
+          <span className="block text-[8px] font-bold mt-1" style={{ color: M.green }}>
+            요한복음 3:16
+          </span>
+          <span className="block text-[8px] leading-snug mt-0.5" style={{ color: M.ink }}>
+            이 사랑을 붙들고 오늘 하루를 살아가려 합니다. @이집사 님 고맙습니다.
+          </span>
+          <span className="flex items-center gap-2 pt-1" style={{ color: M.sub }}>
+            <span className="text-[8px] flex items-center gap-0.5">
+              <Heart size={8} /> 3
+            </span>
+            <span className="text-[8px]">🙏 2</span>
+            <span className="text-[8px] flex items-center gap-0.5">
+              <MessageSquare size={8} /> 댓글 1
+            </span>
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={1}>
+        <span className="flex gap-1.5">
+          <Btn>+ 내 묵상 글쓰기</Btn>
+          <Btn tone="soft">영성일기</Btn>
+        </span>
+      </Row>
+    </Screen>
+  );
+}
+
+function MockGratitude() {
+  return (
+    <Screen>
+      <Row>
+        <MockTitle title="감사 칭찬" sub="오늘의 감사를 나눠요" />
+      </Row>
+
+      <Row pin={2}>
+        <Box>
+          <span className="block text-[9px] font-bold" style={{ color: M.ink }}>
+            박집사
+          </span>
+          <span className="block text-[8px] leading-snug mt-0.5" style={{ color: M.ink }}>
+            아픈 저를 위해 기도해 주신 @김성도 님께 감사드립니다.
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={3}>
+        <Box>
+          <span className="block text-[9px] font-bold" style={{ color: M.ink }}>
+            이권사
+          </span>
+          <span className="block text-[8px] leading-snug mt-0.5" style={{ color: M.ink }}>
+            오늘도 건강하게 예배드릴 수 있어 감사합니다.
+          </span>
+          <span className="text-[8px] flex items-center gap-0.5 pt-1" style={{ color: M.sub }}>
+            <Heart size={8} /> 5
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={1}>
+        <span className="flex gap-1.5">
+          <Btn>+ 감사 나누기</Btn>
+        </span>
+      </Row>
+    </Screen>
+  );
+}
+
+function MockMy() {
+  return (
+    <Screen>
+      <Row>
+        <MockTitle title="나의 기록" sub="김성도님의 나눔 발자취" />
+      </Row>
+
+      <Row pin={2}>
+        <Box>
+          <span className="flex items-center gap-1.5">
+            <ListChecks size={11} color={M.green} />
+            <span className="text-[9px] font-bold" style={{ color: M.ink }}>
+              말씀 체크리스트
+            </span>
+            <span className="text-[8px] ml-auto" style={{ color: M.sub }}>
+              452장 읽음
+            </span>
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={3}>
+        <Box>
+          <span className="flex items-center gap-1.5">
+            <Target size={11} color={M.green} />
+            <span className="text-[9px] font-bold" style={{ color: M.ink }}>
+              내 나눔 목표
+            </span>
+            <span className="text-[8px] ml-auto" style={{ color: M.sub }}>
+              이번 달 3 / 12회
+            </span>
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={1}>
+        <span className="block space-y-1.5">
+          <span
+            className="rounded-xl px-2 py-1.5 flex items-center gap-1"
+            style={{ background: M.box, color: M.sub }}
+          >
+            <Search size={9} />
+            <span className="text-[8px]">내 기록 내용 및 구절 검색...</span>
+          </span>
+          <span className="flex gap-1">
+            <Chip on>말씀 묵상 12</Chip>
+            <Chip>감사 칭찬 5</Chip>
+          </span>
+        </span>
+      </Row>
+    </Screen>
+  );
+}
+
+function MockSettings() {
+  return (
+    <Screen>
+      <Row pin={1}>
+        <MockTitle title="설정" sub="오른쪽 위 톱니에서 엽니다" />
+      </Row>
+
+      <Row pin={2}>
+        <Box>
+          <span className="block text-[8px] font-bold mb-1" style={{ color: M.sub }}>
+            화면
+          </span>
+          <span className="flex gap-1">
+            <Chip on>밝게</Chip>
+            <Chip>어둡게</Chip>
+            <Chip>기기 설정</Chip>
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={3}>
+        <Box>
+          <span className="block text-[8px] font-bold mb-1" style={{ color: M.sub }}>
+            글씨 크기
+          </span>
+          <span className="flex gap-1">
+            <Chip>작게</Chip>
+            <Chip on>보통</Chip>
+            <Chip>크게</Chip>
+            <Chip>아주크게</Chip>
+          </span>
+        </Box>
+      </Row>
+
+      <Row pin={4}>
+        <span className="rounded-xl px-2 py-1.5 flex items-center gap-1.5" style={{ background: M.box }}>
+          <span className="text-[9px] font-bold" style={{ color: M.ink }}>
+            휴대폰 알림
+          </span>
+          <span
+            className="ml-auto w-6 h-3 rounded-full flex items-center px-0.5"
+            style={{ background: M.green }}
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-white ml-auto" />
+          </span>
+        </span>
+      </Row>
+    </Screen>
+  );
+}
+
+/* ── 안내 내용 ─────────────────────────────────────────────── */
+
 interface Slide {
-  icon: typeof BookOpen;
+  /** 인사말 화면에만 쓰는 아이콘 (lucide 든 우리 표시든 받는다) */
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   tab: string;
   title: string;
-  lines: string[];
+  /** 화면 예시 그림 (없으면 인사말 화면) */
+  mock?: () => React.ReactElement;
+  /** 그림 위 번호와 짝이 되는 설명 */
+  pins?: string[];
+  /** 번호와 상관없이 알아 두시면 좋은 것 */
+  notes?: string[];
+  /** 인사말 화면에서만 쓰는 긴 글 */
+  lines?: string[];
 }
 
 const SLIDES: Slide[] = [
   {
     icon: Cross,
     tab: "",
-    title: "함께 말씀을 나누는 곳입니다",
+    title: "우리 공동체가 함께 말씀을 나누는 곳입니다",
     lines: [
-      "우리 공동체끼리만 묵상과 감사를 나눕니다.",
-      "다른 공동체의 글은 보이지 않습니다.",
+      "묵상도 감사도 우리 공동체 안에서만 보입니다.",
+      "다른 공동체의 글은 서로 보이지 않습니다.",
       "",
-      "어떤 탭이 무엇을 하는 곳인지 짧게 안내해 드릴게요.",
+      "화면마다 어떻게 쓰는 곳인지, 그림과 함께",
+      "번호대로 짚어 드리겠습니다.",
       "옆으로 밀어서 넘기시면 됩니다."
     ]
   },
   {
     icon: BookOpen,
-    tab: "오늘말씀",
-    title: "매일 아침 말씀이 도착합니다",
-    lines: [
-      "정해진 성경을 한 장씩 자정에 자동으로 올려 드립니다.",
-      "",
-      "· 개역개정 · 우리말 · NIV 를 골라 볼 수 있습니다",
-      "· 마음에 닿는 구절을 눌러 고른 뒤 바로 묵상을 쓸 수 있습니다",
-      "· 다 읽으셨으면 <읽었습니다> 를 눌러주세요"
+    tab: "오늘 말씀",
+    title: "매일 아침 그날의 말씀이 도착합니다",
+    mock: MockNotice,
+    pins: [
+      "그날 읽을 말씀이 아침마다 저절로 올라옵니다. 목사님이 직접 올리시기도 합니다.",
+      "번역본을 눌러 바꿉니다. 개역개정·우리말·NIV 중 두 개를 나란히 놓고 볼 수도 있습니다.",
+      "마음에 닿은 구절을 누르면 노랗게 표시됩니다. 여러 구절을 고르셔도 됩니다.",
+      "다 읽으셨으면 '읽었습니다'를 눌러 주세요. 고른 구절은 그대로 묵상 글로 가져갑니다."
+    ],
+    notes: [
+      "함께 읽은 분들의 이름이 아래에 모입니다.",
+      "관리자는 '오늘의 말씀 설정'에서 말씀을 직접 고치거나, 한 장씩 · 리딩지저스 통독표로 매일 자동 공지되게 할 수 있습니다."
     ]
   },
   {
-    icon: HeartHandshake,
-    tab: "감사칭찬",
-    title: "작은 감사를 나눕니다",
-    lines: [
-      "오늘 감사한 일, 고마운 지체를 한 줄이라도 적어보세요.",
-      "",
-      "· 이름을 밝히지 않고 올릴 수도 있습니다",
-      "· 글쓰기가 부담스러우면 👍 · 🙏 를 눌러 마음만 전해도 됩니다",
-      "· 성경읽기 챌린지가 열리면 이 자리에 챌린지 탭이 들어섭니다"
+    icon: BrandMark,
+    tab: "성경통독",
+    title: "내 속도로 성경을 읽어 나갑니다",
+    mock: MockBible,
+    pins: [
+      "진행률 상자를 누르면 통독 설정이 열립니다 — 목표, 하루 몇 장, 이번 주 계획, 다 읽은 장 체크.",
+      "'리딩지저스 통독 플랜'을 켜면 통독표대로 매일 읽을 곳이 정해집니다. 시작날 · 읽는 요일 · 방학을 정하고, 공동체 일정과 내 일정 중에 고릅니다.",
+      "구약 · 신약을 눌러 권과 장을 고릅니다. '이어서 읽기'는 마지막에 읽던 곳을 바로 펴 줍니다.",
+      "본문을 좌우로 밀면 장이 넘어갑니다. 다 읽으신 장은 완료로 체크됩니다."
+    ],
+    notes: [
+      "성경을 읽는 동안에는 화면이 저절로 꺼지지 않습니다.",
+      "여기서도 구절을 골라 바로 묵상 글로 가져갈 수 있습니다."
     ]
   },
   {
     icon: MessageSquare,
-    tab: "묵상나눔",
-    title: "말씀 앞에서 받은 마음을 적습니다",
-    lines: [
-      "길게 쓰지 않으셔도 됩니다. 한 문장이면 충분합니다.",
-      "",
-      "· 긴 글은 접혀서 보이고, 누르면 펼쳐집니다",
-      "· 댓글로 서로 격려할 수 있습니다",
-      "· 글에 @이름 을 쓰면 그분에게 알림이 갑니다"
+    tab: "묵상일기",
+    title: "받은 은혜를 서로 나눕니다",
+    mock: MockFeed,
+    pins: [
+      "'내 묵상 글쓰기'로 구절 · 묵상 · 기도제목을 적습니다.",
+      "공동체 전체에 나눌지, 우리 속 식구들에게만 나눌지 고를 수 있습니다.",
+      "좋아요 · 기도할게요와 댓글로 서로 응원합니다. 글에 @이름을 넣으면 그분을 부를 수 있습니다.",
+      "'영성일기'는 나만 보는 일기입니다. 다른 분께는 절대 보이지 않습니다."
+    ],
+    notes: ["긴 글은 접혀 있다가 눌러야 펼쳐집니다 — 다음 분 묵상이 멀지 않도록."]
+  },
+  {
+    icon: Heart,
+    tab: "감사칭찬",
+    title: "작은 감사와 칭찬을 남깁니다",
+    mock: MockGratitude,
+    pins: [
+      "'감사 나누기'로 오늘 감사한 일을 한 줄 남깁니다.",
+      "@이름을 넣으면 그분을 콕 집어 칭찬할 수 있습니다.",
+      "좋아요로 함께 기뻐합니다."
+    ],
+    notes: ["성경읽기 챌린지가 열리는 동안에는 이 자리에 챌린지 탭이 잠시 들어섭니다."]
+  },
+  {
+    icon: User,
+    tab: "나의 기록",
+    title: "내가 걸어온 길이 쌓입니다",
+    mock: MockMy,
+    pins: [
+      "내가 쓴 묵상과 감사가 모두 여기 모입니다. 검색으로 지난 글을 찾습니다.",
+      "말씀 체크리스트 — 지금까지 읽은 장이 권별로 한눈에 보입니다.",
+      "내 나눔 목표 — 이번 달 몇 번 나눌지 정하고 진행률을 봅니다."
     ]
   },
   {
-    icon: BookMarked,
-    tab: "성경통독",
-    title: "내 속도로 성경을 읽습니다",
-    lines: [
-      "권과 장을 골라 읽고, 다 읽으면 <읽음> 을 눌러 표시합니다.",
-      "",
-      "· 화면을 옆으로 밀면 다음 장으로 넘어갑니다",
-      "· 마음에 드는 구절은 눌러서 모아둘 수 있습니다",
-      "· 여기서 누른 <읽음> 이 챌린지 진행률에도 그대로 반영됩니다"
-    ]
-  },
-  {
-    icon: Trophy,
-    tab: "챌린지",
-    title: "함께 한 권을 읽습니다",
-    lines: [
-      "관리자가 성경 한 권과 목표일을 정하면 이 탭이 생깁니다.",
-      "",
-      "· 지체별 진행률을 나란히 보며 서로 응원합니다",
-      "· 중간에 들어오셔도 됩니다",
-      "· 끝나면 다음 날 감사칭찬 탭이 돌아옵니다"
-    ]
-  },
-  {
-    icon: Calendar,
-    tab: "나의기록",
-    title: "내가 지나온 길을 봅니다",
-    lines: [
-      "내가 쓴 묵상과 감사, 통독 진행률을 한자리에서 봅니다.",
-      "",
-      "· 모아둔 말씀 구절도 여기 있습니다",
-      "· 이번 달 나눔 목표를 정할 수 있습니다"
-    ]
-  },
-  {
-    icon: Bell,
-    tab: "알림설정",
-    title: "알림과 글씨 크기를 정합니다",
-    lines: [
-      "먼저 <휴대폰 알림> 을 켜주셔야 알림이 도착합니다.",
-      "",
-      "· 아침 묵상 알림 시간과 요일을 고를 수 있습니다",
-      "· 글씨가 작으면 <글씨 크기> 에서 크게 바꾸세요",
-      "· 이 안내는 여기서 언제든 다시 보실 수 있습니다"
-    ]
+    icon: Settings,
+    tab: "설정",
+    title: "눈이 편하도록 맞춰 쓰세요",
+    mock: MockSettings,
+    pins: [
+      "오른쪽 위 톱니(⚙)를 누르면 설정이 열립니다.",
+      "밝게 · 어둡게를 고를 수 있습니다. 밤에 성경을 읽으실 때는 어둡게가 편합니다.",
+      "글씨가 작으면 크게 키우세요. 앱 전체 글씨가 함께 커집니다.",
+      "휴대폰 알림을 켜 두시면 새 말씀과 나눔이 올라올 때 알려드립니다."
+    ],
+    notes: ["이 안내는 설정 → 안내 → '앱 사용법 다시 보기' 에서 언제든 다시 보실 수 있습니다."]
   }
 ];
 
@@ -169,6 +618,7 @@ export default function AppGuide({ onClose }: Props) {
   };
 
   const s = SLIDES[i];
+  const Mock = s.mock;
 
   return (
     <div className="fixed inset-0 z-[80] bg-[#0C3C2F] flex flex-col text-white">
@@ -182,13 +632,13 @@ export default function AppGuide({ onClose }: Props) {
         </button>
       </div>
 
-      {/* 내용 — 옆으로 밀어 넘긴다 */}
+      {/* 내용 — 옆으로 밀어 넘긴다 (내용이 길면 위아래로 굴려 본다) */}
       <div
-        className="flex-1 flex items-center justify-center px-7 overflow-hidden"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-6 scrollbar-thin"
         style={{ touchAction: "pan-y" }}
         {...swipeHandlers}
       >
-        <div ref={dragRef} className="w-full max-w-md">
+        <div ref={dragRef} className="w-full max-w-md mx-auto pb-2">
           <AnimatePresence mode="wait">
             <motion.div
               key={i}
@@ -197,35 +647,74 @@ export default function AppGuide({ onClose }: Props) {
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: 0.22 }}
             >
-              <div className="w-16 h-16 rounded-3xl bg-[#0F4B3A] flex items-center justify-center mb-6">
-                <s.icon size={30} className="text-white" />
-              </div>
-
-              {s.tab && (
-                <span className="inline-block text-2xs font-black tracking-[0.15em] text-[#FFBA00] mb-2">
+              {s.tab ? (
+                <span className="inline-block text-2xs font-black tracking-[0.15em] text-[#FFBB01] mb-1.5">
                   {s.tab}
                 </span>
+              ) : (
+                <div className="w-14 h-14 rounded-3xl bg-[#0F4B3A] flex items-center justify-center mb-5">
+                  <s.icon size={26} className="text-white" />
+                </div>
               )}
-              <h2 className="text-2xl font-bold leading-snug mb-5">{s.title}</h2>
 
-              <div className="space-y-1.5">
-                {s.lines.map((line, k) =>
-                  line === "" ? (
-                    <div key={k} className="h-2" />
-                  ) : (
-                    <p key={k} className="text-[#D2DED4] leading-relaxed">
-                      {line}
+              <h2 className="text-xl sm:text-2xl font-bold leading-snug mb-4">{s.title}</h2>
+
+              {/* 화면 예시 그림 */}
+              {Mock && (
+                <div className="mb-4">
+                  <Mock />
+                </div>
+              )}
+
+              {/* 그림 위 번호와 짝이 되는 설명 */}
+              {s.pins && (
+                <ol className="space-y-2.5">
+                  {s.pins.map((text, k) => (
+                    <li key={k} className="flex gap-2.5">
+                      <span
+                        className="shrink-0 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[11px] font-black mt-px"
+                        style={{ background: "#FFBB01", color: "#1B4636" }}
+                      >
+                        {k + 1}
+                      </span>
+                      <span className="text-sm text-[#D2DED4] leading-relaxed">{text}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+
+              {/* 인사말 화면 */}
+              {s.lines && (
+                <div className="space-y-1.5">
+                  {s.lines.map((line, k) =>
+                    line === "" ? (
+                      <div key={k} className="h-2" />
+                    ) : (
+                      <p key={k} className="text-[#D2DED4] leading-relaxed">
+                        {line}
+                      </p>
+                    )
+                  )}
+                </div>
+              )}
+
+              {/* 그 밖에 알아 두시면 좋은 것 */}
+              {s.notes && (
+                <div className="mt-4 rounded-2xl bg-[#0F4B3A] px-3.5 py-3 space-y-1.5">
+                  {s.notes.map((note, k) => (
+                    <p key={k} className="text-2xs text-[#BFD3C6] leading-relaxed">
+                      · {note}
                     </p>
-                  )
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
       {/* 아래 — 점과 버튼 */}
-      <div className="shrink-0 px-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-4 space-y-4">
+      <div className="shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 space-y-3 bg-[#0C3C2F]">
         <div className="flex justify-center gap-1.5">
           {SLIDES.map((_, k) => (
             <button
@@ -259,7 +748,7 @@ export default function AppGuide({ onClose }: Props) {
           ) : (
             <button
               onClick={() => go(i + 1)}
-              className="flex-1 py-3.5 rounded-3xl bg-[#FFBA00] text-[#33270A] font-bold flex items-center justify-center gap-1 cursor-pointer"
+              className="flex-1 py-3.5 rounded-3xl bg-[#FFBB01] text-[#33270A] font-bold flex items-center justify-center gap-1 cursor-pointer"
             >
               다음
               <ChevronRight size={18} />
