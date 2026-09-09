@@ -1,39 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { User, Lock, Users, LogOut, Trash2 } from "lucide-react";
-import { SectionLabel, RowGroup, Row, SettingModal } from "./SettingsUI";
-import ProfileModal from "./ProfileModal";
+import { Lock, Trash2 } from "lucide-react";
+import { SettingModal } from "./SettingsUI";
 import { authFetch } from "../lib/session";
 
 /**
- * 설정 화면의 '계정' 묶음.
+ * 계정 관련 팝업 두 가지 — 관리자의 '지체 계정 관리', 지체의 '계정 탈퇴'.
  *
- * 예전에는 이름 바꾸는 폼과 지체 목록이 설정 화면에 통째로 펼쳐져 있어서
- * 화면이 아주 길었다. 이제는 줄만 보이고, 누르면 팝업으로 열린다.
- * 기능은 하나도 빼지 않았다 — 이름·PIN 수정, 관리자의 지체 PIN 변경·계정 삭제, 탈퇴, 로그아웃.
+ * 예전에는 설정 화면 안에 '계정' 묶음이 따로 있었는데,
+ * 내 프로필·비밀번호·로그아웃은 머리말 이름 단추의 차림표에도 똑같이 있어서
+ * 같은 것을 두 곳에서 관리하는 셈이었다. 그래서 계정은 이름 단추 한 곳으로 모았고
+ * (2026-09-10), 설정에만 있던 이 두 가지도 그 차림표에서 열도록 여기로 옮겼다.
+ * 기능은 하나도 빼지 않았다 — 지체 비밀번호 초기화·계정 삭제·탈퇴 그대로다.
  */
 interface Props {
   currentUser: { id: string; name: string; role: "admin" | "member" };
-  onUserUpdate: (user: { id: string; name: string; role: "admin" | "member" }) => void;
+  /** 어느 팝업을 열지 — 아무것도 안 열려 있으면 null */
+  mode: "members" | "leave" | null;
+  onClose: () => void;
   onAccountDeleted: () => void;
-  onLogout: () => void;
 }
 
-export default function AccountSettings({
-  currentUser,
-  onUserUpdate,
-  onAccountDeleted,
-  onLogout
-}: Props) {
-  const [profileMode, setProfileMode] = useState<"profile" | "pin" | null>(null);
-  const [showMembers, setShowMembers] = useState<boolean>(false);
-  const [showLeave, setShowLeave] = useState<boolean>(false);
-
+export default function AccountModals({ currentUser, mode, onClose, onAccountDeleted }: Props) {
   const [allUsers, setAllUsers] = useState<{ id: string; name: string; role: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
   const [editingPinUserId, setEditingPinUserId] = useState<string | null>(null);
   const [adminNewPin, setAdminNewPin] = useState<string>("");
-
-  const isAdmin = currentUser.role === "admin";
 
   const fetchAllUsers = async () => {
     setLoadingUsers(true);
@@ -47,9 +38,10 @@ export default function AccountSettings({
     }
   };
 
+  // 지체 목록은 창을 열 때 불러온다 (설정에 있을 땐 화면이 뜨자마자 불렀다)
   useEffect(() => {
-    if (isAdmin) fetchAllUsers();
-  }, [isAdmin]);
+    if (mode === "members") fetchAllUsers();
+  }, [mode]);
 
   const handleDeleteUser = async (userIdToDelete: string) => {
     const targetUser = allUsers.find((u) => u.id === userIdToDelete);
@@ -111,57 +103,11 @@ export default function AccountSettings({
   };
 
   return (
-    <div>
-      <SectionLabel>계정</SectionLabel>
-      <RowGroup>
-        <Row
-          icon={<User size={17} />}
-          title="내 프로필"
-          sub={`${currentUser.name} · ${isAdmin ? "관리자" : "지체"}`}
-          onClick={() => setProfileMode("profile")}
-        />
-        <Row
-          icon={<Lock size={17} />}
-          title="비밀번호 변경"
-          sub="로그인에 쓰는 숫자 4자리"
-          onClick={() => setProfileMode("pin")}
-        />
-        {isAdmin ? (
-          <Row
-            icon={<Users size={17} />}
-            title="지체 계정 관리"
-            sub={`가입한 지체 ${allUsers.length}명 · 비밀번호 초기화 · 계정 삭제`}
-            badge="관리자"
-            onClick={() => {
-              fetchAllUsers();
-              setShowMembers(true);
-            }}
-          />
-        ) : (
-          <Row
-            icon={<Trash2 size={17} />}
-            title="계정 탈퇴"
-            sub="내 이름을 목록에서 영구히 지웁니다"
-            danger
-            onClick={() => setShowLeave(true)}
-          />
-        )}
-        <Row icon={<LogOut size={17} />} title="로그아웃" onClick={onLogout} chevron={false} />
-      </RowGroup>
-
-      {/* 내 이름 · 비밀번호 */}
-      <ProfileModal
-        open={profileMode !== null}
-        mode={profileMode || "profile"}
-        onClose={() => setProfileMode(null)}
-        currentUser={currentUser}
-        onUserUpdate={onUserUpdate}
-      />
-
+    <>
       {/* 관리자: 지체 계정 관리 */}
       <SettingModal
-        open={showMembers}
-        onClose={() => setShowMembers(false)}
+        open={mode === "members"}
+        onClose={onClose}
         title="지체 계정 관리"
         sub="비밀번호를 잊으신 지체는 여기서 새 번호를 정해 알려드리면 됩니다."
       >
@@ -247,8 +193,8 @@ export default function AccountSettings({
 
       {/* 지체: 탈퇴 */}
       <SettingModal
-        open={showLeave}
-        onClose={() => setShowLeave(false)}
+        open={mode === "leave"}
+        onClose={onClose}
         title="계정 탈퇴"
         sub="탈퇴하시면 로그인 화면의 이름 목록에서 내 이름이 영구히 지워집니다."
       >
@@ -266,6 +212,6 @@ export default function AccountSettings({
           </button>
         </div>
       </SettingModal>
-    </div>
+    </>
   );
 }

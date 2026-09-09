@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette } from "lucide-react";
+import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette, Users, Trash2 } from "lucide-react";
 import BrandMark from "./components/BrandMark";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
@@ -14,7 +14,7 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import InAppBrowserNotice from "./components/InAppBrowserNotice";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
-import AccountSettings from "./components/AccountSettings";
+import AccountModals from "./components/AccountModals";
 import ProfileModal from "./components/ProfileModal";
 import { SectionLabel, RowGroup, Row } from "./components/SettingsUI";
 import ChallengeTab from "./components/ChallengeTab";
@@ -175,6 +175,8 @@ export default function App() {
   const [showAccountMenu, setShowAccountMenu] = useState<boolean>(false);
   /** 내 프로필 · 비밀번호 창 (차림표에서 연다) */
   const [profileMode, setProfileMode] = useState<"profile" | "pin" | null>(null);
+  /* 계정 차림표에서 여는 팝업 — 관리자의 지체 관리, 지체의 탈퇴 */
+  const [accountModal, setAccountModal] = useState<"members" | "leave" | null>(null);
 
   // Prefilled Bible Verse state for writing meditation
   const [prefilledVerse, setPrefilledVerse] = useState<{ title: string; text: string } | null>(null);
@@ -506,24 +508,43 @@ export default function App() {
                       key: "profile",
                       icon: <User size={16} />,
                       label: "내 프로필",
+                      danger: false,
                       run: () => setProfileMode("profile")
                     },
                     {
                       key: "pin",
                       icon: <Lock size={16} />,
                       label: "비밀번호 변경",
+                      danger: false,
                       run: () => setProfileMode("pin")
                     },
+                    currentUser.role === "admin"
+                      ? {
+                          key: "members",
+                          icon: <Users size={16} />,
+                          label: "지체 계정 관리",
+                          danger: false,
+                          run: () => setAccountModal("members")
+                        }
+                      : {
+                          key: "leave",
+                          icon: <Trash2 size={16} />,
+                          label: "계정 탈퇴",
+                          danger: true,
+                          run: () => setAccountModal("leave")
+                        },
                     {
                       key: "switch",
                       icon: <UserCog size={16} />,
                       label: "다른 이름으로 로그인",
+                      danger: false,
                       run: handleSwitchAccount
                     },
                     {
                       key: "logout",
                       icon: <LogOut size={16} />,
                       label: "로그아웃",
+                      danger: false,
                       run: handleLogout
                     }
                   ].map((item) => (
@@ -535,9 +556,11 @@ export default function App() {
                         setShowAccountMenu(false);
                         item.run();
                       }}
-                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-[#14261E] hover:bg-[#F9F9F9] transition cursor-pointer border-t border-[#F2F2F2]"
+                      className={`w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold hover:bg-[#F9F9F9] transition cursor-pointer border-t border-[#F2F2F2] ${
+                        item.danger ? "text-[#B3261E]" : "text-[#14261E]"
+                      }`}
                     >
-                      <span className="text-[#4A6B57] shrink-0">{item.icon}</span>
+                      <span className={`shrink-0 ${item.danger ? "text-[#B3261E]" : "text-[#4A6B57]"}`}>{item.icon}</span>
                       {item.label}
                     </button>
                   ))}
@@ -555,6 +578,18 @@ export default function App() {
         onClose={() => setProfileMode(null)}
         currentUser={currentUser}
         onUserUpdate={handleUserUpdated}
+      />
+
+      {/* 이름 단추에서 여는 지체 계정 관리 · 탈퇴 창 */}
+      <AccountModals
+        currentUser={currentUser}
+        mode={accountModal}
+        onClose={() => setAccountModal(null)}
+        onAccountDeleted={() => {
+          setAccountModal(null);
+          setCurrentUser(null);
+          localStorage.removeItem("bible_med_user");
+        }}
       />
 
       {/* Main Container — 머리말 위로 살짝 겹쳐 올라오는 흰 시트 (시안의 .sheet).
@@ -586,16 +621,6 @@ export default function App() {
             <NotificationSettings currentUser={currentUser} />
 
             <CommunitySettings currentUser={currentUser} onRenamed={setCommunityName} />
-
-            <AccountSettings
-              currentUser={currentUser}
-              onUserUpdate={handleUserUpdated}
-              onAccountDeleted={() => {
-                setCurrentUser(null);
-                localStorage.removeItem("bible_med_user");
-              }}
-              onLogout={handleLogout}
-            />
 
             {/* 꾸미기 — 각자 자기 기기에서 고른다 (다른 분께는 영향이 없다) */}
             <div>
