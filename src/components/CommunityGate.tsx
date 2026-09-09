@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { KeyRound, Church, ArrowLeft, Loader2, Home, X, ChevronRight } from "lucide-react";
+import { Church, ArrowLeft, Loader2, Home, X, ChevronRight } from "lucide-react";
 import BrandMark from "./BrandMark";
 import {
   saveCommunity,
@@ -208,22 +208,6 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
               </p>
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => setMode("join")}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
-                >
-                  <span className="w-[38px] h-[38px] rounded-full bg-[#D2DDD3] text-[#4A6B57] flex items-center justify-center shrink-0">
-                    <KeyRound size={19} />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold text-[#14261E]">가입코드로 들어가기</span>
-                    <span className="block text-2xs text-[#6F8377] mt-0.5">
-                      관리자에게 받은 6자리를 넣습니다
-                    </span>
-                  </span>
-                  <ChevronRight size={17} className="text-[#6F8377] shrink-0" />
-                </button>
-
-                <button
                   onClick={() => setMode("create")}
                   className="w-full flex items-center gap-3 p-3.5 rounded-[18px] bg-[#F9F9F9] hover:bg-[#F0F0F0] transition text-left cursor-pointer"
                 >
@@ -245,14 +229,31 @@ export default function CommunityGate({ onReady, onCancel }: Props) {
               다른 공동체의 묵상·감사·기도제목은 서로 보이지 않습니다. 우리 공동체 안에서만
               나눕니다.
             </p>
+
+            {/*
+              이제는 **초대 링크**를 누르면 코드 없이 바로 그 공동체로 들어간다.
+              코드를 손으로 넣는 길은 링크를 잃어버리셨을 때를 위해 뒤에 남겨 둔다.
+            */}
+            <div className="text-center">
+              <button
+                onClick={() => setMode("join")}
+                className="text-2xs font-semibold text-[#6F8377] hover:text-[#0C3B2E] underline cursor-pointer"
+              >
+                초대 링크 대신 코드를 받으셨나요?
+              </button>
+            </div>
           </div>
         )}
 
         {mode === "join" && (
           <form onSubmit={join} className="space-y-4">
             <div>
+              <p className="text-2xs text-[#6F8377] leading-relaxed bg-[#F9F9F9] rounded-2xl p-3.5 mb-3">
+                초대 <b>링크</b>를 받으셨으면 그 링크를 누르시면 됩니다 — 코드를 넣을 필요가 없습니다.
+                링크가 없을 때만 아래에 여섯 자리를 넣어 주세요.
+              </p>
               <label className="block text-2xs font-bold text-[#6F8377] tracking-[0.08em] mb-2 ml-1.5">
-                가입코드
+                초대 코드
               </label>
               <input
                 value={code}

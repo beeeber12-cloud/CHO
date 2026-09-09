@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  Users2, KeyRound, RefreshCw, ShieldCheck, Shield, Copy, Check, Share2, UserCog
+  Users2, RefreshCw, ShieldCheck, Shield, Copy, Check, Share2, UserCog, UserPlus
 } from "lucide-react";
 import { saveCommunity } from "../lib/session";
 import { SectionLabel, RowGroup, Row, SettingModal } from "./SettingsUI";
@@ -9,10 +9,11 @@ import { SectionLabel, RowGroup, Row, SettingModal } from "./SettingsUI";
  * 우리 공동체 관리.
  *
  * - 모든 지체: 우리 공동체 이름과 인원
- * - 관리자만: 이름 바꾸기, 가입코드 보기·재발급·초대 문구 보내기, 지체 권한
+ * - 관리자만: 이름 바꾸기, 초대 링크 보내기·새로 만들기, 지체 권한
  *
- * 가입코드는 새 지체를 들일 때 알려주는 6자리다.
- * 새어나갔다 싶으면 다시 발급하면 되고, 그 순간 옛 코드는 통하지 않는다.
+ * 새 지체는 **초대 링크**로 부른다 (…/?join=코드). 누르면 바로 우리 공동체 로그인 화면이
+ * 열리므로 코드를 옮겨 적을 일이 없다. 링크 안의 여섯 자리는 평소 감춰 두고,
+ * 링크가 새어나갔을 때만 꺼내 새로 만든다 — 그 순간 옛 링크는 통하지 않는다.
  */
 
 interface Props {
@@ -43,6 +44,8 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   const [showRename, setShowRename] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [showJoinCode, setShowJoinCode] = useState(false);
+  /** 여섯 자리 코드는 평소에 감춰 둔다 (링크를 막을 때만 쓴다) */
+  const [showCode, setShowCode] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
 
   const isAdmin = currentUser.role === "admin";
@@ -107,7 +110,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   };
 
   const regenerate = async () => {
-    if (!confirm("가입코드를 새로 발급하면 지금 코드는 더 이상 쓸 수 없습니다.\n계속할까요?")) return;
+    if (!confirm("초대 링크를 새로 만들면 지금까지 보낸 링크는 더 이상 쓸 수 없습니다.\n계속할까요?")) return;
     setBusy(true);
     setError("");
     try {
@@ -184,9 +187,9 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
 
         {isAdmin && mine.joinCode && (
           <Row
-            icon={<KeyRound size={17} />}
-            title="가입코드 · 초대하기"
-            sub="새 지체를 부를 때 알려주는 6자리"
+            icon={<UserPlus size={17} />}
+            title="초대하기"
+            sub="링크 하나를 보내면 바로 우리 공동체로 들어옵니다"
             badge="관리자"
             onClick={() => setShowJoinCode(true)}
           />
@@ -234,24 +237,10 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
       <SettingModal
         open={showJoinCode}
         onClose={() => setShowJoinCode(false)}
-        title="가입코드 · 초대하기"
-        sub="초대 링크를 눌러 들어오면 코드를 적을 필요가 없습니다. 새어나갔다 싶으면 코드를 새로 발급하세요 — 그 순간 옛 링크는 통하지 않습니다."
+        title="초대하기"
+        sub="이 링크를 카톡으로 보내세요. 누르면 바로 우리 공동체 로그인 화면이 열립니다."
       >
         <div className="space-y-3">
-          <div className="flex items-center gap-2 bg-[#F9F9F9] rounded-2xl px-4 py-3">
-            <span className="flex-1 text-2xl font-bold tracking-[0.3em] text-[#0C3B2E]">
-              {mine.joinCode}
-            </span>
-            <button
-              onClick={regenerate}
-              disabled={busy}
-              className="p-2.5 rounded-2xl bg-white text-[#4A6B57] hover:bg-[#EAEAEA] transition cursor-pointer disabled:opacity-40 shrink-0"
-              title="새로 발급"
-            >
-              <RefreshCw size={18} className={busy ? "animate-spin" : ""} />
-            </button>
-          </div>
-
           {/* 초대 링크 — 눈으로 확인하고 그대로 복사하실 수 있게 */}
           <div className="bg-[#F9F9F9] rounded-2xl px-4 py-3">
             <p className="text-2xs font-bold text-[#6F8377] mb-1">초대 링크</p>
@@ -283,6 +272,43 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
           <pre className="p-3.5 bg-[#F9F9F9] rounded-2xl text-2xs text-[#4A6B57] whitespace-pre-wrap break-all leading-relaxed select-all">
             {inviteText}
           </pre>
+
+          {/*
+            여섯 자리 코드는 이제 링크 안에 들어 있다 — 옮겨 적으실 일이 없다.
+            다만 링크가 새어나갔을 때 **막는 열쇠**라서 없앨 수는 없다.
+            그래서 눈에서만 치우고, 필요할 때 펼쳐 보시게 한다.
+          */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowCode((v) => !v)}
+              className="text-2xs font-bold text-[#6F8377] hover:text-[#0C3B2E] cursor-pointer underline"
+            >
+              {showCode ? "코드 숨기기" : "링크가 새어나갔나요?"}
+            </button>
+
+            {showCode && (
+              <div className="mt-2 bg-[#F9F9F9] rounded-2xl p-3.5 space-y-2.5">
+                <p className="text-2xs text-[#4A6B57] leading-relaxed">
+                  초대 링크에는 아래 여섯 자리가 들어 있습니다. 새로 만들면
+                  <b> 지금까지 보낸 링크는 그 순간부터 막힙니다.</b>
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 text-lg font-bold tracking-[0.3em] text-[#0C3B2E]">
+                    {mine.joinCode}
+                  </span>
+                  <button
+                    onClick={regenerate}
+                    disabled={busy}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white text-[#4A6B57] hover:bg-[#EAEAEA] transition cursor-pointer disabled:opacity-40 shrink-0 text-2xs font-bold"
+                  >
+                    <RefreshCw size={14} className={busy ? "animate-spin" : ""} />
+                    링크 새로 만들기
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </SettingModal>
 
