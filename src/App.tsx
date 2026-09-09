@@ -33,7 +33,7 @@ import {
   savedMode
 } from "./lib/theme";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
-import { useSwipe } from "./lib/useSwipe";
+import { useSwipe, isTypingTarget } from "./lib/useSwipe";
 
 interface UserProfile {
   id: string;
@@ -268,7 +268,13 @@ export default function App() {
         탭까지 같이 넘어가면서 팝업이 닫힌다 — 그래서 바깥에서 온 손짓은 흘려보낸다.
       */
       const fromPopup = !!el && !!viewPortalRef.current && !viewPortalRef.current.contains(el);
-      skipSwipe.current = fromPopup || !!el?.closest?.("[data-no-tab-swipe]");
+      /*
+        글을 쓰는 중이면 화면을 넘기지 않는다.
+        묵상·감사를 쓰다가 손이 옆으로 스치면 쓰던 화면이 넘어가 버렸다.
+        (칸 안에서 시작한 손짓은 useSwipe 가 따로 막고, 여기서는 '쓰는 중' 전체를 막는다)
+      */
+      const typing = isTypingTarget(el) || isTypingTarget(document.activeElement);
+      skipSwipe.current = fromPopup || typing || !!el?.closest?.("[data-no-tab-swipe]");
       if (skipSwipe.current) return;
       rawTabSwipe.swipeHandlers.onTouchStart(e);
     },

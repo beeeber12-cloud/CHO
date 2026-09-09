@@ -27,6 +27,16 @@ const FOLLOW_BLOCKED = 0.12;
 const MAX_FOLLOW = 96;
 const SNAP_BACK = "transform .32s cubic-bezier(.22,1,.36,1)";
 
+/**
+ * 글을 쓰는 칸인지 (또는 그 안인지).
+ * 여기서 시작한 손짓은 넘기기가 아니라 글자를 고르거나 커서를 옮기는 동작이다.
+ */
+export function isTypingTarget(el: EventTarget | null): boolean {
+  const node = el as HTMLElement | null;
+  if (!node || typeof node.closest !== "function") return false;
+  return !!node.closest("input, textarea, select, [contenteditable=''], [contenteditable='true']");
+}
+
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
@@ -64,6 +74,11 @@ export function useSwipe({
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) {
+      start.current = null;
+      return;
+    }
+    // 글쓰기 칸에서 시작한 손짓은 넘기지 않는다 (글자를 고르시는 중이다)
+    if (isTypingTarget(e.target)) {
       start.current = null;
       return;
     }

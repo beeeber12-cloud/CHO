@@ -2771,7 +2771,7 @@ async function startServer() {
           content: content || "",
         };
         saveDb(db);
-        return res.json(db.notices[idx]);
+        return res.json(withVerseText(db.notices[idx]));
       }
     }
 
@@ -2798,7 +2798,7 @@ async function startServer() {
       tag: "notice"
     }).catch((e) => { console.warn("[Push] 공지 알림 실패:", e); return 0; });
 
-    res.json(newNotice);
+    res.json(withVerseText(newNotice));
   });
 
   app.post("/api/notices/:id/read", (req: Request, res: Response) => {
@@ -2823,7 +2823,9 @@ async function startServer() {
     }
 
     saveDb(db);
-    res.json(notice);
+    // 본문은 저장돼 있지 않다 — 내보낼 때 채운다.
+    // (이게 빠져 있어서 '읽었습니다' 를 누르면 말씀이 사라졌다)
+    res.json(withVerseText(notice));
   });
 
   // --- Sok (Small Group) APIs ---
