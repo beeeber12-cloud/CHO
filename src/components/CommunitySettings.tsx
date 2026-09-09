@@ -8,7 +8,7 @@ import { SectionLabel, RowGroup, Row, SettingModal } from "./SettingsUI";
 /**
  * 우리 공동체 관리.
  *
- * - 모든 지체: 우리 공동체 이름과 인원
+ * - 모든 지체: 우리 공동체 이름과 인원, **초대 링크 보내기**
  * - 관리자만: 이름 바꾸기, 초대 링크 보내기·새로 만들기, 지체 권한
  *
  * 새 지체는 **초대 링크**로 부른다 (…/?join=코드). 누르면 바로 우리 공동체 로그인 화면이
@@ -185,12 +185,11 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
           }
         />
 
-        {isAdmin && mine.joinCode && (
+        {mine.joinCode && (
           <Row
             icon={<UserPlus size={17} />}
             title="초대하기"
             sub="링크 하나를 보내면 바로 우리 공동체로 들어옵니다"
-            badge="관리자"
             onClick={() => setShowJoinCode(true)}
           />
         )}
@@ -278,6 +277,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
             다만 링크가 새어나갔을 때 **막는 열쇠**라서 없앨 수는 없다.
             그래서 눈에서만 치우고, 필요할 때 펼쳐 보시게 한다.
           */}
+          {isAdmin && (
           <div className="pt-1">
             <button
               type="button"
@@ -309,6 +309,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
               </div>
             )}
           </div>
+          )}
         </div>
       </SettingModal>
 

@@ -14,8 +14,7 @@ import {
   applyTheme,
   cacheTheme,
   gradientCss,
-  isHex,
-  normalizeTheme
+  isHex
 } from "../lib/theme";
 
 /**
@@ -23,7 +22,9 @@ import {
  *
  * 아래에서 올라오는 창이라 **뒤로 앱이 그대로 보인다** — 색을 고르면 그 자리에서
  * 앱 전체가 바뀌는 것을 눈으로 보며 고를 수 있다.
- * '저장' 을 눌러야 공동체 모두에게 적용된다. 저장 없이 닫으면 원래대로 돌아간다.
+ *
+ * 고른 색은 **이 기기에만** 남는다 (2026-09-10부터). 다른 지체의 화면이나
+ * 다른 공동체에는 아무 영향이 없다. 저장 없이 닫으면 원래대로 돌아간다.
  *
  * 여기서 정하는 것은 **밝은 화면**의 색이다. 어두운 화면(다크)은 눈이 부시지 않게
  * 따로 짜 둔 색을 쓴다 — 그래서 어둡게 쓰는 분이 열면 잠시 밝은 화면으로 보여 드린다.
@@ -38,74 +39,50 @@ import {
  */
 const PRESETS: { name: string; theme: AppTheme }[] = [
   {
-    // #336 — 465062 · DBE2E9 · F5F5F1 · 26D07C
-    name: "민트 그린",
+    // #112 — 2557AB · DCE2E6 · F4F6F7 · FF7F57
+    name: "파랑 오렌지",
     theme: {
-      page: "#F5F5F1",
+      page: "#F4F6F7",
       card: "#FFFFFF",
-      box: "#F0F3F6",
-      soft: "#F6F7F5",
-      mint: "#DBE2E9",
-      line: "#E4E9EE",
-      title: "#34404E",
-      body: "#3A4652",
-      muted: "#6B7885",
-      faint: "#9AA6B2",
-      scripture: "#333B43",
-      accent: "#0F7A4C",
-      accent2: "#16915C",
-      point: "#26D07C",
-      ink: "#232C35",
-      gradMain: { from: "#3B4A5C", to: "#232C35", angle: 135 },
-      gradSub: { from: "#16915C", to: "#0F7A4C", angle: 135 },
+      box: "#EFF2F4",
+      soft: "#F7F9FA",
+      mint: "#DCE2E6",
+      line: "#E4E9EC",
+      title: "#1F3A5F",
+      body: "#22354A",
+      muted: "#6B7A88",
+      faint: "#9CAAB6",
+      scripture: "#333333",
+      accent: "#2557AB",
+      accent2: "#3A6FBF",
+      point: "#FF7F57",
+      ink: "#16283F",
+      gradMain: { from: "#2557AB", to: "#16283F", angle: 135 },
+      gradSub: { from: "#3A6FBF", to: "#2557AB", angle: 135 },
       font: "sans"
     }
   },
   {
-    // #186 — 313D53 · E3E3E3 · F88181 · EDE2C8
-    name: "코랄 크림",
+    // #153 — 393D50 · EDE5D8 · F7F6F4 · F56457
+    name: "코랄 네이비",
     theme: {
-      page: "#FFFFFF",
+      page: "#F7F6F4",
       card: "#FFFFFF",
-      box: "#F6F6F6",
-      soft: "#F7F2E6",
-      mint: "#EDE2C8",
-      line: "#E3E3E3",
-      title: "#313D53",
-      body: "#2C3648",
-      muted: "#6E7787",
-      faint: "#A2AAB8",
+      box: "#F2F1EE",
+      soft: "#EDE5D8",
+      mint: "#E4DACA",
+      line: "#E6E4DF",
+      title: "#393D50",
+      body: "#2F3342",
+      muted: "#71768A",
+      faint: "#A6AAB8",
       scripture: "#333333",
-      accent: "#3A4A66",
-      accent2: "#445576",
-      point: "#F88181",
-      ink: "#1F2836",
-      gradMain: { from: "#3E5070", to: "#232D3E", angle: 135 },
-      gradSub: { from: "#556A8E", to: "#3A4A66", angle: 135 },
-      font: "sans"
-    }
-  },
-  {
-    // #341 — 3F88EB · 404F68 · D1D9DE · 3AAB87
-    name: "바다 파랑",
-    theme: {
-      page: "#F7F9FA",
-      card: "#FFFFFF",
-      box: "#F1F4F6",
-      soft: "#E9EEF1",
-      mint: "#D1D9DE",
-      line: "#E2E8EC",
-      title: "#2F3A4D",
-      body: "#333F52",
-      muted: "#6A7686",
-      faint: "#9AA5B2",
-      scripture: "#333333",
-      accent: "#2F72CF",
-      accent2: "#2E9074",
-      point: "#3F88EB",
-      ink: "#1E2836",
-      gradMain: { from: "#3573C9", to: "#26314A", angle: 135 },
-      gradSub: { from: "#2E9074", to: "#1F6B57", angle: 135 },
+      accent: "#4A4F66",
+      accent2: "#5A6076",
+      point: "#F56457",
+      ink: "#232637",
+      gradMain: { from: "#454A63", to: "#232637", angle: 135 },
+      gradSub: { from: "#5A6076", to: "#393D50", angle: 135 },
       font: "sans"
     }
   },
@@ -130,6 +107,30 @@ const PRESETS: { name: string; theme: AppTheme }[] = [
       ink: "#2E2A24",
       gradMain: { from: "#6B8391", to: "#37434C", angle: 135 },
       gradSub: { from: "#8AA0AD", to: "#5A7180", angle: 135 },
+      font: "sans"
+    }
+  },
+  {
+    // #108 — 334E4C · FFE074 · 31A78F · D5DDDF
+    name: "청록 노랑",
+    theme: {
+      page: "#F5F8F8",
+      card: "#FFFFFF",
+      box: "#EFF3F3",
+      soft: "#E9EEEE",
+      mint: "#D5DDDF",
+      line: "#E1E8E8",
+      title: "#334E4C",
+      body: "#2C4340",
+      muted: "#6A807E",
+      faint: "#9BAEAC",
+      scripture: "#333333",
+      accent: "#1F7F6B",
+      accent2: "#268D77",
+      point: "#FFE074",
+      ink: "#223A38",
+      gradMain: { from: "#334E4C", to: "#1B2E2C", angle: 135 },
+      gradSub: { from: "#268D77", to: "#1F7F6B", angle: 135 },
       font: "sans"
     }
   }
@@ -280,26 +281,17 @@ export default function ThemeStudio({
     onClose();
   };
 
-  const save = async () => {
+  /** 고른 색을 이 기기에 남긴다 (서버로 보내지 않는다 — 내 화면만 바뀐다) */
+  const save = () => {
     setSaving(true);
     setMessage("");
     try {
-      const res = await fetch("/api/theme", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft)
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "저장하지 못했습니다.");
-      }
-      const applied = normalizeTheme(await res.json());
-      cacheTheme(applied);
-      onSaved(applied);
-      applyTheme(applied, false);
-      setMessage("공동체 모두에게 적용되었습니다.");
-    } catch (e: any) {
-      setMessage(e?.message || "저장하지 못했습니다.");
+      cacheTheme(draft);
+      onSaved(draft);
+      applyTheme(draft, false);
+      setMessage("이 기기에 저장했습니다.");
+    } catch {
+      setMessage("저장하지 못했습니다. 기기 설정에서 저장이 막혀 있을 수 있습니다.");
     } finally {
       setSaving(false);
     }
@@ -386,7 +378,7 @@ export default function ThemeStudio({
                   <p className={`text-2xs ${UI.muted} mt-0.5`}>
                     {dark
                       ? "어두운 화면은 따로 짜 둔 색을 씁니다 — 지금은 밝은 화면으로 보여 드립니다"
-                      : "고르는 즉시 뒤 화면이 바뀝니다 · 저장해야 모두에게 적용됩니다"}
+                      : "고르는 즉시 뒤 화면이 바뀝니다 · 내 기기에서만 바뀝니다"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">

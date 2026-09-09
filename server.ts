@@ -2171,13 +2171,17 @@ async function startServer() {
     if (!community) return res.status(404).json({ error: "공동체를 찾을 수 없습니다." });
 
     const db = loadStore(community.id);
-    const isAdmin = (db.users || []).find((u) => u.id === me.uid)?.role === "admin";
     res.json({
       id: community.id,
       name: community.name,
       memberCount: (db.users || []).length,
       createdAt: community.createdAt,
-      joinCode: isAdmin ? community.joinCode : undefined
+      /*
+        초대는 **우리 공동체 지체 누구나** 할 수 있다 (2026-09-10).
+        이 코드는 초대 링크에 실려 나가는 열쇠라, 이미 우리 안에 계신 분께는
+        숨길 이유가 없다. 링크를 새로 만들어 옛 링크를 막는 일만 관리자 몫으로 남긴다.
+      */
+      joinCode: community.joinCode
     });
   });
 

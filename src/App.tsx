@@ -22,15 +22,13 @@ import AppGuide, { guideSeen } from "./components/AppGuide";
 import ThemeStudio from "./components/ThemeStudio";
 import ScreenModeSetting from "./components/ScreenModeSetting";
 import {
+  APP_DEFAULT_THEME,
   AppTheme,
-  DEFAULT_THEME,
   ThemeMode,
   applyTheme,
-  cacheTheme,
   cachedTheme,
   effectiveTheme,
   isDarkNow,
-  normalizeTheme,
   saveMode,
   savedMode
 } from "./lib/theme";
@@ -124,12 +122,11 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
 
   /**
-   * 앱 색.
-   * - theme  : 관리자가 정한 공동체 색 (밝은 화면에 쓴다)
-   * - mode   : 이 기기에서 밝게/어둡게/기기 설정 따름
-   * 어두운 화면은 눈이 부시지 않게 따로 짜 둔 색(DARK_THEME)을 쓴다.
+   * 앱 색 — **이 기기에서만** 쓰는 내 색이다.
+   * 내가 고른 색은 내 휴대폰에만 남고, 다른 지체나 다른 공동체에는 영향이 없다.
+   * 고른 적이 없으면 기본색으로 본다.
    */
-  const [theme, setTheme] = useState<AppTheme>(() => cachedTheme() || DEFAULT_THEME);
+  const [theme, setTheme] = useState<AppTheme>(() => cachedTheme() || APP_DEFAULT_THEME);
   const [mode, setMode] = useState<ThemeMode>(() => savedMode());
   const [themeOpen, setThemeOpen] = useState<boolean>(false);
 
@@ -151,19 +148,6 @@ export default function App() {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, [mode, theme]);
-
-  useEffect(() => {
-    fetch("/api/theme")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((raw) => {
-        const next = raw ? normalizeTheme(raw) : DEFAULT_THEME;
-        setTheme(next);
-        cacheTheme(raw ? next : null);
-      })
-      .catch(() => {
-        // 연결이 안 되면 기억해 둔 색 그대로 쓴다
-      });
-  }, [currentUser?.id]);
 
   const changeMode = (m: ThemeMode) => {
     saveMode(m);
@@ -607,21 +591,18 @@ export default function App() {
               onLogout={handleLogout}
             />
 
-            {/* 꾸미기 — 관리자가 정하면 공동체 모두의 앱 색이 바뀐다 */}
-            {currentUser.role === "admin" && (
-              <div>
-                <SectionLabel>꾸미기</SectionLabel>
-                <RowGroup>
-                  <Row
-                    icon={<Palette size={17} />}
-                    title="앱 색 꾸미기"
-                    sub="상자 · 글씨 · 그라데이션 색을 직접 고릅니다"
-                    badge="관리자"
-                    onClick={() => setThemeOpen(true)}
-                  />
-                </RowGroup>
-              </div>
-            )}
+            {/* 꾸미기 — 각자 자기 기기에서 고른다 (다른 분께는 영향이 없다) */}
+            <div>
+              <SectionLabel>꾸미기</SectionLabel>
+              <RowGroup>
+                <Row
+                  icon={<Palette size={17} />}
+                  title="앱 색 꾸미기"
+                  sub="상자 · 글씨 · 그라데이션 색을 직접 고릅니다 · 내 기기에서만"
+                  onClick={() => setThemeOpen(true)}
+                />
+              </RowGroup>
+            </div>
 
             {/* 안내 */}
             <div>

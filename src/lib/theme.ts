@@ -9,8 +9,9 @@
  * 이렇게 하면 그 색을 쓰는 모든 자리가 한 번에 바뀐다.
  * 같은 뜻으로 쓰이던 비슷한 색들(연한 면 예닐곱 가지 등)은 한 갈래로 묶었다.
  *
- * - 관리자가 저장한 색은 서버에 남아 **공동체 모두**의 앱에 적용된다 (밝은 화면).
- * - 어둡게(다크)는 **기기마다 각자** 고른다. 어둡게로 두면 아래 DARK_THEME 을 쓴다.
+ * - 색은 **기기마다 각자** 고른다 (2026-09-10부터). 내가 고른 색은 내 기기에만 남고
+ *   다른 지체·다른 공동체에는 아무 영향이 없다. 고르지 않으면 APP_DEFAULT_THEME.
+ * - 어둡게(다크)도 기기마다 각자. 어둡게로 두면 아래 DARK_THEME 을 쓴다.
  *
  * ⚠️ 화면 코드의 색 값을 바꾸면 아래 ROLE_HEXES 도 함께 고쳐야 한다.
  *    안 그러면 그 색만 꾸미기·다크에서 안 바뀐다.
@@ -398,6 +399,7 @@ export function effectiveTheme(community: AppTheme, mode: ThemeMode): AppTheme {
 export function bootTheme(): void {
   const mode = savedMode();
   const dark = isDarkNow(mode);
-  const t = dark ? DARK_THEME : cachedTheme();
-  if (t) applyTheme(t, dark);
+  // 고른 색이 없으면 기본색으로 시작한다 (기본색이 곧 지금 앱의 모습이다)
+  const t = dark ? DARK_THEME : cachedTheme() || APP_DEFAULT_THEME;
+  applyTheme(t, dark);
 }
