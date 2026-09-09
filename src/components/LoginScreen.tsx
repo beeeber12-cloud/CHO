@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { User } from "../types";
-import { Lock, UserPlus, ShieldAlert, CheckCircle2, ChevronDown } from "lucide-react";
+import { Lock, UserPlus, ShieldAlert, CheckCircle2, ChevronDown, Church } from "lucide-react";
 import { motion } from "motion/react";
 import BrandMark from "./BrandMark";
 import { saveToken, getCommunity, saveCommunity, clearToken, StoredCommunity } from "../lib/session";
+import { takeInvitedName } from "../lib/invite";
 import CommunityGate from "./CommunityGate";
 
 interface LoginScreenProps {
@@ -27,6 +28,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   // 지금 보고 있는 공동체. 기기에 기억된 것이 없으면 서버가 기본 공동체를 알려준다.
   const [community, setCommunity] = useState<{ id: string; name: string; requiresJoinCode?: boolean } | null>(null);
   const [showGate, setShowGate] = useState<boolean>(false);
+  /** 초대 링크로 들어오신 경우 — 어느 공동체인지 한 번 알려 드린다 */
+  const [invitedTo] = useState<string>(() => takeInvitedName());
   const [regSuccess, setRegSuccess] = useState<string>("");
 
   useEffect(() => {
@@ -206,6 +209,22 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
       {/* 흰 시트 — 머리말 위로 살짝 올라온다 (앱 안쪽 화면과 같은 짜임) */}
       <main className="relative z-10 -mt-[22px] flex-1 bg-white rounded-t-[26px] w-full max-w-md mx-auto px-[22px] pt-7 pb-10">
+        {/* 초대 링크로 들어오셨으면 어느 공동체인지 먼저 알려 드린다.
+            (코드를 옮겨 적을 필요 없이 이미 그 공동체 문 앞에 서 계신 것이다) */}
+        {invitedTo && (
+          <div className="mb-4 bg-[#E8F0E9] p-3.5 rounded-2xl flex items-start gap-2">
+            <Church className="shrink-0 mt-px text-[#0C3B2E]" size={16} />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[#0C3B2E]">
+                {invitedTo} 공동체에 초대되셨습니다
+              </p>
+              <p className="text-2xs text-[#4A6B57] mt-0.5 leading-relaxed">
+                처음이시면 아래 <b>처음 오셨나요? 새 식구 등록하기</b> 로 이름을 만들어 주세요.
+              </p>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="mb-4 bg-[#FDF3F3] p-3.5 rounded-2xl text-xs font-semibold text-[#8F1E17] flex items-start gap-2">
             <ShieldAlert className="shrink-0 mt-px" size={15} />

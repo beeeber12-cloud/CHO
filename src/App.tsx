@@ -11,6 +11,7 @@ import BibleQnA from "./components/BibleQnA";
 import NotificationSettings from "./components/NotificationSettings";
 import MyMeditations from "./components/MyMeditations";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import InAppBrowserNotice from "./components/InAppBrowserNotice";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
 import AccountSettings from "./components/AccountSettings";
@@ -417,6 +418,7 @@ export default function App() {
     return (
       <>
         <LoginScreen onLoginSuccess={handleLoginSuccess} />
+        <InAppBrowserNotice />
         <PWAInstallPrompt />
       </>
     );
@@ -425,6 +427,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
       <PWAInstallPrompt />
+      <InAppBrowserNotice />
       {/* 처음 오신 분께 탭을 하나씩 소개한다 (건너뛸 수 있다) */}
       {guideOpen && (
         <AppGuide onClose={() => setGuideOpen(false)} />

@@ -47,12 +47,18 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
 
   const isAdmin = currentUser.role === "admin";
 
-  /** 카카오톡 등에 그대로 붙여넣을 수 있는 초대 문구 (주소 + 코드) */
+/**
+   * 초대 링크 — 이 주소를 누르면 **바로 우리 공동체 로그인 화면**이 열린다.
+   * 가입코드를 옮겨 적을 필요가 없다 (코드는 링크 안에 들어 있다).
+   */
+  const inviteLink = mine ? `${window.location.origin}/?join=${mine.joinCode}` : "";
+
+  /** 카카오톡에 그대로 붙여넣는 초대 문구 */
   const inviteText = mine
     ? `${mine.name} 말씀나눔에 초대합니다.\n\n` +
-      `${window.location.origin}\n\n` +
-      `가입코드: ${mine.joinCode}\n` +
-      `('다른 공동체로 들어가기' 를 누르고 코드를 넣어주세요)`
+      `아래 링크를 누르면 바로 들어오실 수 있어요.\n` +
+      `${inviteLink}\n\n` +
+      `휴대폰 홈 화면에 앱처럼 두시려면, 링크를 연 뒤 화면에 뜨는 '설치' 안내를 따라주세요.`
     : "";
 
   const load = async () => {
@@ -229,7 +235,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
         open={showJoinCode}
         onClose={() => setShowJoinCode(false)}
         title="가입코드 · 초대하기"
-        sub="주소와 코드가 함께 복사됩니다. 새어나갔다 싶으면 새로 발급하시면 됩니다 — 그 순간 옛 코드는 통하지 않습니다."
+        sub="초대 링크를 눌러 들어오면 코드를 적을 필요가 없습니다. 새어나갔다 싶으면 코드를 새로 발급하세요 — 그 순간 옛 링크는 통하지 않습니다."
       >
         <div className="space-y-3">
           <div className="flex items-center gap-2 bg-[#F9F9F9] rounded-2xl px-4 py-3">
@@ -244,6 +250,14 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
             >
               <RefreshCw size={18} className={busy ? "animate-spin" : ""} />
             </button>
+          </div>
+
+          {/* 초대 링크 — 눈으로 확인하고 그대로 복사하실 수 있게 */}
+          <div className="bg-[#F9F9F9] rounded-2xl px-4 py-3">
+            <p className="text-2xs font-bold text-[#6F8377] mb-1">초대 링크</p>
+            <p className="text-xs font-semibold text-[#0C3B2E] break-all select-all leading-relaxed">
+              {inviteLink}
+            </p>
           </div>
 
           <div className="flex gap-2">
