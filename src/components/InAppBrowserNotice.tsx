@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Smartphone } from "lucide-react";
 import {
@@ -17,6 +17,16 @@ import {
  * (넘어가면 그 화면에 설치 안내가 저절로 뜬다)
  */
 
+function Hint() {
+  const [head, menu] = externalHint().split("→");
+  return (
+    <p className="text-2xs text-[#A8B3A9] mt-1.5 leading-snug break-keep">
+      {head.trim()}
+      {menu ? <span className="whitespace-nowrap"> → {menu.trim()}</span> : null}
+    </p>
+  );
+}
+
 const HIDE_KEY = "inappNoticeHiddenAt";
 const HIDE_HOURS = 12;
 
@@ -31,7 +41,32 @@ export default function InAppBrowserNotice() {
     }
   });
 
-  if (!app || isStandalone() || closed) return null;
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const showing = !!app && !isStandalone() && !closed;
+
+  useLayoutEffect(() => {
+    if (!showing) return;
+    const el = boxRef.current;
+    if (!el) return;
+
+    const push = () => {
+      document.body.style.paddingTop = Math.ceil(el.getBoundingClientRect().height) + "px";
+    };
+    push();
+
+    // 글씨 크기·기기 방향이 바뀌면 높이도 달라진다
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(push) : null;
+    ro?.observe(el);
+    window.addEventListener("resize", push);
+
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", push);
+      document.body.style.paddingTop = "";
+    };
+  }, [showing]);
+
+  if (!showing) return null;
 
   const where =
     app === "kakao"
@@ -60,6 +95,7 @@ export default function InAppBrowserNotice() {
   return (
     <AnimatePresence>
       <motion.div
+        ref={boxRef}
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
@@ -71,10 +107,10 @@ export default function InAppBrowserNotice() {
           </span>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#0C3B2E] leading-snug">
+            <p className="text-sm font-bold text-[#0C3B2E] leading-snug break-keep">
               {where}에서는 설치가 안 됩니다
             </p>
-            <p className="text-2xs text-[#6F8377] mt-1 leading-relaxed">
+            <p className="text-2xs text-[#6F8377] mt-1 leading-relaxed break-keep">
               브라우저로 열면 홈 화면에 설치됩니다.
             </p>
 
@@ -87,10 +123,10 @@ export default function InAppBrowserNotice() {
                 >
                   브라우저로 열기
                 </button>
-                <p className="text-2xs text-[#A8B3A9] mt-1.5 leading-snug">{externalHint()}</p>
+                <Hint />
               </div>
             ) : (
-              <p className="text-2xs text-[#A8B3A9] mt-1.5 leading-snug">{externalHint()}</p>
+              <Hint />
             )}
           </div>
 
