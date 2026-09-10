@@ -33,14 +33,14 @@ export default function PickedVerseBar({ count, onClear, onWrite }: Props) {
             className="fixed left-3 right-3 z-[45] bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] md:bottom-6"
           >
             <div className="max-w-md mx-auto grad-forest text-white rounded-3xl shadow-2xl pl-4 pr-2 py-2 flex items-center justify-between gap-2">
-              <span className="text-sm font-bold whitespace-nowrap">{count}구절 고름</span>
+              <span className="text-sm font-bold whitespace-nowrap">{count}구절 체크</span>
 
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={onClear}
                   className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition cursor-pointer"
-                  aria-label="고른 구절 지우기"
+                  aria-label="체크한 구절 지우기"
                 >
                   <X size={16} />
                 </button>

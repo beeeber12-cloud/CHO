@@ -1041,21 +1041,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 />
               </div>
 
-              {/* 구절을 고르면 안내 + 해제 */}
-              {pickedVerses.size > 0 && (
-                <div className="flex items-center justify-between gap-2 bg-[#FFF6DC] rounded-3xl px-3.5 py-2.5">
-                  <span className="text-xs font-bold text-[#0C3B2E]">
-                    {pickedVerses.size}개 구절을 골랐어요
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setPickedVerses(new Map())}
-                    className="text-xs font-bold text-[#6F8377] hover:text-[#0C3B2E] cursor-pointer"
-                  >
-                    선택 해제
-                  </button>
-                </div>
-              )}
+              {/* 고른 구절 안내와 해제는 아래 막대가 맡는다 */}
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-[#E3E9E2]">
@@ -1102,18 +1088,14 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     </button>
                   )}
 
-                  {onSelectVerseForMeditation && (
+                  {onSelectVerseForMeditation && pickedVerses.size === 0 && (
                     <button
                       type="button"
                       onClick={writeWithPicked}
                       className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-1.5 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={14} />
-                      <span>
-                        {pickedVerses.size > 0
-                          ? `고른 ${pickedVerses.size}구절로 묵상 쓰기`
-                          : "이 말씀으로 내 묵상 쓰기"}
-                      </span>
+                      <span>이 말씀으로 내 묵상 쓰기</span>
                     </button>
                   )}
                 </div>
