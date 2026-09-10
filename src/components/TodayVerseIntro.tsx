@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronRight, Clock } from "lucide-react";
 
 /**
  * 하루에 처음 앱을 여실 때 딱 한 번 뜨는 화면.
@@ -8,6 +8,11 @@ import { BookOpen, ChevronRight } from "lucide-react";
  * 처음 오신 분이 막히는 곳은 기능이 아니라 **"지금 뭘 눌러야 하지"** 다.
  * 그래서 앱을 열면 다른 것보다 먼저 **오늘 함께 읽을 말씀**을 알려 드리고,
  * 누르면 그대로 오늘말씀 화면으로 들어간다.
+ *
+ * 오늘 말씀이 아직 없으면 **지난 말씀을 오늘 것처럼 보여 주지 않는다.**
+ * (서버는 오늘 것이 없으면 가장 최근 공지를 대신 내어 준다 — 그대로 믿으면
+ *  어제 말씀이 '오늘 함께 읽을 말씀' 으로 뜬다) 그때는 아직 전이라고 알려 드리고,
+ * 관리자께는 올리러 가시라고 청한다.
  *
  * 안내는 스스로 사라져야 한다 —
  * 하루에 한 번만 뜨고(이 기기 기준), 이미 읽음 표시를 하셨으면 뜨지 않는다.
@@ -29,6 +34,15 @@ function markSeen(date: string): void {
     localStorage.setItem(SEEN_KEY, date);
   } catch {
     // 무시 — 이번 한 번은 닫히는 것만으로 충분하다
+  }
+}
+
+/** 한국 날짜 "2026-09-11" — 기기 시계가 어느 나라에 맞춰져 있어도 우리 기준으로 본다 */
+function todayInKorea(): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+  } catch {
+    return "";
   }
 }
 
@@ -60,7 +74,7 @@ function firstVerse(text?: string): string {
 }
 
 interface Props {
-  currentUser: { id: string; name: string };
+  currentUser: { id: string; name: string; role?: "admin" | "member" };
   /** 튜토리얼처럼 먼저 봐야 할 것이 떠 있으면 미룬다 */
   enabled?: boolean;
   /** 눌러서 들어가면 — 오늘말씀 화면으로 */
@@ -89,20 +103,24 @@ export default function TodayVerseIntro({
   replay = 0
 }: Props) {
   const [notice, setNotice] = useState<TodayNotice | null>(null);
+  /** 오늘 말씀이 아직 안 올라온 날 */
+  const [pending, setPending] = useState<boolean>(false);
   const [done, setDone] = useState<boolean>(false);
   /** 설정에서 일부러 부르셨는가 (그때는 '오늘 봤음' 을 따지지 않는다) */
   const [forced, setForced] = useState<boolean>(false);
+  /**
+   * 딱지에 뭐라고 쓸지 — 공동체가 통독을 어떤 방식으로 하느냐에 따라 다르다.
+   * 리딩지저스 통독표를 따르는 중이면 그 이름을 그대로 쓴다.
+   */
+  const [label, setLabel] = useState<string>("오늘 나눌 말씀");
+
+  const isAdmin = currentUser.role === "admin";
 
   useEffect(() => {
     if (replay <= 0) return;
     setForced(true);
     setDone(false);
   }, [replay]);
-  /**
-   * 딱지에 뭐라고 쓸지 — 공동체가 통독을 어떤 방식으로 하느냐에 따라 다르다.
-   * 리딩지저스 통독표를 따르는 중이면 그 이름을 그대로 쓴다.
-   */
-  const [label, setLabel] = useState<string>("오늘 나눌 말씀");
 
   useEffect(() => {
     let alive = true;
@@ -129,11 +147,27 @@ export default function TodayVerseIntro({
         const res = await fetch("/api/notices/today");
         if (!res.ok) return;
         const data = await res.json();
-        if (!alive || !data || !data.id) return;
-        // 오늘 이미 봤거나, 이미 읽으셨으면 띄우지 않는다 (다시 보기는 예외)
-        if (!forced && seenOn(data.date)) return;
-        if (!forced && (data.readBy || []).includes(currentUser.id)) return;
-        setNotice(data);
+        if (!alive) return;
+
+        const today = todayInKorea();
+        // 서버는 오늘 것이 없으면 지난 공지를 대신 내어 준다 — 날짜로 가려낸다
+        const isToday = !!data && !!data.id && (!today || data.date === today);
+
+        if (isToday) {
+          // 오늘 이미 봤거나, 이미 읽으셨으면 띄우지 않는다 (다시 보기는 예외)
+          if (!forced && seenOn(data.date)) return;
+          if (!forced && (data.readBy || []).includes(currentUser.id)) return;
+          setPending(false);
+          setNotice(data);
+          return;
+        }
+
+        // 아직 오늘 말씀이 없는 날.
+        // 이때는 '오늘 봤음' 으로 적어두지 않는다 — 조금 뒤에 올라오면
+        // 다시 여실 때 진짜 말씀을 보셔야 하기 때문이다.
+        if (!forced && seenOn(today)) return;
+        setNotice(null);
+        setPending(true);
       } catch {
         // 말씀을 못 받아오면 조용히 넘어간다 — 평소 화면이 먼저다
       }
@@ -144,22 +178,25 @@ export default function TodayVerseIntro({
     };
   }, [enabled, done, forced, currentUser.id]);
 
-  const open = enabled && !!notice && !done;
+  const open = enabled && (!!notice || pending) && !done;
 
   useEffect(() => {
     onOpenChange?.(open);
   }, [open, onOpenChange]);
 
   const enter = () => {
+    // 말씀이 올라온 날만 '오늘 봤음' 으로 적는다
     if (notice) markSeen(notice.date);
     setForced(false);
     setDone(true);
     onEnter();
   };
 
+  const dateLine = koreanDate(notice ? notice.date : todayInKorea());
+
   return (
     <AnimatePresence>
-      {open && notice && (
+      {open && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -177,54 +214,78 @@ export default function TodayVerseIntro({
             onClick={enter}
             className="relative z-10 w-full h-full flex flex-col items-center justify-between px-7 text-center cursor-pointer pt-[calc(env(safe-area-inset-top)+2.75rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]"
           >
-            <span className="text-2xs font-medium text-white/50">{koreanDate(notice.date)}</span>
+            <span className="text-2xs font-medium text-white/50">{dateLine}</span>
 
             <span className="flex flex-col items-center gap-5">
-            <motion.span
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08, duration: 0.3 }}
-              className="text-2xs font-bold px-3 py-1.5 rounded-full"
-              style={{ background: C.gold, color: C.onGold }}
-            >
-              {label}
-            </motion.span>
-
-            <motion.span
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.16, duration: 0.34 }}
-              className="block"
-            >
-              <span className="block text-sm text-white/80 break-keep">
-                {currentUser.name}님, 오늘 함께 읽을 말씀은
-              </span>
-              <span
-                className="block text-3xl sm:text-4xl font-bold mt-3 leading-tight break-keep"
-                style={{ color: C.gold }}
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08, duration: 0.3 }}
+                className="text-2xs font-bold px-3 py-1.5 rounded-full"
+                style={
+                  notice
+                    ? { background: C.gold, color: C.onGold }
+                    : { background: "rgba(255,255,255,0.18)", color: "#FFFFFF" }
+                }
               >
-                {notice.verseTitle}
-              </span>
-              <span className="block text-lg font-bold text-white mt-2">입니다</span>
+                {notice ? label : "아직 오늘 말씀 전"}
+              </motion.span>
 
-              {/* 본문 첫 구절 한 줄 — 무슨 말씀인지 미리 마음에 얹어 드린다 */}
-              {firstVerse(notice.verseText) && (
-                <span className="scripture-font block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
-                  “{firstVerse(notice.verseText)}”
-                </span>
-              )}
-            </motion.span>
+              <motion.span
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16, duration: 0.34 }}
+                className="block"
+              >
+                {notice ? (
+                  <>
+                    <span className="block text-sm text-white/80 break-keep">
+                      {currentUser.name}님, 오늘 함께 읽을 말씀은
+                    </span>
+                    <span
+                      className="block text-3xl sm:text-4xl font-bold mt-3 leading-tight break-keep"
+                      style={{ color: C.gold }}
+                    >
+                      {notice.verseTitle}
+                    </span>
+                    <span className="block text-lg font-bold text-white mt-2">입니다</span>
 
-            <motion.span
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.26, duration: 0.34 }}
-              className="mt-3 flex items-center gap-2 bg-white text-[#12503B] px-6 py-3.5 rounded-3xl text-base font-bold shadow-xl"
-            >
-              <BookOpen size={18} />
-              말씀 보러 가기
-              <ChevronRight size={18} />
-            </motion.span>
+                    {/* 본문 첫 구절 한 줄 — 무슨 말씀인지 미리 마음에 얹어 드린다 */}
+                    {firstVerse(notice.verseText) && (
+                      <span className="scripture-font block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
+                        “{firstVerse(notice.verseText)}”
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className="block text-sm text-white/80 break-keep">
+                      {currentUser.name}님,
+                    </span>
+                    <span className="block text-2xl sm:text-3xl font-bold mt-3 leading-snug break-keep text-white">
+                      오늘 함께 읽을 말씀이
+                      <br />
+                      아직 올라오지 않았어요
+                    </span>
+                    <span className="block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
+                      {isAdmin
+                        ? "지체들이 기다리고 있습니다. 오늘 말씀을 올려 주세요."
+                        : "곧 올라옵니다. 먼저 성경통독을 이어 가셔도 좋습니다."}
+                    </span>
+                  </>
+                )}
+              </motion.span>
+
+              <motion.span
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.26, duration: 0.34 }}
+                className="mt-3 flex items-center gap-2 bg-white text-[#12503B] px-6 py-3.5 rounded-3xl text-base font-bold shadow-xl"
+              >
+                {notice ? <BookOpen size={18} /> : <Clock size={18} />}
+                {notice ? "말씀 보러 가기" : isAdmin ? "오늘 말씀 올리러 가기" : "둘러보기"}
+                <ChevronRight size={18} />
+              </motion.span>
             </span>
 
             <span className="text-2xs text-white/60">화면 아무 곳이나 누르셔도 됩니다</span>
