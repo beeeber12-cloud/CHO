@@ -36,7 +36,27 @@ interface TodayNotice {
   id: string;
   date: string;
   verseTitle: string;
+  verseText?: string;
   readBy?: string[];
+}
+
+/** "9월 11일 금요일" */
+function koreanDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return `${Number(m[2])}월 ${Number(m[3])}일 ${weekdays[d.getDay()]}요일`;
+}
+
+/** 본문 첫 구절만 한 줄로 (절 번호는 떼고, 너무 길면 줄인다) */
+function firstVerse(text?: string): string {
+  const line = (text || "")
+    .split("\n")
+    .map((l) => l.replace(/^\s*\d+\s*/, "").trim())
+    .find((l) => l.length > 0);
+  if (!line) return "";
+  return line.length > 52 ? line.slice(0, 52).trim() + "…" : line;
 }
 
 interface Props {
@@ -140,8 +160,11 @@ export default function TodayVerseIntro({
           <button
             type="button"
             onClick={enter}
-            className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-5 px-7 text-center cursor-pointer"
+            className="relative z-10 w-full h-full flex flex-col items-center justify-between px-7 text-center cursor-pointer pt-[calc(env(safe-area-inset-top)+2.75rem)] pb-[calc(env(safe-area-inset-bottom)+2rem)]"
           >
+            <span className="text-2xs font-medium text-white/50">{koreanDate(notice.date)}</span>
+
+            <span className="flex flex-col items-center gap-5">
             <motion.span
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -168,6 +191,13 @@ export default function TodayVerseIntro({
                 {notice.verseTitle}
               </span>
               <span className="block text-lg font-bold text-white mt-2">입니다</span>
+
+              {/* 본문 첫 구절 한 줄 — 무슨 말씀인지 미리 마음에 얹어 드린다 */}
+              {firstVerse(notice.verseText) && (
+                <span className="scripture-font block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
+                  “{firstVerse(notice.verseText)}”
+                </span>
+              )}
             </motion.span>
 
             <motion.span
@@ -180,6 +210,7 @@ export default function TodayVerseIntro({
               말씀 보러 가기
               <ChevronRight size={18} />
             </motion.span>
+            </span>
 
             <span className="text-2xs text-white/60">화면 아무 곳이나 누르셔도 됩니다</span>
           </button>
