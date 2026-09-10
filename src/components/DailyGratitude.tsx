@@ -401,6 +401,7 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                   text={grat.content}
                   names={memberNames}
                   className="text-sm text-[#14261E] leading-relaxed whitespace-pre-line"
+                  embedVideo
                 />
 
                 {/* Footer Actions */}

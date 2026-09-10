@@ -9,6 +9,8 @@ import { enablePush, isPushEnabled } from "../lib/push";
 import ReactionBar from "./ReactionBar";
 import CollapsibleText from "./CollapsibleText";
 import MentionText from "./MentionText";
+import YouTubeCard from "./YouTubeCard";
+import { youtubeIdsIn } from "../lib/links";
 import MentionPicker from "./MentionPicker";
 import { appendMention } from "../lib/mentions";
 import { splitLeadingVerses } from "../lib/verseRef";
@@ -869,6 +871,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   )}
                 </CollapsibleText>
 
+                {/* 붙여 넣으신 찬양·설교 영상은 여기서 바로 재생된다 (접히는 상자 밖에 둔다) */}
+                {youtubeIdsIn(medBody).slice(0, 2).map((vid) => (
+                  <YouTubeCard key={vid} id={vid} />
+                ))}
 
                 {/* 기도제목 */}
                 {med.prayer && (
