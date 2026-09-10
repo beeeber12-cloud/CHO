@@ -445,7 +445,7 @@ export default function App() {
       <TodayVerseIntro
         currentUser={currentUser}
         enabled={!guideOpen}
-        onEnter={() => openTab('notice')}
+        onEnter={(tab) => openTab(tab)}
         onOpenChange={setIntroOpen}
         replay={introReplay}
       />

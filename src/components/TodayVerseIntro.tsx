@@ -77,8 +77,8 @@ interface Props {
   currentUser: { id: string; name: string; role?: "admin" | "member" };
   /** 튜토리얼처럼 먼저 봐야 할 것이 떠 있으면 미룬다 */
   enabled?: boolean;
-  /** 눌러서 들어가면 — 오늘말씀 화면으로 */
-  onEnter: () => void;
+  /** 눌러서 들어가면 — 어느 화면으로 갈지 함께 알린다 */
+  onEnter: (tab: "notice" | "bible") => void;
   /** 떠 있는 동안에는 다른 안내가 겹치지 않게 알려 준다 */
   onOpenChange?: (open: boolean) => void;
   /**
@@ -184,12 +184,19 @@ export default function TodayVerseIntro({
     onOpenChange?.(open);
   }, [open, onOpenChange]);
 
+  /**
+   * 말씀이 올라온 날은 오늘말씀으로.
+   * 아직 안 올라온 날은 — 관리자께는 올리실 수 있는 오늘말씀으로,
+   * 지체께는 지금 하실 수 있는 성경통독으로 모신다.
+   */
+  const goTo: "notice" | "bible" = notice || isAdmin ? "notice" : "bible";
+
   const enter = () => {
     // 말씀이 올라온 날만 '오늘 봤음' 으로 적는다
     if (notice) markSeen(notice.date);
     setForced(false);
     setDone(true);
-    onEnter();
+    onEnter(goTo);
   };
 
   const dateLine = koreanDate(notice ? notice.date : todayInKorea());
@@ -260,17 +267,17 @@ export default function TodayVerseIntro({
                 ) : (
                   <>
                     <span className="block text-sm text-white/80 break-keep">
-                      {currentUser.name}님,
+                      {isAdmin ? "관리자님," : `${currentUser.name}님,`}
                     </span>
                     <span className="block text-2xl sm:text-3xl font-bold mt-3 leading-snug break-keep text-white">
-                      오늘 함께 읽을 말씀이
+                      오늘의 말씀이
                       <br />
-                      아직 올라오지 않았어요
+                      설정되지 않았습니다
                     </span>
                     <span className="block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
                       {isAdmin
                         ? "지체들이 기다리고 있습니다. 오늘 말씀을 올려 주세요."
-                        : "곧 올라옵니다. 먼저 성경통독을 이어 가셔도 좋습니다."}
+                        : "관리자님의 설정을 기다리고 있습니다."}
                     </span>
                   </>
                 )}
@@ -283,7 +290,7 @@ export default function TodayVerseIntro({
                 className="mt-3 flex items-center gap-2 bg-white text-[#12503B] px-6 py-3.5 rounded-3xl text-base font-bold shadow-xl"
               >
                 {notice ? <BookOpen size={18} /> : <Clock size={18} />}
-                {notice ? "말씀 보러 가기" : isAdmin ? "오늘 말씀 올리러 가기" : "둘러보기"}
+                {notice ? "말씀 보러 가기" : isAdmin ? "오늘 말씀 올리러 가기" : "성경통독으로 바로가기"}
                 <ChevronRight size={18} />
               </motion.span>
             </span>
