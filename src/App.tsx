@@ -123,6 +123,8 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
   /** 하루 첫 접속 때 뜨는 '오늘 함께 읽을 말씀' 화면이 떠 있는가 */
   const [introOpen, setIntroOpen] = useState<boolean>(false);
+  /** 설정에서 '오늘 첫 화면 다시 보기' 를 누른 횟수 (바뀔 때마다 한 번 더 뜬다) */
+  const [introReplay, setIntroReplay] = useState<number>(0);
 
   /**
    * 앱 색 — **이 기기에서만** 쓰는 내 색이다.
@@ -445,6 +447,7 @@ export default function App() {
         enabled={!guideOpen}
         onEnter={() => openTab('notice')}
         onOpenChange={setIntroOpen}
+        replay={introReplay}
       />
 
       {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
@@ -653,6 +656,15 @@ export default function App() {
             <div>
               <SectionLabel>안내</SectionLabel>
               <RowGroup>
+                <Row
+                  icon={<BookOpen size={17} />}
+                  title="오늘 첫 화면 다시 보기"
+                  sub="하루에 한 번 뜨는 '오늘 함께 읽을 말씀' 화면을 지금 봅니다"
+                  onClick={() => {
+                    setShowSettings(false);
+                    setIntroReplay((v) => v + 1);
+                  }}
+                />
                 <Row
                   icon={<HelpCircle size={17} />}
                   title="앱 사용법 다시 보기"

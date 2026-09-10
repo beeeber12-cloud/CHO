@@ -67,6 +67,11 @@ interface Props {
   onEnter: () => void;
   /** 떠 있는 동안에는 다른 안내가 겹치지 않게 알려 준다 */
   onOpenChange?: (open: boolean) => void;
+  /**
+   * '다시 보기' — 이 숫자가 바뀔 때마다 한 번 더 띄운다.
+   * 오늘 이미 보셨거나 읽음 표시를 하셨어도 그때는 띄운다 (일부러 부르신 것이니).
+   */
+  replay?: number;
 }
 
 /** 앱 색을 그대로 따른다 (튜토리얼과 같은 방식) */
@@ -80,10 +85,19 @@ export default function TodayVerseIntro({
   currentUser,
   enabled = true,
   onEnter,
-  onOpenChange
+  onOpenChange,
+  replay = 0
 }: Props) {
   const [notice, setNotice] = useState<TodayNotice | null>(null);
   const [done, setDone] = useState<boolean>(false);
+  /** 설정에서 일부러 부르셨는가 (그때는 '오늘 봤음' 을 따지지 않는다) */
+  const [forced, setForced] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (replay <= 0) return;
+    setForced(true);
+    setDone(false);
+  }, [replay]);
   /**
    * 딱지에 뭐라고 쓸지 — 공동체가 통독을 어떤 방식으로 하느냐에 따라 다르다.
    * 리딩지저스 통독표를 따르는 중이면 그 이름을 그대로 쓴다.
@@ -116,9 +130,9 @@ export default function TodayVerseIntro({
         if (!res.ok) return;
         const data = await res.json();
         if (!alive || !data || !data.id) return;
-        // 오늘 이미 봤거나, 이미 읽으셨으면 띄우지 않는다
-        if (seenOn(data.date)) return;
-        if ((data.readBy || []).includes(currentUser.id)) return;
+        // 오늘 이미 봤거나, 이미 읽으셨으면 띄우지 않는다 (다시 보기는 예외)
+        if (!forced && seenOn(data.date)) return;
+        if (!forced && (data.readBy || []).includes(currentUser.id)) return;
         setNotice(data);
       } catch {
         // 말씀을 못 받아오면 조용히 넘어간다 — 평소 화면이 먼저다
@@ -128,7 +142,7 @@ export default function TodayVerseIntro({
     return () => {
       alive = false;
     };
-  }, [enabled, done, currentUser.id]);
+  }, [enabled, done, forced, currentUser.id]);
 
   const open = enabled && !!notice && !done;
 
@@ -138,6 +152,7 @@ export default function TodayVerseIntro({
 
   const enter = () => {
     if (notice) markSeen(notice.date);
+    setForced(false);
     setDone(true);
     onEnter();
   };
