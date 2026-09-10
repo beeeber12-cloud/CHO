@@ -27,6 +27,8 @@ function stripInviteFromUrl(): void {
     const url = new URL(window.location.href);
     url.searchParams.delete("join");
     url.searchParams.delete("invite");
+    // 카카오톡에게 건네는 쪽지였을 뿐 — 들어오고 나면 주소에 남길 이유가 없다
+    url.searchParams.delete("openExternalBrowser");
     window.history.replaceState({}, "", url.pathname + (url.search || "") + url.hash);
   } catch {
     // 무시 — 주소가 조금 지저분해질 뿐이다

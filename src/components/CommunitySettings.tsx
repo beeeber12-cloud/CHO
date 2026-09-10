@@ -54,7 +54,13 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
    * 초대 링크 — 이 주소를 누르면 **바로 우리 공동체 로그인 화면**이 열린다.
    * 가입코드를 옮겨 적을 필요가 없다 (코드는 링크 안에 들어 있다).
    */
-  const inviteLink = mine ? `${window.location.origin}/?join=${mine.joinCode}` : "";
+  /*
+    openExternalBrowser=1 — 카카오톡·라인이 자기 안에서 열지 않고
+    기기의 기본 브라우저로 바로 넘겨 준다 (설치는 브라우저에서만 되기 때문이다)
+  */
+  const inviteLink = mine
+    ? `${window.location.origin}/?join=${mine.joinCode}&openExternalBrowser=1`
+    : "";
 
   /** 카카오톡에 그대로 붙여넣는 초대 문구 */
   const inviteText = mine
