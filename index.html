@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>말씀나눔 - 성경 묵상 공유</title>
     <link rel="manifest" href="/manifest.json" />
+
+    <script>
+      // 설치 신호는 화면이 그려지기도 전에, 딱 한 번만 온다 — 여기서 붙잡아 둔다.
+      window.__installPromptEvent = null;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__installPromptEvent = e;
+        window.dispatchEvent(new Event('cho:installready'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__installPromptEvent = null;
+      });
+    </script>
     <meta name="theme-color" content="#14603F" />
 
     <!-- 브라우저 탭/즐겨찾기 아이콘 -->
@@ -36,7 +49,10 @@
         // 새 버전이 적용되면 화면을 한 번 자동으로 새로 고친다.
         // 어르신들이 '껐다 켜기'를 여러 번 하지 않아도 업데이트가 바로 보이게 한다.
         var __reloadedForUpdate = false;
+        // 처음 들어온 사람은 갈아탈 옛 버전이 없다 (그런데도 claim 때문에 신호가 온다)
+        var __hadController = !!navigator.serviceWorker.controller;
         navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (!__hadController) return;      // 첫 방문에는 새로고침하지 않는다
           if (__reloadedForUpdate) return;   // 새로고침이 반복되지 않도록
           __reloadedForUpdate = true;
           window.location.reload();

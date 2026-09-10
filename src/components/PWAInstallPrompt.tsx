@@ -42,6 +42,21 @@ export default function PWAInstallPrompt() {
     };
     window.addEventListener("beforeinstallprompt", handler);
 
+    /*
+      설치 신호는 화면이 그려지기 전에 이미 왔을 수 있다.
+      index.html 이 먼저 붙잡아 두므로 (window.__installPromptEvent),
+      여기서는 그것을 집어 오기만 하면 된다. 아직 안 왔으면 알려 줄 때 받는다.
+    */
+    const stash = () => (window as any).__installPromptEvent as BeforeInstallPromptEvent | null;
+    const pickUp = () => {
+      const saved = stash();
+      if (!saved) return;
+      setDeferredPrompt(saved);
+      setVisible(true);
+    };
+    pickUp();
+    window.addEventListener("cho:installready", pickUp);
+
     // iOS 사파리: 설치 이벤트가 없으므로 수동 안내
     if (isIos && isSafari) {
       setShowIosGuide(true);
@@ -54,6 +69,7 @@ export default function PWAInstallPrompt() {
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("cho:installready", pickUp);
       window.removeEventListener("appinstalled", installedHandler);
     };
   }, []);
@@ -73,6 +89,8 @@ export default function PWAInstallPrompt() {
     const choice = await deferredPrompt.userChoice;
     if (choice.outcome === "accepted") setVisible(false);
     setDeferredPrompt(null);
+    // 한 번 쓴 신호는 다시 쓸 수 없다
+    (window as any).__installPromptEvent = null;
   };
 
   if (!visible) return null;
@@ -110,7 +128,8 @@ export default function PWAInstallPrompt() {
               <button
                 type="button"
                 onClick={install}
-                className="mt-2 inline-flex items-center gap-1.5 bg-[#0C3B2E] hover:bg-[#072A20] text-white font-bold text-xs px-3.5 py-1.5 rounded-3xl transition cursor-pointer shadow-sm"
+                // 카드와 같은 초록이라 단추가 보이지 않았다 — 금색으로 도드라지게 한다
+                className="mt-2 inline-flex items-center gap-1.5 bg-[#FFBA00] hover:brightness-105 text-[#4A3600] font-bold text-xs px-4 py-2 rounded-3xl transition cursor-pointer shadow-sm"
               >
                 <Download size={14} />
                 <span>앱 설치하기</span>
