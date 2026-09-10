@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ExternalLink, X, Smartphone } from "lucide-react";
+import { X, Smartphone } from "lucide-react";
 import {
   canOpenExternally,
   externalHint,
@@ -71,25 +71,26 @@ export default function InAppBrowserNotice() {
           </span>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#0C3B2E]">
-              {where} 안에서는 앱 설치가 안 됩니다
+            <p className="text-sm font-bold text-[#0C3B2E] leading-snug">
+              {where}에서는 설치가 안 됩니다
             </p>
-            <p className="text-2xs text-[#6F8377] mt-0.5 leading-relaxed">
-              브라우저로 열면 홈 화면에 앱처럼 설치하실 수 있습니다.
-              {canOpenExternally() ? "" : ` ${externalHint()}`}
+            <p className="text-2xs text-[#6F8377] mt-1 leading-relaxed">
+              브라우저로 열면 홈 화면에 설치됩니다.
             </p>
 
-            {canOpenExternally() && (
-              <div className="flex items-center gap-2 mt-2.5">
+            {canOpenExternally() ? (
+              <div className="mt-2.5">
                 <button
                   type="button"
                   onClick={openInExternalBrowser}
-                  className="grad-forest flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-white text-xs font-bold cursor-pointer hover:brightness-110"
+                  className="grad-forest w-full py-2.5 rounded-2xl text-white text-sm font-bold cursor-pointer hover:brightness-110 whitespace-nowrap"
                 >
-                  <ExternalLink size={14} /> 브라우저로 열기
+                  브라우저로 열기
                 </button>
-                <span className="text-2xs text-[#A8B3A9] leading-snug min-w-0">{externalHint()}</span>
+                <p className="text-2xs text-[#A8B3A9] mt-1.5 leading-snug">{externalHint()}</p>
               </div>
+            ) : (
+              <p className="text-2xs text-[#A8B3A9] mt-1.5 leading-snug">{externalHint()}</p>
             )}
           </div>
 

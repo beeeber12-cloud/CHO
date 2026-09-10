@@ -179,7 +179,7 @@ export function canOpenExternally(): boolean {
 /** 손으로 여실 때의 안내 문구 */
 export function externalHint(): string {
   const app = inAppBrowser();
-  if (app === "kakao") return "안 열리면 오른쪽 아래 ⋮ 를 누르고 '다른 브라우저로 열기' 를 골라주세요.";
-  if (isIos()) return "오른쪽 아래 ⋯ 를 누르고 'Safari로 열기' 를 골라주세요.";
-  return "안 열리면 오른쪽 위 ⋮ 를 누르고 '다른 브라우저로 열기' 를 골라주세요.";
+  if (app === "kakao") return "안 열리면 오른쪽 아래 ⋮ → '다른 브라우저로 열기'";
+  if (isIos()) return "오른쪽 아래 ⋯ → 'Safari로 열기'";
+  return "안 열리면 오른쪽 위 ⋮ → '다른 브라우저로 열기'";
 }
