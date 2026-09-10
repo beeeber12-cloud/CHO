@@ -606,7 +606,9 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         </button>
         <button
           onClick={() => setShowJournal(true)}
-          className="grad-teal flex-1 flex items-center justify-center gap-1.5 text-white font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
+          // 진한 단추가 둘이면 무엇이 먼저인지 안 보인다.
+          // 여기서 먼저 하실 일은 '묵상 나누기' 이므로 일기는 한 톤 연하게 둔다.
+          className="bg-[#F1F4EE] hover:bg-[#E7ECE2] flex-1 flex items-center justify-center gap-1.5 text-[#2F5D4A] font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap"
         >
           <Lock size={15} />
           {possessiveTitle(currentUser.name, "영성일기")}
