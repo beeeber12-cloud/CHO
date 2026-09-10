@@ -64,6 +64,27 @@ export default function TodayVerseIntro({
 }: Props) {
   const [notice, setNotice] = useState<TodayNotice | null>(null);
   const [done, setDone] = useState<boolean>(false);
+  /**
+   * 딱지에 뭐라고 쓸지 — 공동체가 통독을 어떤 방식으로 하느냐에 따라 다르다.
+   * 리딩지저스 통독표를 따르는 중이면 그 이름을 그대로 쓴다.
+   */
+  const [label, setLabel] = useState<string>("오늘 나눌 말씀");
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/bible-plan")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!alive || !d) return;
+        if (d.active && d.mode === "readingJesus") setLabel("리딩지저스");
+      })
+      .catch(() => {
+        // 못 받아오면 평소 이름 그대로 둔다
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!enabled || done) return;
@@ -128,7 +149,7 @@ export default function TodayVerseIntro({
               className="text-2xs font-bold px-3 py-1.5 rounded-full"
               style={{ background: C.gold, color: C.onGold }}
             >
-              관리자가 정한 오늘의 말씀
+              {label}
             </motion.span>
 
             <motion.span
