@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette, Users, Trash2 } from "lucide-react";
+import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette, Users, Trash2, Download } from "lucide-react";
 import BrandMark from "./components/BrandMark";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
@@ -125,6 +125,8 @@ export default function App() {
   const [introOpen, setIntroOpen] = useState<boolean>(false);
   /** 설정에서 '오늘 첫 화면 다시 보기' 를 누른 횟수 (바뀔 때마다 한 번 더 뜬다) */
   const [introReplay, setIntroReplay] = useState<number>(0);
+  /** 설정에서 '앱 설치하는 법' 을 누른 횟수 (닫아 두었어도 다시 뜬다) */
+  const [installReplay, setInstallReplay] = useState<number>(0);
 
   /**
    * 앱 색 — **이 기기에서만** 쓰는 내 색이다.
@@ -416,14 +418,14 @@ export default function App() {
       <>
         <LoginScreen onLoginSuccess={handleLoginSuccess} />
         <InAppBrowserNotice />
-        <PWAInstallPrompt />
+        <PWAInstallPrompt replay={installReplay} />
       </>
     );
   }
 
   return (
     <div className="min-h-screen bg-white text-[#14261E] pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10 font-sans">
-      <PWAInstallPrompt />
+      <PWAInstallPrompt replay={installReplay} />
       <InAppBrowserNotice />
       {/* 처음 오신 분께 탭을 하나씩 소개한다 (건너뛸 수 있다) */}
       {guideOpen && (
@@ -656,6 +658,15 @@ export default function App() {
             <div>
               <SectionLabel>안내</SectionLabel>
               <RowGroup>
+                <Row
+                  icon={<Download size={17} />}
+                  title="앱 설치하는 법"
+                  sub="홈 화면에 아이콘으로 두고 앱처럼 쓰는 방법을 알려 드립니다"
+                  onClick={() => {
+                    setShowSettings(false);
+                    setInstallReplay((v) => v + 1);
+                  }}
+                />
                 <Row
                   icon={<BookOpen size={17} />}
                   title="오늘 첫 화면 다시 보기"
