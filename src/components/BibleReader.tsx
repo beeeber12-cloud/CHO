@@ -6,6 +6,8 @@ import ModalPortal from "./ModalPortal";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
+import CoachMark from "./CoachMark";
+import PickedVerseBar from "./PickedVerseBar";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
@@ -692,6 +694,16 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /** 고른 구절(없으면 본문 앞부분)을 묵상 쓰기로 넘긴다 — 아래 단추와 막대가 함께 쓴다 */
+  const writeWithPicked = () => {
+    if (!result || !onSelectVerseForMeditation) return;
+    const picked = buildPickedText();
+    // 장까지 함께 남긴다 ("마가복음 1장 3,5절")
+    const refs = buildVerseReference(result.reference, pickedVerses.keys());
+    // 지금 보고 있는 번역본을 그대로 넘긴다
+    onSelectVerseForMeditation(refs, picked || (versionPanes[0]?.text || result.text).slice(0, 200));
+  };
+
   const { swipeHandlers, justSwiped, dragRef } = useSwipe({
     onSwipeLeft: () => goToChapter(nextTarget, 1),
     onSwipeRight: () => goToChapter(prevTarget, -1),
@@ -1004,6 +1016,31 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 </div>
               </div>
 
+              {/* 고른 구절이 있는 동안 화면 아래에 떠 있는 막대 */}
+              {onSelectVerseForMeditation && (
+                <PickedVerseBar
+                  count={pickedVerses.size}
+                  onClear={() => setPickedVerses(new Map())}
+                  onWrite={writeWithPicked}
+                />
+              )}
+
+              {/* 처음 오신 분께 한 번만 — 옆으로 밀면 장이 넘어간다는 것 */}
+              <div className="relative h-0">
+                <CoachMark
+                  id="bible-swipe"
+                  show={!loading && !!result}
+                  gesture="swipe"
+                  className="absolute bottom-3 left-0 right-0"
+                  text={
+                    <>
+                      손가락으로 <b style={{ color: "#FFD470" }}>옆으로 밀면</b> 다음 장으로
+                      넘어갑니다
+                    </>
+                  }
+                />
+              </div>
+
               {/* 구절을 고르면 안내 + 해제 */}
               {pickedVerses.size > 0 && (
                 <div className="flex items-center justify-between gap-2 bg-[#FFF6DC] rounded-3xl px-3.5 py-2.5">
@@ -1068,17 +1105,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {onSelectVerseForMeditation && (
                     <button
                       type="button"
-                      onClick={() => {
-                        // 고른 구절이 있으면 그것만, 없으면 본문 앞부분을 넘긴다
-                        const picked = buildPickedText();
-                        // 장까지 함께 남긴다 ("마가복음 1장 3,5절")
-                        const refs = buildVerseReference(result.reference, pickedVerses.keys());
-                        onSelectVerseForMeditation(
-                          refs,
-                          // 지금 보고 있는 번역본을 그대로 넘긴다
-                          picked || (versionPanes[0]?.text || result.text).slice(0, 200)
-                        );
-                      }}
+                      onClick={writeWithPicked}
                       className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-1.5 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={14} />

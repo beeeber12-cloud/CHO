@@ -1323,3 +1323,39 @@ Firestore 의 `communities/{id}` 문서에서 **theme 칸 하나만** merge 로 
   묶었다. '다른 브라우저로 / 열기' 처럼 갈라지면 글이 잘린 것처럼 보인다.
 
 확인: 412 · 360 · 320px 에서 잘리는 글자 없음, 카드 아래로 앱 화면이 밀려 내려옴.
+
+## 처음 오신 분을 위한 세 가지 (2026-09-10)
+
+시안(claude.ai/code/artifact/c940ec3e-…)의 1·3·4번을 넣었다.
+**처음 오신 분이 막히는 곳은 기능이 아니라 "지금 뭘 눌러야 하지" 다.**
+
+**① 오늘 함께 읽을 말씀 카드** — `src/components/TodayVerseCard.tsx`
+
+- 오늘말씀이 **아닌** 화면 맨 위에 뜬다. 누르면 곧장 오늘말씀으로 넘어간다.
+- 튜토리얼과 같은 차림 — 그라데이션 바탕(`--u-grad-main`)에 포인트색 딱지
+  ("관리자가 정한 오늘의 말씀"), 구절명은 포인트색 굵은 글씨.
+- **읽음 표시를 하시면 사라진다.** 오늘말씀에서 읽음을 누르면
+  `cho:notice-read`(= `NOTICE_READ_EVENT`) 를 쏘고, 카드가 그때 다시 확인한다.
+- `App.tsx` 에서는 자리에서 빼지 않고 `hidden` 으로만 감춘다 — 탭을 오갈 때마다
+  다시 불러오지 않기 위해서다.
+
+**③ 그 자리에서 한 번만 뜨는 손가락 안내** — `src/components/CoachMark.tsx`
+
+- 두 곳: 성경통독 `bible-swipe`(옆으로 밀면 장이 넘어간다), 오늘말씀 `notice-pick`
+  (절을 누르면 그 구절만 골라 묵상을 쓴다).
+- 기억은 `localStorage["coach:<id>"]`. 누르거나 12초가 지나면 사라지고 다시 안 뜬다.
+- 손가락 동그라미는 `.coach-finger` / `.coach-tap` (index.css). 움직임 줄이기 설정 존중.
+- **본문 상자를 감싸지 않는다** — 상자 바로 뒤에 높이 0인 `relative` 칸을 두고
+  그 안에서 `absolute` 로 띄운다. 장 넘기기 손짓 배선(`data-no-tab-swipe`,
+  `swipeHandlers`, `dragRef`)은 손대지 않았다.
+
+**④ 고른 구절 막대** — `src/components/PickedVerseBar.tsx`
+
+- 첫 구절을 고르는 순간 화면 아래에서 올라온다. 훑어 내려도 따라온다.
+- `ModalPortal` 로 body 에 그린다 — 탭 전환에 걸린 transform 때문에 그냥 두면
+  `fixed` 가 화면이 아니라 탭 내용을 기준으로 잡힌다.
+- 하단 탭 바(z-50) 보다 낮은 z-45, `bottom: env(safe-area-inset-bottom)+4.75rem`.
+- 오늘말씀·성경통독이 함께 쓴다. 두 곳의 묵상 쓰기 로직은 `writeWithPicked()` 하나로
+  묶어 단추와 막대가 같은 길을 쓴다.
+
+확인: 가짜 응답으로 띄워 카드·안내·막대를 눈으로 봄 (실서버 자료는 건드리지 않았다).

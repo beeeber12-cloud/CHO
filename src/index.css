@@ -90,6 +90,32 @@
   .grad-forest-sheen { animation: none; }
   .grad-forest-sheen::after { display: none; }
 }
+/* 처음 오신 분께 보여 드리는 손가락 안내의 동그라미.
+   옆으로 미는 동작은 좌우로 오가고, 누르는 동작은 콩콩 뛴다. */
+.coach-finger,
+.coach-tap {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: rgba(47, 115, 88, 0.22);
+  box-shadow: inset 0 0 0 2px #2F7358;
+}
+.coach-finger { animation: coach-swipe 2.8s ease-in-out infinite; }
+.coach-tap { animation: coach-tap 1.8s ease-in-out infinite; }
+@keyframes coach-swipe {
+  0%, 10% { transform: translateX(46px); opacity: 0; }
+  22% { opacity: 1; }
+  72% { transform: translateX(-46px); opacity: 1; }
+  100% { transform: translateX(-46px); opacity: 0; }
+}
+@keyframes coach-tap {
+  0%, 100% { transform: scale(0.86); opacity: 0.55; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-finger, .coach-tap { animation: none; opacity: 1; transform: none; }
+}
+
 /* 청록 그라데이션 — "구약", 보조 행동 버튼에 사용 */
 .grad-teal {
   background-image: linear-gradient(135deg, #2B8577, #195C50);

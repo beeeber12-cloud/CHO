@@ -23,6 +23,9 @@ import { READING_JESUS_TITLE } from "../data/readingJesus";
 import { motion, AnimatePresence } from "motion/react";
 import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
+import CoachMark from "./CoachMark";
+import PickedVerseBar from "./PickedVerseBar";
+import { NOTICE_READ_EVENT } from "./TodayVerseCard";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
@@ -336,6 +339,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       if (res.ok) {
         const updatedNotice = await res.json();
         setNotice(updatedNotice);
+        // 다른 화면 위의 '오늘 함께 읽을 말씀' 카드도 같이 사라지도록 알린다
+        window.dispatchEvent(new Event(NOTICE_READ_EVENT));
       }
     } catch (err) {
       console.error("Failed to toggle read status:", err);
@@ -378,6 +383,16 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     } finally {
       setSubmitting(false);
     }
+  };
+
+  /** 고른 구절(없으면 본문 앞부분)을 묵상 쓰기로 넘긴다 — 아래 단추와 막대가 함께 쓴다 */
+  const writeWithPicked = () => {
+    if (!notice || !onSelectVerseForMeditation) return;
+    const picked = buildPickedText();
+    // 장까지 함께 남긴다 ("마가복음 1장 3,5절")
+    const ref = buildVerseReference(notice.verseTitle, pickedVerses.keys());
+    // 지금 보고 있는 번역본을 그대로 넘긴다
+    onSelectVerseForMeditation(ref, picked || (noticePanes[0]?.text || notice.verseText).slice(0, 200));
   };
 
   const hasRead = notice?.readBy.includes(currentUser.id) || false;
@@ -705,6 +720,31 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 />
               </div>
 
+              {/* 고른 구절이 있는 동안 화면 아래에 떠 있는 막대 */}
+              {onSelectVerseForMeditation && (
+                <PickedVerseBar
+                  count={pickedVerses.size}
+                  onClear={() => setPickedVerses(new Map())}
+                  onWrite={writeWithPicked}
+                />
+              )}
+
+              {/* 처음 오신 분께 한 번만 — 절을 눌러 고를 수 있다는 것 */}
+              <div className="relative h-0">
+                <CoachMark
+                  id="notice-pick"
+                  show={noticePanes.length > 0}
+                  gesture="tap"
+                  className="absolute bottom-3 left-0 right-0"
+                  text={
+                    <>
+                      마음에 닿는 <b style={{ color: "#FFD470" }}>절을 누르면</b> 그 구절만 골라
+                      묵상을 쓸 수 있습니다
+                    </>
+                  }
+                />
+              </div>
+
               {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
               {onSelectVerseForMeditation && (
                 <div className="mt-4 pt-3 border-t border-[#E3E9E2] flex items-center justify-between gap-2 flex-wrap">
@@ -725,16 +765,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                     )}
                     <button
                       type="button"
-                      onClick={() => {
-                        const picked = buildPickedText();
-                        // 장까지 함께 남긴다 ("마가복음 1장 3,5절")
-                        const ref = buildVerseReference(notice.verseTitle, pickedVerses.keys());
-                        // 지금 보고 있는 번역본을 그대로 넘긴다
-                        onSelectVerseForMeditation(
-                          ref,
-                          picked || (noticePanes[0]?.text || notice.verseText).slice(0, 200)
-                        );
-                      }}
+                      onClick={writeWithPicked}
                       className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={13} />

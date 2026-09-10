@@ -12,6 +12,7 @@ import NotificationSettings from "./components/NotificationSettings";
 import MyMeditations from "./components/MyMeditations";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import InAppBrowserNotice from "./components/InAppBrowserNotice";
+import TodayVerseCard from "./components/TodayVerseCard";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
 import AccountModals from "./components/AccountModals";
@@ -688,6 +689,16 @@ export default function App() {
           })}
         </div>
 
+
+        {/*
+          오늘 함께 읽을 말씀 — 어느 화면에 계시든 눈에 띄게 알려 드리고,
+          누르면 곧장 오늘말씀으로 넘어간다. 읽음 표시를 하시면 스스로 사라진다.
+          (오늘말씀 화면에서는 필요 없으므로 감춘다 — 자리에서 빼지 않고 감추기만 해
+           탭을 오갈 때마다 다시 불러오지 않는다)
+        */}
+        <div className={activeTab === 'notice' ? "hidden" : "mb-3.5"}>
+          <TodayVerseCard currentUser={currentUser} onOpen={() => openTab('notice')} />
+        </div>
 
         {/* Selected View Window */}
         <div
