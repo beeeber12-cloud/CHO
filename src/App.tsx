@@ -12,7 +12,7 @@ import NotificationSettings from "./components/NotificationSettings";
 import MyMeditations from "./components/MyMeditations";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import InAppBrowserNotice from "./components/InAppBrowserNotice";
-import TodayVerseCard from "./components/TodayVerseCard";
+import TodayVerseIntro from "./components/TodayVerseIntro";
 import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
 import AccountModals from "./components/AccountModals";
@@ -121,6 +121,8 @@ export default function App() {
   const [challengeOn, setChallengeOn] = useState<boolean>(false);
   /** 처음 들어오신 분께 보여드리는 앱 사용 안내 */
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
+  /** 하루 첫 접속 때 뜨는 '오늘 함께 읽을 말씀' 화면이 떠 있는가 */
+  const [introOpen, setIntroOpen] = useState<boolean>(false);
 
   /**
    * 앱 색 — **이 기기에서만** 쓰는 내 색이다.
@@ -434,9 +436,20 @@ export default function App() {
         onSaved={setTheme}
       />
 
+      {/*
+        하루에 처음 여실 때, 다른 것보다 먼저 오늘 함께 읽을 말씀을 알려 드린다.
+        누르면 그대로 오늘말씀 화면으로 들어간다. (튜토리얼이 떠 있으면 미룬다)
+      */}
+      <TodayVerseIntro
+        currentUser={currentUser}
+        enabled={!guideOpen}
+        onEnter={() => openTab('notice')}
+        onOpenChange={setIntroOpen}
+      />
+
       {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
           안내를 보는 동안에는 겹치지 않게 미뤄 둔다 */}
-      {!guideOpen && <GoalSummaryPopup currentUser={currentUser} />}
+      {!guideOpen && !introOpen && <GoalSummaryPopup currentUser={currentUser} />}
       {/* Dynamic Header — 공동체 이름만 담백하게, 계정 관련은 톱니(설정)로 옮겼다.
           시안처럼 아래 흰 시트가 이 머리말 위로 겹쳐 올라와야 하므로 sticky 를 쓰지 않는다
           (sticky + z-40 이면 머리말이 시트 위에 그려져 겹침이 안 보인다) */}
@@ -689,16 +702,6 @@ export default function App() {
           })}
         </div>
 
-
-        {/*
-          오늘 함께 읽을 말씀 — 어느 화면에 계시든 눈에 띄게 알려 드리고,
-          누르면 곧장 오늘말씀으로 넘어간다. 읽음 표시를 하시면 스스로 사라진다.
-          (오늘말씀 화면에서는 필요 없으므로 감춘다 — 자리에서 빼지 않고 감추기만 해
-           탭을 오갈 때마다 다시 불러오지 않는다)
-        */}
-        <div className={activeTab === 'notice' ? "hidden" : "mb-3.5"}>
-          <TodayVerseCard currentUser={currentUser} onOpen={() => openTab('notice')} />
-        </div>
 
         {/* Selected View Window */}
         <div

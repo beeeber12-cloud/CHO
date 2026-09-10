@@ -25,7 +25,6 @@ import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
 import CoachMark from "./CoachMark";
 import PickedVerseBar from "./PickedVerseBar";
-import { NOTICE_READ_EVENT } from "./TodayVerseCard";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
@@ -339,8 +338,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       if (res.ok) {
         const updatedNotice = await res.json();
         setNotice(updatedNotice);
-        // 다른 화면 위의 '오늘 함께 읽을 말씀' 카드도 같이 사라지도록 알린다
-        window.dispatchEvent(new Event(NOTICE_READ_EVENT));
       }
     } catch (err) {
       console.error("Failed to toggle read status:", err);
