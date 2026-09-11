@@ -864,7 +864,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             onClick={() => setShowPlanPicker(true)}
             className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-3xl text-2xs sm:text-xs font-bold transition cursor-pointer disabled:opacity-60 bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
           >
-            <span className="whitespace-nowrap">{myTable ? myTable.short : "일반통독"}</span>
+            <span className="whitespace-nowrap">{myTable ? `${myTable.short} 플랜` : "일반 통독 플랜"}</span>
             <ChevronDown size={13} className="opacity-70" />
           </button>
         )}
@@ -1172,14 +1172,14 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                   {([
                     {
                       id: null as ReadingTableId | null,
-                      title: "일반통독",
+                      title: "일반 통독 플랜",
                       sub: `내가 정한 범위를 하루 ${userProgress?.dailyTarget || 3}장씩`
                     },
                     ...READING_TABLE_LIST.map((t) => ({
                       id: t.id as ReadingTableId | null,
                       title:
                         t.id === "readingJesus"
-                          ? "리딩지저스"
+                          ? "리딩지저스 플랜"
                           : `어,성경 ${t.totalDays}일 플랜`,
                       sub:
                         t.id === "readingJesus"
