@@ -126,7 +126,12 @@ export interface BiblePlan {
    *  - chapter(기본): 정한 권에서 하루 한 장씩
    *  - readingJesus: 리딩지저스 통독표를 따라 그날 분량 전체
    */
-  mode?: 'chapter' | 'readingJesus';
+  mode?: 'chapter' | 'readingJesus' | 'wtbt';
+  /**
+   * '성경이 읽어지네' 를 고른 경우 어느 표인지 (120일치 · 240일치).
+   * 리딩지저스에는 이 값이 없다.
+   */
+  wtbtLength?: 120 | 240;
   /**
    * 리딩지저스 통독표 일정 — 공동체가 정한다.
    * 통독표에는 날짜가 없다(읽는 순서만 있다). 아래 셋으로 날짜에 얹는다.
@@ -165,8 +170,11 @@ export interface UserBibleProgress {
    * 통독을 어떤 방식으로 하는지.
    *  - normal(기본): 내가 정한 범위를 하루 n장씩
    *  - readingJesus: 교회 리딩지저스 통독표를 그대로 따른다
+   *  - wtbt: 성경이 읽어지네 통독표(120일치·240일치)를 따른다
    */
-  planMode?: 'normal' | 'readingJesus';
+  planMode?: 'normal' | 'readingJesus' | 'wtbt';
+  /** 성경이 읽어지네를 고른 경우 어느 표인지 */
+  wtbtLength?: 120 | 240;
   /**
    * 리딩지저스 통독 일정을 공동체 것으로 따를지, 내가 정한 것으로 할지.
    * 없으면 공동체 일정을 따른다 (공동체 일정이 없으면 내 일정을 쓴다).

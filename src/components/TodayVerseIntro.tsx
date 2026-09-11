@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BookOpen, ChevronRight, Clock } from "lucide-react";
+import { readingTable, tableIdOf } from "../lib/readingTables";
 
 /**
  * 하루에 처음 앱을 여실 때 딱 한 번 뜨는 화면.
@@ -128,7 +129,9 @@ export default function TodayVerseIntro({
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!alive || !d) return;
-        if (d.active && d.mode === "readingJesus") setLabel("리딩지저스");
+        // 통독표를 따르는 중이면 그 표의 이름을 딱지에 쓴다
+        const id = tableIdOf(d.mode, d.wtbtLength);
+        if (d.active && id) setLabel(readingTable(id).short);
       })
       .catch(() => {
         // 못 받아오면 평소 이름 그대로 둔다

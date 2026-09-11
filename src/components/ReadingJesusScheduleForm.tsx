@@ -11,16 +11,19 @@ import {
   RJBreak,
   RJ_DAY_LABELS,
   RJ_DAY_PRESETS,
-  RJ_TOTAL_DAYS,
-  RJ_WEEKS
+  RJ_ENTRIES
 } from "../lib/readingJesus";
+import { ReadingJesusEntry } from "../data/readingJesus";
 
 /**
- * 리딩지저스 통독 일정을 정하는 칸 — 시작날 · 읽는 요일 · 쉬는 기간.
+ * 통독 일정을 정하는 칸 — 시작날 · 읽는 요일 · 쉬는 기간.
  *
  * 관리자가 공동체 일정을 정할 때(오늘의 말씀 설정)와
  * 지체가 자기 일정을 정할 때(성경통독) **같은 칸을 쓴다.**
  * 그래야 둘이 따로 놀지 않고, 고칠 곳도 한 군데다.
+ *
+ * 통독표는 갈아 끼울 수 있다 — 주지 않으면 리딩지저스 표를 쓴다
+ * ('성경이 읽어지네' 는 그 표의 순서표를 넘겨 준다).
  */
 export interface ReadingJesusScheduleFormProps {
   startDate: string;
@@ -33,6 +36,8 @@ export interface ReadingJesusScheduleFormProps {
   startHint?: string;
   /** 미리보기 첫 줄의 이름 (예: "오늘 올라갈 말씀" / "오늘 읽을 말씀") */
   todayLabel?: string;
+  /** 따를 통독표 (없으면 리딩지저스) */
+  entries?: ReadingJesusEntry[];
 }
 
 export default function ReadingJesusScheduleForm({
@@ -43,13 +48,17 @@ export default function ReadingJesusScheduleForm({
   breaks,
   onBreaks,
   startHint = "이 날 1주차 첫 분량(창세기 1~4장)부터 시작합니다.",
-  todayLabel = "오늘 읽을 말씀"
+  todayLabel = "오늘 읽을 말씀",
+  entries = RJ_ENTRIES
 }: ReadingJesusScheduleFormProps) {
   const settings = React.useMemo(
     () => rjNormalizeSettings({ startDate, readingDays, breaks }),
     [startDate, readingDays, breaks]
   );
-  const schedule = React.useMemo(() => buildRjSchedule(settings), [settings]);
+  const schedule = React.useMemo(() => buildRjSchedule(settings, entries), [settings, entries]);
+  /** 표가 몇 주 몇 일짜리인지 (표마다 다르다) */
+  const totalDays = entries.length;
+  const totalWeeks = entries[entries.length - 1]?.week || 1;
   const today = React.useMemo(() => rjDayOn(schedule, rjDateKey(new Date())), [schedule]);
   const finish = React.useMemo(() => rjFinishDate(schedule), [schedule]);
 
@@ -194,7 +203,7 @@ export default function ReadingJesusScheduleForm({
                 : "없음 — 오늘은 읽는 날이 아닙니다"}
             </p>
             <p className="text-2xs text-[#6F8377]">
-              {RJ_WEEKS}주 {RJ_TOTAL_DAYS}일 계획 · 마치는 날 {finish ? rjDateLabel(finish) : "-"}
+              {totalWeeks}주 {totalDays}일 계획 · 마치는 날 {finish ? rjDateLabel(finish) : "-"}
             </p>
           </>
         )}

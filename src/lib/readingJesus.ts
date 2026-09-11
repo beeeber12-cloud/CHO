@@ -123,20 +123,26 @@ export function rjBreakOn(settings: RJSettings | null, dateKey: string): RJBreak
 const MAX_SPAN_DAYS = 4000;
 
 /**
- * 통독표 270일치를 실제 날짜에 차례대로 얹는다.
+ * 통독표를 실제 날짜에 차례대로 얹는다.
  * 읽는 요일이 아니거나 방학인 날은 건너뛴다.
+ *
+ * 표를 주지 않으면 리딩지저스 표를 쓴다 — '성경이 읽어지네' 같은 다른 표는
+ * 그 표의 순서표를 넘겨 주면 된다 (lib/readingTables.ts).
  */
-export function buildRjSchedule(settings: RJSettings | null): RJDay[] {
+export function buildRjSchedule(
+  settings: RJSettings | null,
+  entries: ReadingJesusEntry[] = RJ_ENTRIES
+): RJDay[] {
   const start = settings && rjParseDate(settings.startDate);
   if (!settings || !start) return [];
 
   const out: RJDay[] = [];
   const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
 
-  for (let step = 0; step < MAX_SPAN_DAYS && out.length < RJ_ENTRIES.length; step++) {
+  for (let step = 0; step < MAX_SPAN_DAYS && out.length < entries.length; step++) {
     const key = rjDateKey(cursor);
     if (settings.readingDays.includes(cursor.getDay()) && !rjBreakOn(settings, key)) {
-      const entry = RJ_ENTRIES[out.length];
+      const entry = entries[out.length];
       out.push({
         index: out.length,
         entry,
