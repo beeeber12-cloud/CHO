@@ -28,13 +28,15 @@ const shortDate = (value: string): string => {
 };
 
 interface MeditationFeedProps {
+  /** 영성일기(나만 보는 일기)를 쓰시겠다고 설정에서 켜셨는가 */
+  journalEnabled?: boolean;
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
   allUsers: { id: string; name: string; role: string }[];
   prefilledVerse?: { title: string; text: string } | null;
   onClearPrefilledVerse?: () => void;
 }
 
-export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, onClearPrefilledVerse }: MeditationFeedProps) {
+export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, onClearPrefilledVerse, journalEnabled = false }: MeditationFeedProps) {
   const [meditations, setMeditations] = useState<Meditation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showWriteForm, setShowWriteForm] = useState<boolean>(false);
@@ -634,15 +636,18 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           {/* 쓰다 만 글이 남아 있으면 '이어쓰기'라고 알려 준다 */}
           {showWriteForm ? "닫기" : hasDraft ? "묵상 이어쓰기" : "묵상 나누기"}
         </button>
-        <button
-          onClick={() => setShowJournal(true)}
-          // 진한 단추가 둘이면 무엇이 먼저인지 안 보인다.
-          // 여기서 먼저 하실 일은 '묵상 나누기' 이므로 일기는 한 톤 연하게 둔다.
-          className="bg-[#F1F4EE] hover:bg-[#E7ECE2] flex-1 flex items-center justify-center gap-1.5 text-[#2F5D4A] font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap"
-        >
-          <Lock size={15} />
-          {possessiveTitle(currentUser.name, "영성일기")}
-        </button>
+        {/* 영성일기는 설정에서 켜신 분께만 보인다 (기본은 없다) */}
+        {journalEnabled && (
+          <button
+            onClick={() => setShowJournal(true)}
+            // 진한 단추가 둘이면 무엇이 먼저인지 안 보인다.
+            // 여기서 먼저 하실 일은 '묵상 나누기' 이므로 일기는 한 톤 연하게 둔다.
+            className="bg-[#F1F4EE] hover:bg-[#E7ECE2] flex-1 flex items-center justify-center gap-1.5 text-[#2F5D4A] font-bold text-sm px-3.5 py-3 rounded-3xl transition cursor-pointer whitespace-nowrap"
+          >
+            <Lock size={15} />
+            {possessiveTitle(currentUser.name, "영성일기")}
+          </button>
+        )}
       </div>
 
       {/* 방 고르기 — 시안의 .room-filter: 감싸는 상자 없이 작은 알약만 한 줄로 */}

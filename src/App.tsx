@@ -17,7 +17,7 @@ import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
 import AccountModals from "./components/AccountModals";
 import ProfileModal from "./components/ProfileModal";
-import { SectionLabel, RowGroup, Row } from "./components/SettingsUI";
+import { SectionLabel, RowGroup, Row, Switch } from "./components/SettingsUI";
 import ChallengeTab from "./components/ChallengeTab";
 import AppGuide, { guideSeen } from "./components/AppGuide";
 import ThemeStudio from "./components/ThemeStudio";
@@ -35,6 +35,7 @@ import {
 } from "./lib/theme";
 import { clearToken, getCommunity, saveCommunity } from "./lib/session";
 import { useSwipe, isTypingTarget } from "./lib/useSwipe";
+import { journalOn, setJournalOn } from "./lib/journalPref";
 
 interface UserProfile {
   id: string;
@@ -127,6 +128,8 @@ export default function App() {
   const [introReplay, setIntroReplay] = useState<number>(0);
   /** 설정에서 '앱 설치하는 법' 을 누른 횟수 (닫아 두었어도 다시 뜬다) */
   const [installReplay, setInstallReplay] = useState<number>(0);
+  /** 영성일기(나만 보는 일기)를 쓰시겠다고 켜 두셨는가 — 이 기기에서만 */
+  const [journalEnabled, setJournalEnabled] = useState<boolean>(() => journalOn());
 
   /**
    * 앱 색 — **이 기기에서만** 쓰는 내 색이다.
@@ -641,6 +644,29 @@ export default function App() {
 
             <CommunitySettings currentUser={currentUser} onRenamed={setCommunityName} />
 
+            {/* 영성일기 — 쓰시는 분만 켜 둔다 (기본은 없다) */}
+            <div>
+              <SectionLabel>묵상</SectionLabel>
+              <RowGroup>
+                <Row
+                  icon={<Lock size={17} />}
+                  title="영성일기 쓰기"
+                  sub="나만 보는 일기장을 묵상일기 화면에 둡니다 · 내 기기에서만"
+                  right={
+                    <Switch
+                      checked={journalEnabled}
+                      onChange={() => {
+                        const next = !journalEnabled;
+                        setJournalEnabled(next);
+                        setJournalOn(next);
+                      }}
+                      label="영성일기 쓰기"
+                    />
+                  }
+                />
+              </RowGroup>
+            </div>
+
             {/* 꾸미기 — 각자 자기 기기에서 고른다 (다른 분께는 영향이 없다) */}
             <div>
               <SectionLabel>꾸미기</SectionLabel>
@@ -758,6 +784,7 @@ export default function App() {
                 <MeditationFeed 
                   currentUser={currentUser} 
                   allUsers={allUsers}
+                  journalEnabled={journalEnabled}
                   prefilledVerse={prefilledVerse}
                   onClearPrefilledVerse={() => setPrefilledVerse(null)}
                 />
