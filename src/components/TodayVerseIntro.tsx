@@ -219,20 +219,17 @@ export default function TodayVerseIntro({
             <span className="text-2xs font-medium text-white/50">{dateLine}</span>
 
             <span className="flex flex-col items-center gap-6 w-full max-w-[20rem]">
-              {/* 오늘의 위로 — 날마다 다른 한 문장과 말씀 한 구절 */}
+              {/* 오늘의 말씀 한 구절 — 덧붙이는 말 없이 말씀만 둔다 */}
               <motion.span
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.36 }}
                 className="block"
               >
-                <span className="block text-xl sm:text-2xl font-bold leading-snug break-keep text-white">
-                  {cheer.line}
-                </span>
-                <span className="scripture-font block text-sm text-white/75 leading-relaxed break-keep mt-4">
+                <span className="scripture-font block text-lg sm:text-xl text-white leading-relaxed break-keep">
                   “{cheer.text}”
                 </span>
-                <span className="block text-2xs text-white/50 mt-2">{cheer.ref}</span>
+                <span className="block text-xs text-white/55 mt-3">{cheer.ref}</span>
               </motion.span>
 
               {/* 오늘 읽을 말씀 — 어디인지만 담백하게 */}
