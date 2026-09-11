@@ -64,12 +64,23 @@ const M = {
   grad: "var(--u-grad-main, linear-gradient(135deg, #2F7358, #153A2B))"
 };
 
-/** 번호표 — 예시 그림의 왼쪽 칸에 선다 */
+/**
+ * 번호마다 **제 색**이 있다.
+ *
+ * 그림 위의 번호와 아래 설명의 번호가 같은 색이면, 어느 자리를 말하는지
+ * 글을 짚어 가며 찾지 않아도 눈이 먼저 잇는다. (어르신께는 이게 가장 빠르다)
+ */
+const PIN_COLORS = ["#FFBA00", "#FB835B", "#4DB6A5"];
+export function pinColor(n: number): string {
+  return PIN_COLORS[(n - 1) % PIN_COLORS.length];
+}
+
+/** 번호표 */
 function Pin({ n }: { n: number }) {
   return (
     <span
       className="w-[17px] h-[17px] rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
-      style={{ background: M.gold, color: M.greenDeep, boxShadow: `0 0 0 1.5px ${M.paper}` }}
+      style={{ background: pinColor(n), color: "#2A2213", boxShadow: `0 0 0 1.5px ${M.paper}` }}
     >
       {n}
     </span>
@@ -88,7 +99,7 @@ function Row({ pin, children }: { pin?: number; children: React.ReactNode }) {
     <div className="relative pl-1.5">
       <span
         className="block rounded-[10px] px-1.5 py-1"
-        style={{ boxShadow: `0 0 0 1.5px ${M.gold}` }}
+        style={{ boxShadow: `0 0 0 1.5px ${pinColor(pin)}` }}
       >
         {children}
       </span>
@@ -192,7 +203,7 @@ function MockNotice() {
         <MockTitle title="오늘의 말씀" sub="요한복음 3장 · 9월 8일" />
       </Row>
 
-      <Row pin={2}>
+      <Row>
         <span className="flex gap-1">
           <Chip on>개역개정</Chip>
           <Chip>우리말</Chip>
@@ -200,7 +211,7 @@ function MockNotice() {
         </span>
       </Row>
 
-      <Row pin={3}>
+      <Row pin={2}>
         <span className="block space-y-1">
           <span className="block text-[9px] leading-snug" style={{ color: M.ink }}>
             <span style={{ color: M.sub }}>15 </span>
@@ -216,7 +227,7 @@ function MockNotice() {
         </span>
       </Row>
 
-      <Row pin={4}>
+      <Row pin={3}>
         <span className="flex gap-1.5">
           <Btn>
             <Check size={9} /> 읽었습니다
@@ -279,7 +290,7 @@ function MockBible() {
         </span>
       </Row>
 
-      <Row pin={4}>
+      <Row>
         <span
           className="rounded-xl px-2 py-1.5 flex items-center justify-between"
           style={{ background: M.box }}
@@ -465,55 +476,53 @@ const SLIDES: Slide[] = [
     lines: [
       "여기 올라온 글은 우리 공동체 안에서만 보입니다.",
       "",
-      "화면마다 번호로 짚어 드리겠습니다.",
+      "화면마다 번호와 색으로 짚어 드리겠습니다.",
       "옆으로 밀어 넘겨 주세요."
     ]
   },
   {
     icon: BookOpen,
     tab: "오늘 말씀",
-    title: "오늘 함께 읽을 말씀",
+    title: "오늘 우리가 함께 읽을 말씀",
     mock: MockNotice,
     pins: [
-      "아침마다 저절로 올라옵니다",
-      "번역본을 눌러 바꿉니다",
-      "구절을 누르면 묵상으로 가져갑니다",
-      "다 읽으면 눌러 주세요"
+      "오늘의 말씀이 아침마다 올라옵니다",
+      "마음에 닿은 구절을 골라 둡니다",
+      "다 읽으면 함께 읽은 분들이 모입니다"
     ],
-    notes: ["속장·리더는 여기서 통독 프로그램을 정합니다."]
+    notes: ["속장·리더가 통독 프로그램을 정합니다."]
   },
   {
     icon: BrandMark,
     tab: "성경통독",
-    title: "각자 성경을 읽습니다",
+    title: "내 속도로 성경 전체를 읽어 갑니다",
     mock: MockBible,
     pins: [
-      "지금까지 읽은 양이 보입니다",
-      "통독 플랜을 고릅니다",
-      "읽던 곳에서 이어 읽습니다",
-      "옆으로 밀면 장이 넘어갑니다"
+      "읽은 만큼 차곡차곡 쌓입니다",
+      "플랜을 고르면 그날 읽을 곳이 정해집니다",
+      "읽던 곳에서 이어 읽습니다"
     ]
   },
   {
     icon: MessageSquare,
     tab: "묵상일기",
-    title: "묵상과 기도제목을 나눕니다",
+    title: "받은 은혜와 기도제목을 나눕니다",
     mock: MockFeed,
-    pins: ["묵상과 기도제목을 적습니다", "어디에 올릴지 고릅니다", "좋아요·기도로 응원합니다"]
+    pins: ["오늘 받은 은혜를 적습니다", "누구와 나눌지 고릅니다", "서로 기도로 붙들어 줍니다"]
   },
   {
     icon: Heart,
     tab: "감사칭찬",
-    title: "감사와 칭찬을 남깁니다",
+    title: "서로를 칭찬하며 함께 기뻐합니다",
     mock: MockGratitude,
-    pins: ["오늘 감사한 일 한 줄", "@이름으로 칭찬합니다", "함께 기뻐합니다"]
+    pins: ["오늘 감사한 일 한 줄", "@이름으로 그분을 칭찬합니다", "함께 기뻐합니다"]
   },
   {
     icon: User,
     tab: "나의 기록",
-    title: "내 기록이 그대로 남습니다",
+    title: "내 신앙의 발자취가 쌓입니다",
     mock: MockMy,
-    pins: ["내가 쓴 글이 모입니다", "읽은 장이 한눈에", "이번 달 나눔 목표"],
+    pins: ["내가 쓴 글이 모두 모입니다", "읽은 장이 한눈에 보입니다", "이번 달 나눔 목표"],
     notes: ["몇 해 뒤 돌아보면 내 인생의 귀한 자산이 됩니다."]
   }
 ];
@@ -605,14 +614,19 @@ export default function AppGuide({ onClose }: Props) {
               {s.pins && (
                 <ol className="space-y-2.5">
                   {s.pins.map((text, k) => (
-                    <li key={k} className="flex gap-2.5">
+                    // 번호·색·왼쪽 선이 그림의 그 자리와 짝이다
+                    <li
+                      key={k}
+                      className="flex gap-2.5 items-start pl-2.5"
+                      style={{ boxShadow: `inset 2px 0 ${pinColor(k + 1)}` }}
+                    >
                       <span
                         className="shrink-0 w-[19px] h-[19px] rounded-full flex items-center justify-center text-[11px] font-black mt-px"
-                        style={{ background: M.gold, color: M.greenDeep }}
+                        style={{ background: pinColor(k + 1), color: "#2A2213" }}
                       >
                         {k + 1}
                       </span>
-                      <span className="text-sm text-white/85 leading-relaxed">{text}</span>
+                      <span className="text-sm text-white/90 leading-relaxed break-keep">{text}</span>
                     </li>
                   ))}
                 </ol>
