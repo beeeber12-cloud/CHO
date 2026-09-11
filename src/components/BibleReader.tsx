@@ -1473,7 +1473,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     ? "아직 정해지지 않음"
                     : rjFollowingCommunity
                     ? "공동체 일정 따르기"
-                    : "내가 정한 일정"}
+                    : "통독 일정 정하기"}
                 </span>
               </span>
               <ChevronRight size={16} className="text-[#6F8377] shrink-0" />
