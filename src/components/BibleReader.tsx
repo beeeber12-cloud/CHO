@@ -2028,7 +2028,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
               {/* 구약 / 신약 / 통독 진행 중 */}
               <div className="pb-3 border-b border-[#E3E9E2] mb-3">
-                <div className="flex bg-[#F5F5F5] p-1 rounded-3xl text-xs font-bold text-[#4A6B57] overflow-x-auto w-fit">
+                <div data-no-tab-swipe className="flex bg-[#F5F5F5] p-1 rounded-3xl text-xs font-bold text-[#4A6B57] overflow-x-auto w-fit">
                   <button
                     type="button"
                     onClick={() => setChecklistTab('OT')}

@@ -651,7 +651,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
       </div>
 
       {/* 방 고르기 — 시안의 .room-filter: 감싸는 상자 없이 작은 알약만 한 줄로 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      {/* 방 알약 줄은 옆으로 밀어 넘겨 보는 자리다 — 여기서 시작한 손짓으로 탭이 넘어가면 안 된다 */}
+      <div data-no-tab-swipe className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {/* Public All Tab */}
         <button
           onClick={() => setSelectedSokTab("all")}
