@@ -749,6 +749,18 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   /** 통독표를 따르는 중인가 */
   const isRJ = !!myTable;
 
+  /** 플랜마다 다른 상자 색 (지금 무엇을 따르는지 한눈에) */
+  const planBox = !myTable
+    ? "bg-[#F9F9F9]"
+    : myTable.id === "readingJesus"
+    ? "bg-[#E8F0E9]"
+    : "bg-[#D2DDD3]";
+  const planBoxHover = !myTable
+    ? "hover:bg-[#F0F0F0]"
+    : myTable.id === "readingJesus"
+    ? "hover:bg-[#E3ECE4]"
+    : "hover:bg-[#C7D8C9]";
+
   /** 읽은 장 모음 — 리딩지저스 표에서 완료 표시를 붙이는 데 쓴다 */
   const completedSet = React.useMemo(
     () => new Set(userProgress?.completedChapters || []),
@@ -862,7 +874,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             type="button"
             disabled={switchingMode}
             onClick={() => setShowPlanPicker(true)}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-3xl text-2xs sm:text-xs font-bold transition cursor-pointer disabled:opacity-60 bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-3xl text-2xs sm:text-xs font-bold transition cursor-pointer disabled:opacity-60 text-[#2F5D4A] ${planBox} ${planBoxHover}`}
           >
             <span className="whitespace-nowrap">{myTable ? `${myTable.short} 플랜` : "일반 통독 플랜"}</span>
             <ChevronDown size={13} className="opacity-70" />
@@ -871,7 +883,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       </div>
 
       {/* 진행률 + 마지막 읽은 곳 + 구약/신약을 한 상자로 묶었다 (시안의 .nav-card) */}
-      <div className="bg-[#F9F9F9] rounded-3xl sm:rounded-[32px] p-4 sm:p-5 space-y-4">
+      <div className={`${planBox} rounded-3xl sm:rounded-[32px] p-4 sm:p-5 space-y-4 transition-colors`}>
         {/* 진행률 · 통독 설정 — 한 줄 버튼으로 줄이고, 자세한 내용은 팝업에서 본다.
             (예전에는 진행률·목표·체크리스트가 여기 다 펼쳐져 있어 본문이 한참 아래 있었다) */}
         {currentUser && (
