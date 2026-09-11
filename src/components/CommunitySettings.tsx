@@ -47,6 +47,8 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   /** 여섯 자리 코드는 평소에 감춰 둔다 (링크를 막을 때만 쓴다) */
   const [showCode, setShowCode] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  /** 우리 공동체에 누가 있는지 보는 창 (모든 지체가 열 수 있다) */
+  const [showRoster, setShowRoster] = useState(false);
 
   const isAdmin = currentUser.role === "admin";
 
@@ -180,15 +182,8 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
         <Row
           icon={<Users2 size={17} />}
           title={mine.name}
-          sub={`지체 ${mine.memberCount}명${isAdmin ? " · 눌러서 이름 바꾸기" : ""}`}
-          onClick={
-            isAdmin
-              ? () => {
-                  setDraftName(mine.name);
-                  setShowRename(true);
-                }
-              : undefined
-          }
+          sub={`지체 ${mine.memberCount}명 · 눌러서 지체들 보기`}
+          onClick={() => setShowRoster(true)}
         />
 
         {mine.joinCode && (
@@ -212,6 +207,51 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
       </RowGroup>
 
       {error && <p className="text-xs text-[#8F1E17] mt-2 ml-1.5">{error}</p>}
+
+      {/* 누가 있는지 — 모든 지체가 볼 수 있다 */}
+      <SettingModal
+        open={showRoster}
+        onClose={() => setShowRoster(false)}
+        title={mine.name}
+        sub={`함께 말씀을 나누는 지체 ${members.length || mine.memberCount}명입니다.`}
+      >
+        <div className="space-y-2">
+          {members.length === 0 ? (
+            <p className="text-xs text-[#6F8377] py-4 text-center">지체 목록을 불러오는 중...</p>
+          ) : (
+            members.map((m) => (
+              <div key={m.id} className="flex items-center gap-2.5 p-3 bg-[#F9F9F9] rounded-2xl">
+                <span className="w-8 h-8 rounded-full bg-[#D2DDD3] text-[#4A6B57] text-xs font-bold flex items-center justify-center shrink-0">
+                  {m.name.slice(0, 1)}
+                </span>
+                <span className="text-sm font-bold text-[#14261E] truncate">{m.name}</span>
+                {m.role === "admin" && (
+                  <span className="text-2xs font-bold text-[#4A3600] bg-[#FFBA00] px-2 py-0.5 rounded-full shrink-0">
+                    관리자
+                  </span>
+                )}
+                {m.id === currentUser.id && (
+                  <span className="text-2xs font-bold text-[#6F8377] shrink-0">나</span>
+                )}
+              </div>
+            ))
+          )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowRoster(false);
+                setDraftName(mine.name);
+                setShowRename(true);
+              }}
+              className="w-full mt-1 py-3 rounded-2xl bg-[#F1F4EE] hover:bg-[#E7ECE2] text-[#2F5D4A] text-sm font-bold transition cursor-pointer"
+            >
+              공동체 이름 바꾸기
+            </button>
+          )}
+        </div>
+      </SettingModal>
 
       {/* 공동체 이름 바꾸기 */}
       <SettingModal
