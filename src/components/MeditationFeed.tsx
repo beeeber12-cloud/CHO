@@ -661,7 +661,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
               : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
           }`}
         >
-          전체
+          전체공유방
         </button>
 
         {/* 내 방 → 그다음 다른 방들 */}
@@ -783,7 +783,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   onChange={(e) => setSokIdForForm(e.target.value || null)}
                   className="w-full text-sm px-3.5 py-3 bg-white border-2 border-[#0C3B2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold cursor-pointer"
                 >
-                  <option value="">전체 공유 · 우리 공동체 모두가 봅니다</option>
+                  <option value="">전체공유방 · 우리 공동체 모두가 봅니다</option>
                   {myRoom && (
                     <option value={myRoom.id}>
                       내 묵상방 · 나와 내가 초대한 지체만 봅니다
