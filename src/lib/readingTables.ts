@@ -2,128 +2,84 @@ import {
   READING_JESUS_ENTRIES,
   READING_JESUS_PER_WEEK,
   READING_JESUS_TITLE,
+  READING_JESUS_TOTAL_CHAPTERS,
   READING_JESUS_WEEKS,
   ReadingJesusEntry
 } from "../data/readingJesus";
-import { WTBT_120, WTBT_240, WTBT_TITLE, WtbtEntry } from "../data/wtbt";
+import { WTBT_TITLE, WTBT_TOTAL_CHAPTERS, WTBT_WEEKS } from "../data/wtbt";
+import {
+  buildRjSchedule,
+  buildWeeklySchedule,
+  RJDay,
+  RJSettings,
+  WeeklyEntry
+} from "./readingJesus";
 
 /**
  * 앱이 아는 **통독표들**.
  *
- * 통독표는 저마다 다르지만 쓰임새는 같다 — 날짜 없는 순서표이고,
- * 공동체가 정한 시작날·읽는 요일·방학으로 달력에 얹힌다(lib/readingJesus.ts).
- * 그래서 표만 갈아 끼우면 나머지는 그대로 돈다.
+ * 표는 저마다 다르게 짜여 있지만, 달력에 얹는 일은 한 가지 길로 모은다.
  *
- *  · readingJesus — 더공감하는교회 리딩지저스 (45주 × 6일)
- *  · wtbt120 · wtbt240 — 성경이 읽어지네 (120일치 · 240일치)
+ *  · 리딩지저스 — **날짜별 표**. 270일치가 차례대로 적혀 있어 읽는 날에 하나씩 얹는다.
+ *  · 어 성경이 읽어지네 — **주별 표**(52주). 한 주에 읽을 범위만 있고,
+ *    그 주 분량을 **그 주의 읽는 날 수로 나누는 일은 앱이 한다**
+ *    (월~금이면 하루가 조금 많아지고, 매일 읽으면 가벼워진다).
  */
 
-export type ReadingTableId = "readingJesus" | "wtbt120" | "wtbt240";
+export type ReadingTableId = "readingJesus" | "wtbt";
 
 export interface ReadingTable {
   id: ReadingTableId;
-  /** 설정 화면에 보이는 이름 ("어 성경이 읽어지네 120일") */
+  /** 설정 화면에 보이는 이름 */
   name: string;
-  /** 오늘의 말씀 제목 앞에 붙는 짧은 이름 ("성경이 읽어지네") */
+  /** 제목 앞에 붙는 짧은 이름 */
   short: string;
   /** 통독 목표 이름 */
   goalTitle: string;
+  /** 표가 짜인 방식 */
+  kind: "daily" | "weekly";
+  /** 날짜별 표의 순서표 (주별 표는 빈 배열) */
   entries: ReadingJesusEntry[];
+  /** 주별 표의 주 목록 (날짜별 표는 빈 배열) */
+  weekly: WeeklyEntry[];
+  /** 표 전체 주 수 */
+  weeks: number;
   /** 한 주에 읽는 날 수 (표가 그렇게 묶여 있을 때) */
   perWeek: number;
-  totalDays: number;
-  /** 표 자체가 주로 묶여 있을 때의 주 수 (날짜별 표는 0 — 달력으로 센다) */
-  weeks: number;
-  /** 이 표로 읽게 되는 장 수 (같은 장을 두 번 읽어도 하나로 센다) */
+  /** 이 표로 읽게 되는 장 수 (겹치는 것은 하나로 센다) */
   totalChapters: number;
 }
 
-/**
- * '성경이 읽어지네' 표를 리딩지저스와 같은 모양으로 맞춘다.
- *
- * 그쪽 표에는 **'주' 가 없다** — 날짜별로만 적혀 있다.
- * 없는 주를 지어내지 않는다(week: 0). 전체 스케줄은 **달력으로** 묶는다
- * (rjWeekBlocksByDate) — 읽는 요일을 월~금으로 잡으면 한 주에 5일이 들어간다.
- */
-function fromWtbt(list: WtbtEntry[]): ReadingJesusEntry[] {
-  return list.map((e) => ({
-    week: 0,
-    section: e.ranges[0]?.[0] || "성경",
-    label: e.label,
-    ranges: e.ranges
-  }));
-}
-
-/** 같은 장을 여러 번 읽는 표도 있으므로(복음서 나란히 읽기) 겹치는 것은 하나로 센다 */
-function uniqueChapters(entries: ReadingJesusEntry[]): number {
-  const seen = new Set<string>();
-  for (const e of entries) {
-    for (const [book, from, to] of e.ranges) {
-      for (let c = from; c <= to; c++) seen.add(`${book} ${c}`);
-    }
-  }
-  return seen.size;
-}
-
-function table(
-  id: ReadingTableId,
-  name: string,
-  short: string,
-  goalTitle: string,
-  entries: ReadingJesusEntry[],
-  perWeek: number,
-  weeks: number
-): ReadingTable {
-  return {
-    id,
-    name,
-    short,
-    goalTitle,
-    entries,
-    perWeek,
-    totalDays: entries.length,
-    weeks,
-    totalChapters: uniqueChapters(entries)
-  };
-}
-
-const WTBT_120_ENTRIES = fromWtbt(WTBT_120);
-const WTBT_240_ENTRIES = fromWtbt(WTBT_240);
-
 export const READING_TABLES: Record<ReadingTableId, ReadingTable> = {
-  readingJesus: table(
-    "readingJesus",
-    "리딩지저스 통독표",
-    "리딩지저스",
-    READING_JESUS_TITLE,
-    READING_JESUS_ENTRIES,
-    READING_JESUS_PER_WEEK,
-    READING_JESUS_WEEKS
-  ),
-  wtbt120: table(
-    "wtbt120",
-    "어 성경이 읽어지네 120일",
-    "어 성경이 읽어지네",
-    `${WTBT_TITLE} 120일`,
-    WTBT_120_ENTRIES,
-    6,
-    0
-  ),
-  wtbt240: table(
-    "wtbt240",
-    "어 성경이 읽어지네 240일",
-    "어 성경이 읽어지네",
-    `${WTBT_TITLE} 240일`,
-    WTBT_240_ENTRIES,
-    6,
-    0
-  )
+  readingJesus: {
+    id: "readingJesus",
+    name: "리딩지저스 통독표",
+    short: "리딩지저스",
+    goalTitle: READING_JESUS_TITLE,
+    kind: "daily",
+    entries: READING_JESUS_ENTRIES,
+    weekly: [],
+    weeks: READING_JESUS_WEEKS,
+    perWeek: READING_JESUS_PER_WEEK,
+    totalChapters: READING_JESUS_TOTAL_CHAPTERS
+  },
+  wtbt: {
+    id: "wtbt",
+    name: "어 성경이 읽어지네",
+    short: "어 성경이 읽어지네",
+    goalTitle: WTBT_TITLE,
+    kind: "weekly",
+    entries: [],
+    weekly: WTBT_WEEKS,
+    weeks: WTBT_WEEKS.length,
+    perWeek: 0,
+    totalChapters: WTBT_TOTAL_CHAPTERS
+  }
 };
 
 export const READING_TABLE_LIST: ReadingTable[] = [
   READING_TABLES.readingJesus,
-  READING_TABLES.wtbt120,
-  READING_TABLES.wtbt240
+  READING_TABLES.wtbt
 ];
 
 /** 모르는 이름이 와도 앱이 멈추지 않게 리딩지저스로 돌려준다 */
@@ -133,32 +89,44 @@ export function readingTable(id?: string | null): ReadingTable {
 
 /**
  * 저장된 통독 설정에서 표를 고른다.
- *
- * 예전 자료에는 `mode: "readingJesus"` 만 있고 표 이름이 없다 — 그때는 리딩지저스다.
- * '성경이 읽어지네' 는 `mode: "wtbt"` 와 `wtbtLength`(120·240)로 적힌다.
+ * 통독표를 따르지 않는 방식(한 장씩 · 일반 통독)이면 null 이다.
  */
-export function tableIdOf(mode?: string | null, wtbtLength?: number | null): ReadingTableId | null {
+export function tableIdOf(mode?: string | null): ReadingTableId | null {
   if (mode === "readingJesus") return "readingJesus";
-  if (mode === "wtbt") return wtbtLength === 240 ? "wtbt240" : "wtbt120";
+  if (mode === "wtbt") return "wtbt";
   return null;
-}
-
-/**
- * 그날이 표에서 어디쯤인지 한 마디로.
- * 리딩지저스는 주 단위로 묶여 있어 "12주 시편", 날짜별 표는 "34일차" 가 자연스럽다.
- */
-export function tableDayLabel(table: ReadingTable, index: number, entry?: { week: number; section: string }): string {
-  if (table.id === "readingJesus" && entry) return `${entry.week}주 ${entry.section}`;
-  return `${index + 1}일차${entry?.section ? ` · ${entry.section}` : ""}`;
-}
-
-/** "12주차 / 45주" · "34일차 / 120일" */
-export function tableProgressLabel(table: ReadingTable, index: number, week: number): string {
-  if (table.id === "readingJesus") return week > 0 ? `${week}주차 / ${table.weeks}주` : "";
-  return index >= 0 ? `${index + 1}일차 / ${table.totalDays}일` : "";
 }
 
 /** 통독표를 따르는 방식인가 (한 장씩 방식이 아닌가) */
 export function isTableMode(mode?: string | null): boolean {
   return mode === "readingJesus" || mode === "wtbt";
+}
+
+/**
+ * 표를 달력에 얹는다 — 어느 표든 여기 하나로 부른다.
+ * 주별 표는 그 주 분량을 읽는 날에 나누고, 날짜별 표는 하루치를 하나씩 얹는다.
+ */
+export function buildTableSchedule(
+  table: ReadingTable | null,
+  settings: RJSettings | null
+): RJDay[] {
+  if (!table || !settings) return [];
+  return table.kind === "weekly"
+    ? buildWeeklySchedule(settings, table.weekly)
+    : buildRjSchedule(settings, table.entries);
+}
+
+/** 그날이 표에서 어디쯤인지 한 마디로 ("12주 시편") */
+export function tableDayLabel(
+  _table: ReadingTable,
+  _index: number,
+  entry?: { week: number; section: string }
+): string {
+  if (!entry) return "";
+  return entry.section ? `${entry.week}주 ${entry.section}` : `${entry.week}주`;
+}
+
+/** "12주차 / 52주" */
+export function tableProgressLabel(table: ReadingTable, _index: number, week: number): string {
+  return week > 0 ? `${week}주차 / ${table.weeks}주` : "";
 }

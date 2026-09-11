@@ -1,7 +1,6 @@
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
 import {
-  buildRjSchedule,
   rjDateKey,
   rjDateLabel,
   rjDayOn,
@@ -11,10 +10,9 @@ import {
   RJBreak,
   RJ_DAY_LABELS,
   RJ_DAY_PRESETS,
-  RJ_ENTRIES,
   rjWeekBlocksByDate
 } from "../lib/readingJesus";
-import { ReadingJesusEntry } from "../data/readingJesus";
+import { buildTableSchedule, ReadingTable, readingTable } from "../lib/readingTables";
 
 /**
  * 통독 일정을 정하는 칸 — 시작날 · 읽는 요일 · 쉬는 기간.
@@ -38,7 +36,7 @@ export interface ReadingJesusScheduleFormProps {
   /** 미리보기 첫 줄의 이름 (예: "오늘 올라갈 말씀" / "오늘 읽을 말씀") */
   todayLabel?: string;
   /** 따를 통독표 (없으면 리딩지저스) */
-  entries?: ReadingJesusEntry[];
+  table?: ReadingTable | null;
 }
 
 export default function ReadingJesusScheduleForm({
@@ -50,21 +48,28 @@ export default function ReadingJesusScheduleForm({
   onBreaks,
   startHint = "이 날 1주차 첫 분량(창세기 1~4장)부터 시작합니다.",
   todayLabel = "오늘 읽을 말씀",
-  entries = RJ_ENTRIES
+  table
 }: ReadingJesusScheduleFormProps) {
+  const plan = table || readingTable("readingJesus");
   const settings = React.useMemo(
     () => rjNormalizeSettings({ startDate, readingDays, breaks }),
     [startDate, readingDays, breaks]
   );
-  const schedule = React.useMemo(() => buildRjSchedule(settings, entries), [settings, entries]);
+  const schedule = React.useMemo(() => buildTableSchedule(plan, settings), [plan, settings]);
   /**
    * 몇 주 몇 일짜리인지.
-   * 주는 **달력으로** 센다 — 읽는 요일을 월~금으로 잡으면 같은 표라도 주가 늘어난다.
+   * 주별 표는 주 수가 정해져 있고(52주), 날짜별 표는 **달력으로** 센다 —
+   * 읽는 요일을 월~금으로 잡으면 같은 표라도 주가 늘어난다.
    */
-  const totalDays = entries.length;
+  const totalDays = schedule.length;
   const totalWeeks = React.useMemo(
-    () => (schedule.length > 0 ? rjWeekBlocksByDate(schedule).length : 0),
-    [schedule]
+    () =>
+      plan.kind === "weekly"
+        ? plan.weeks
+        : schedule.length > 0
+        ? rjWeekBlocksByDate(schedule).length
+        : 0,
+    [plan, schedule]
   );
   const today = React.useMemo(() => rjDayOn(schedule, rjDateKey(new Date())), [schedule]);
   const finish = React.useMemo(() => rjFinishDate(schedule), [schedule]);

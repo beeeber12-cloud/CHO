@@ -120,7 +120,7 @@ export default function TodayVerseIntro({
       .then((d) => {
         if (!alive || !d) return;
         // 통독표를 따르는 중이면 그 표의 이름을 딱지에 쓴다
-        const id = tableIdOf(d.mode, d.wtbtLength);
+        const id = tableIdOf(d.mode);
         if (d.active && id) setLabel(readingTable(id).short);
       })
       .catch(() => {

@@ -122,6 +122,13 @@ export function rjBreakOn(settings: RJSettings | null, dateKey: string): RJBreak
 /** 하루씩 걸어가다 끝없이 돌지 않도록 하는 울타리 (270일치를 다 얹기엔 넉넉하다) */
 const MAX_SPAN_DAYS = 4000;
 
+/** 그 주의 월요일 0시 */
+function startOfWeek(today: Date): Date {
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+
 /**
  * 통독표를 실제 날짜에 차례대로 얹는다.
  * 읽는 요일이 아니거나 방학인 날은 건너뛴다.
@@ -153,6 +160,110 @@ export function buildRjSchedule(
     }
     cursor.setDate(cursor.getDate() + 1);
   }
+  return out;
+}
+
+/** 주 단위 통독표의 한 주 */
+export interface WeeklyEntry {
+  week: number;
+  ranges: [string, number, number][];
+  label: string;
+}
+
+/** 이어지는 장들을 다시 범위로 묶는다 ([창1,창2,창3] → [["창세기",1,3]]) */
+function rangesOf(chapters: RJChapter[]): [string, number, number][] {
+  const out: [string, number, number][] = [];
+  for (const c of chapters) {
+    const last = out[out.length - 1];
+    if (last && last[0] === c.book && last[2] === c.chapter - 1) last[2] = c.chapter;
+    else out.push([c.book, c.chapter, c.chapter]);
+  }
+  return out;
+}
+
+/**
+ * **주 단위 통독표**를 달력에 얹는다.
+ *
+ * 표에는 한 주에 읽을 범위만 있다 ("창세기 1~11장 · 욥기 1~20장").
+ * 그 주에 실제로 읽는 날이 며칠인지는 공동체가 정하므로(월~금이면 5일, 매일이면 7일),
+ * **그 주 분량을 그 주의 읽는 날 수로 고르게 나눈다.** 남는 장은 앞날부터 하나씩 더 준다.
+ *
+ * 읽는 날이 하나도 없는 주(통째로 쉬는 주)는 건너뛴다 — 그 주 분량이 사라지지 않고
+ * 다음 주로 밀린다.
+ */
+export function buildWeeklySchedule(
+  settings: RJSettings | null,
+  weeks: WeeklyEntry[]
+): RJDay[] {
+  const start = settings && rjParseDate(settings.startDate);
+  if (!settings || !start) return [];
+
+  const out: RJDay[] = [];
+  const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  let weekIdx = 0;
+  let mondayKey = "";
+  let pending: Date[] = [];
+
+  /** 모아 둔 그 주의 읽는 날들에 한 주 분량을 나눠 담는다 */
+  const flush = () => {
+    if (pending.length === 0 || weekIdx >= weeks.length) {
+      pending = [];
+      return;
+    }
+    const entry = weeks[weekIdx++];
+
+    // 그 주에 읽을 장을 죽 펼친다
+    const chapters: RJChapter[] = [];
+    for (const [book, from, to] of entry.ranges) {
+      for (let c = from; c <= to; c++) chapters.push({ book, chapter: c, key: `${book} ${c}장` });
+    }
+
+    /*
+      그 주 분량이 읽는 날 수보다 적으면(디모데후서 4장을 6일에 나누는 식)
+      **앞날부터 채우고 남는 날은 비워 둔다** — 0장짜리 날을 만들지 않는다.
+    */
+    const days = Math.min(pending.length, chapters.length);
+    if (days === 0) { pending = []; return; }
+    const base = Math.floor(chapters.length / days);
+    const extra = chapters.length % days;
+
+    let at = 0;
+    pending.slice(0, days).forEach((date, i) => {
+      const take = base + (i < extra ? 1 : 0);
+      const mine = chapters.slice(at, at + take);
+      at += take;
+      const ranges = rangesOf(mine);
+      out.push({
+        index: out.length,
+        entry: {
+          week: entry.week,
+          section: ranges[0]?.[0] || entry.ranges[0]?.[0] || "",
+          label: entry.label,
+          ranges
+        },
+        date: new Date(date),
+        dateKey: rjDateKey(date),
+        chapters: mine
+      });
+    });
+
+    pending = [];
+  };
+
+  for (let step = 0; step < MAX_SPAN_DAYS && weekIdx < weeks.length; step++) {
+    const key = rjDateKey(cursor);
+    const monday = rjDateKey(startOfWeek(cursor));
+    if (monday !== mondayKey) {
+      flush();
+      mondayKey = monday;
+    }
+    if (settings.readingDays.includes(cursor.getDay()) && !rjBreakOn(settings, key)) {
+      pending.push(new Date(cursor));
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  flush();
+
   return out;
 }
 
@@ -207,13 +318,6 @@ export interface RJWeekRow {
   /** 쉬는 기간이면 그 이름 */
   restLabel?: string;
   done: boolean;
-}
-
-/** 그 주의 월요일 0시 */
-function startOfWeek(today: Date): Date {
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d;
 }
 
 /** 이번 주 월~일 */

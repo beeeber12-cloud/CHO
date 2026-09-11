@@ -26,7 +26,6 @@ import {
   PlanScope
 } from "../lib/readingPlan";
 import {
-  buildRjSchedule,
   rjDateKey,
   rjDayOn,
   rjFinishDate,
@@ -35,7 +34,6 @@ import {
   rjRestText,
   rjShortDate,
   rjWeekBlocks,
-  rjWeekBlocksByDate,
   rjWeekRows,
   RJBreak,
   RJChapter,
@@ -44,6 +42,7 @@ import {
   RJ_DEFAULT_READING_DAYS
 } from "../lib/readingJesus";
 import {
+  buildTableSchedule,
   READING_TABLE_LIST,
   ReadingTableId,
   readingTable,
@@ -111,8 +110,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
    * 교회 리딩지저스 통독표를 그대로 따르느냐(readingJesus).
    */
   const [planMode, setPlanMode] = useState<"normal" | "readingJesus" | "wtbt">("normal");
-  /** '어,성경' 을 고른 경우 어느 표인지 */
-  const [wtbtLength, setWtbtLength] = useState<120 | 240>(120);
   /** 통독 플랜 고르는 창 */
   const [showPlanPicker, setShowPlanPicker] = useState<boolean>(false);
   const [switchingMode, setSwitchingMode] = useState<boolean>(false);
@@ -266,7 +263,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         setPlanMode(
           data.planMode === "readingJesus" ? "readingJesus" : data.planMode === "wtbt" ? "wtbt" : "normal"
         );
-        setWtbtLength(data.wtbtLength === 240 ? 240 : 120);
         setRjFollow(data.rjFollow === "personal" ? "personal" : "community");
         setRjStartDate(data.rjStartDate || "");
         setRjReadingDays(
@@ -499,19 +495,17 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
    */
   const switchPlanMode = async (table: ReadingTableId | null) => {
     if (!currentUser?.id) return;
-    const next = table === null ? "normal" : table === "readingJesus" ? "readingJesus" : "wtbt";
-    const nextLength: 120 | 240 = table === "wtbt240" ? 240 : 120;
-    if (next === planMode && (next !== "wtbt" || nextLength === wtbtLength)) return;
+    const next = table === null ? "normal" : table;
+    if (next === planMode) return;
 
     // 눌렀을 때 바로 바뀌게 (저장은 뒤따라간다)
     setPlanMode(next);
-    setWtbtLength(nextLength);
     setSwitchingMode(true);
     try {
       const res = await fetch("/api/bible-progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser.id, planMode: next, wtbtLength: nextLength })
+        body: JSON.stringify({ userId: currentUser.id, planMode: next })
       });
       if (res.ok) {
         const updated: UserBibleProgress = await res.json();
@@ -744,9 +738,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
   /** 지금 따르고 있는 통독표 (일반통독이면 null) */
   const myTable = React.useMemo(() => {
-    const id = tableIdOf(planMode === "normal" ? null : planMode, wtbtLength);
+    const id = tableIdOf(planMode === "normal" ? null : planMode);
     return id ? readingTable(id) : null;
-  }, [planMode, wtbtLength]);
+  }, [planMode]);
   /** 통독표를 따르는 중인가 */
   const isRJ = !!myTable;
 
@@ -763,6 +757,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     : myTable.id === "readingJesus"
     ? "리딩 성경 통독"
     : "어성경 통독";
+
 
   /** 읽은 장 모음 — 리딩지저스 표에서 완료 표시를 붙이는 데 쓴다 */
   const completedSet = React.useMemo(
@@ -786,8 +781,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
   /** 통독표를 달력에 얹은 것 (270일치) */
   const rjSchedule = React.useMemo(
-    () => buildRjSchedule(rjSettings, myTable?.entries),
-    [rjSettings, myTable]
+    () => buildTableSchedule(myTable, rjSettings),
+    [myTable, rjSettings]
   );
   /** 이번 주 월~일 */
   const rjRows = React.useMemo(
@@ -798,15 +793,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     () => rjDayOn(rjSchedule, rjDateKey(new Date())),
     [rjSchedule]
   );
-  /*
-    전체 스케줄의 주 묶음.
-    인쇄된 표가 주로 묶여 있는 리딩지저스는 그 주를 그대로 쓰고,
-    날짜별로만 적힌 표는 **달력으로** 묶는다 (읽는 요일 설정이 그대로 반영된다).
-  */
-  const rjBlocks = React.useMemo(
-    () => (myTable && myTable.weeks > 0 ? rjWeekBlocks(rjSchedule) : rjWeekBlocksByDate(rjSchedule)),
-    [rjSchedule, myTable]
-  );
+  // 전체 스케줄의 주 묶음 — 두 표 모두 '몇째 주' 를 갖고 있어 그대로 묶으면 된다
+  const rjBlocks = React.useMemo(() => rjWeekBlocks(rjSchedule), [rjSchedule]);
   const rjFinish = React.useMemo(() => rjFinishDate(rjSchedule), [rjSchedule]);
   /** 이번 주가 몇째 주인지 (전체 스케줄에서 표시하고 그리로 스크롤한다) */
   const rjCurrentWeek = React.useMemo(() => {
@@ -1201,14 +1189,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     },
                     ...READING_TABLE_LIST.map((t) => ({
                       id: t.id as ReadingTableId | null,
-                      title:
-                        t.id === "readingJesus"
-                          ? "리딩지저스 플랜"
-                          : `어,성경 ${t.totalDays}일 플랜`,
+                      title: `${t.short} 플랜`,
                       sub:
-                        t.id === "readingJesus"
-                          ? `${t.weeks}주 ${t.totalDays}일 · 교회 통독표대로`
-                          : `${t.totalDays}일 · 하루 분량을 표가 정합니다`
+                        t.kind === "weekly"
+                          ? `${t.weeks}주 · 한 주 분량을 읽는 날에 나눠 드립니다`
+                          : `${t.weeks}주 ${t.entries.length}일 · 교회 통독표대로`
                     }))
                   ]).map((opt) => {
                     const picked = (myTable?.id || null) === opt.id;
@@ -1851,7 +1836,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         sub={
           rjSchedule.length === 0
             ? "아직 통독 일정이 정해지지 않았습니다"
-            : `${rjBlocks.length}주 ${rjSchedule.length}일 · 마치는 날 ${rjFinish ? rjShortDate(rjFinish) : "-"}`
+            : `${myTable?.weeks || rjBlocks.length}주 ${rjSchedule.length}일 · 마치는 날 ${
+                rjFinish ? rjShortDate(rjFinish) : "-"
+              }`
         }
       >
         <div className="space-y-4">

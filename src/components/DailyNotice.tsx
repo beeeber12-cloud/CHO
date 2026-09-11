@@ -208,10 +208,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
    *  - readingJesus: 교회 리딩지저스 통독표를 따라 그날 분량 전체
    */
   const [plannerMode, setPlannerMode] = useState<"chapter" | "readingJesus" | "wtbt">("chapter");
-  /** '성경이 읽어지네' 는 120일치·240일치 중에 고른다 */
-  const [wtbtLength, setWtbtLength] = useState<120 | 240>(120);
   /** 지금 고른 통독표 (한 장씩 방식이면 null) */
-  const planTable = tableIdOf(plannerMode, wtbtLength);
+  const planTable = tableIdOf(plannerMode);
   const planTableInfo = planTable ? readingTable(planTable) : null;
   /** 통독을 시작하는 날 */
   const [rjStartDate, setRjStartDate] = useState<string>("");
@@ -287,7 +285,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
         setPlannerMode(
           data.mode === "readingJesus" ? "readingJesus" : data.mode === "wtbt" ? "wtbt" : "chapter"
         );
-        setWtbtLength(data.wtbtLength === 240 ? 240 : 120);
         setRjStartDate(data.rjStartDate || "");
         setRjReadingDays(
           Array.isArray(data.rjReadingDays) && data.rjReadingDays.length > 0
@@ -314,7 +311,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
           currentChapter: plannerChapter,
           active: plannerActive,
           mode: plannerMode,
-          wtbtLength,
           rjStartDate,
           rjReadingDays,
           // 날짜를 다 채운 것만 보낸다
@@ -529,31 +525,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               </div>
             </div>
 
-            {plannerMode === "wtbt" && (
-              <div>
-                <label className="block text-2xs font-bold text-[#6F8377] mb-1.5">통독표 고르기</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {([120, 240] as const).map((len) => (
-                    <button
-                      key={len}
-                      type="button"
-                      onClick={() => setWtbtLength(len)}
-                      className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition cursor-pointer ${
-                        wtbtLength === len
-                          ? "grad-forest text-white"
-                          : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
-                      }`}
-                    >
-                      {len}일 플랜
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <p className="text-[#6F8377] leading-relaxed">
               {plannerMode === "wtbt"
-                ? `'성경이 읽어지네' ${wtbtLength}일치 통독표를 그대로 따릅니다. 고른 날짜부터 하루하루 그날 분량 전체가 오늘의 말씀으로 올라갑니다. 읽는 요일이 아니거나 쉬는 기간인 날은 앞 공지가 그대로 남습니다.`
+                ? "'어 성경이 읽어지네' 52주 통독표를 따릅니다. 한 주에 읽을 범위를 그 주의 읽는 날 수로 나눠 하루치를 정합니다 — 월~금으로 읽으면 하루가 조금 많아지고, 매일 읽으면 가벼워집니다. 읽는 요일이 아니거나 쉬는 기간인 날은 앞 공지가 그대로 남습니다."
                 : plannerMode === "readingJesus"
                 ? "교회 리딩지저스 통독표를 그대로 따릅니다. 고른 날짜부터 하루하루 그날 분량 전체(예: 마태복음 1~3장)가 오늘의 말씀으로 올라갑니다. 강해 영상만 있는 주일과 특별주간처럼 읽을 분량이 없는 날은 앞 공지가 그대로 남습니다."
                 : "설정한 성경책에서 매일 새로운 하루가 시작될 때 한 장씩 오늘의 말씀으로 자동 공지합니다 (Gemini AI가 목회적인 가이드와 묵상 해설을 함께 작성해 줍니다)."}
@@ -570,8 +544,12 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 breaks={rjBreaks}
                 onBreaks={setRjBreaks}
                 todayLabel="오늘 올라갈 말씀"
-                entries={planTableInfo?.entries}
-                startHint={`이 날 첫 분량(${planTableInfo?.entries[0]?.label || ""})부터 공동체 전체가 함께 시작합니다.`}
+                table={planTableInfo}
+                startHint={`이 날 첫 분량(${
+                  planTableInfo?.kind === "weekly"
+                    ? planTableInfo.weekly[0]?.label
+                    : planTableInfo?.entries[0]?.label
+                } )부터 공동체 전체가 함께 시작합니다.`.replace(" )", ")")}
               />
             )}
 
