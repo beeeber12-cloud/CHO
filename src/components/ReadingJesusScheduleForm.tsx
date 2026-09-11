@@ -11,7 +11,8 @@ import {
   RJBreak,
   RJ_DAY_LABELS,
   RJ_DAY_PRESETS,
-  RJ_ENTRIES
+  RJ_ENTRIES,
+  rjWeekBlocksByDate
 } from "../lib/readingJesus";
 import { ReadingJesusEntry } from "../data/readingJesus";
 
@@ -56,9 +57,15 @@ export default function ReadingJesusScheduleForm({
     [startDate, readingDays, breaks]
   );
   const schedule = React.useMemo(() => buildRjSchedule(settings, entries), [settings, entries]);
-  /** 표가 몇 주 몇 일짜리인지 (표마다 다르다) */
+  /**
+   * 몇 주 몇 일짜리인지.
+   * 주는 **달력으로** 센다 — 읽는 요일을 월~금으로 잡으면 같은 표라도 주가 늘어난다.
+   */
   const totalDays = entries.length;
-  const totalWeeks = entries[entries.length - 1]?.week || 1;
+  const totalWeeks = React.useMemo(
+    () => (schedule.length > 0 ? rjWeekBlocksByDate(schedule).length : 0),
+    [schedule]
+  );
   const today = React.useMemo(() => rjDayOn(schedule, rjDateKey(new Date())), [schedule]);
   const finish = React.useMemo(() => rjFinishDate(schedule), [schedule]);
 

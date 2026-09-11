@@ -35,6 +35,7 @@ import {
   rjRestText,
   rjShortDate,
   rjWeekBlocks,
+  rjWeekBlocksByDate,
   rjWeekRows,
   RJBreak,
   RJChapter,
@@ -797,14 +798,23 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     () => rjDayOn(rjSchedule, rjDateKey(new Date())),
     [rjSchedule]
   );
-  const rjBlocks = React.useMemo(() => rjWeekBlocks(rjSchedule), [rjSchedule]);
+  /*
+    전체 스케줄의 주 묶음.
+    인쇄된 표가 주로 묶여 있는 리딩지저스는 그 주를 그대로 쓰고,
+    날짜별로만 적힌 표는 **달력으로** 묶는다 (읽는 요일 설정이 그대로 반영된다).
+  */
+  const rjBlocks = React.useMemo(
+    () => (myTable && myTable.weeks > 0 ? rjWeekBlocks(rjSchedule) : rjWeekBlocksByDate(rjSchedule)),
+    [rjSchedule, myTable]
+  );
   const rjFinish = React.useMemo(() => rjFinishDate(rjSchedule), [rjSchedule]);
   /** 이번 주가 몇째 주인지 (전체 스케줄에서 표시하고 그리로 스크롤한다) */
   const rjCurrentWeek = React.useMemo(() => {
     const todayKey = rjDateKey(new Date());
-    const soon = rjSchedule.find((d) => d.dateKey >= todayKey);
-    return soon?.entry.week ?? 0;
-  }, [rjSchedule]);
+    // 오늘(또는 다음 읽는 날)이 들어 있는 묶음을 찾는다 — 어느 표든 같은 방법으로 센다
+    const block = rjBlocks.find((b) => b.days.some((d) => d.dateKey >= todayKey));
+    return block?.week ?? 0;
+  }, [rjBlocks]);
 
   // 전체 스케줄을 열면 이번 주가 바로 눈에 들어오게 내려 준다
   useEffect(() => {
@@ -1841,7 +1851,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
         sub={
           rjSchedule.length === 0
             ? "아직 통독 일정이 정해지지 않았습니다"
-            : `${myTable ? `${myTable.totalDays}일` : ""} · 마치는 날 ${rjFinish ? rjShortDate(rjFinish) : "-"}`
+            : `${rjBlocks.length}주 ${rjSchedule.length}일 · 마치는 날 ${rjFinish ? rjShortDate(rjFinish) : "-"}`
         }
       >
         <div className="space-y-4">

@@ -32,6 +32,7 @@ export interface ReadingTable {
   /** 한 주에 읽는 날 수 (표가 그렇게 묶여 있을 때) */
   perWeek: number;
   totalDays: number;
+  /** 표 자체가 주로 묶여 있을 때의 주 수 (날짜별 표는 0 — 달력으로 센다) */
   weeks: number;
   /** 이 표로 읽게 되는 장 수 (같은 장을 두 번 읽어도 하나로 센다) */
   totalChapters: number;
@@ -40,20 +41,17 @@ export interface ReadingTable {
 /**
  * '성경이 읽어지네' 표를 리딩지저스와 같은 모양으로 맞춘다.
  *
- * 그쪽 표에는 '주' 가 없고 날짜별로만 적혀 있다. 전체 스케줄을 볼 때 묶음이 있어야
- * 눈에 들어오므로 **권이 바뀌는 자리마다 묶음을 나눈다** (창세기 / 출애굽기 …).
+ * 그쪽 표에는 **'주' 가 없다** — 날짜별로만 적혀 있다.
+ * 없는 주를 지어내지 않는다(week: 0). 전체 스케줄은 **달력으로** 묶는다
+ * (rjWeekBlocksByDate) — 읽는 요일을 월~금으로 잡으면 한 주에 5일이 들어간다.
  */
 function fromWtbt(list: WtbtEntry[]): ReadingJesusEntry[] {
-  let week = 0;
-  let section = "";
-  return list.map((e) => {
-    const book = e.ranges[0]?.[0] || section || "성경";
-    if (book !== section) {
-      section = book;
-      week += 1;
-    }
-    return { week, section, label: e.label, ranges: e.ranges };
-  });
+  return list.map((e) => ({
+    week: 0,
+    section: e.ranges[0]?.[0] || "성경",
+    label: e.label,
+    ranges: e.ranges
+  }));
 }
 
 /** 같은 장을 여러 번 읽는 표도 있으므로(복음서 나란히 읽기) 겹치는 것은 하나로 센다 */
@@ -109,7 +107,7 @@ export const READING_TABLES: Record<ReadingTableId, ReadingTable> = {
     `${WTBT_TITLE} 120일`,
     WTBT_120_ENTRIES,
     6,
-    WTBT_120_ENTRIES[WTBT_120_ENTRIES.length - 1]?.week || 1
+    0
   ),
   wtbt240: table(
     "wtbt240",
@@ -118,7 +116,7 @@ export const READING_TABLES: Record<ReadingTableId, ReadingTable> = {
     `${WTBT_TITLE} 240일`,
     WTBT_240_ENTRIES,
     6,
-    WTBT_240_ENTRIES[WTBT_240_ENTRIES.length - 1]?.week || 1
+    0
   )
 };
 

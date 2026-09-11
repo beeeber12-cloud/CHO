@@ -284,6 +284,41 @@ export interface RJWeekBlock {
   days: RJDay[];
 }
 
+/**
+ * **날짜로** 주를 묶는다 (월요일 시작).
+ *
+ * 리딩지저스는 인쇄된 표가 6일씩 묶여 있어 그 '주' 를 그대로 쓰지만,
+ * '어 성경이 읽어지네' 처럼 날짜별로만 적힌 표에는 주가 없다.
+ * 그때는 **달력이 정답이다** — 읽는 요일을 월~금으로 잡으면 한 주에 5일,
+ * 월~토면 6일이 들어간다. 주 번호도 1부터 차례대로 붙는다.
+ */
+export function rjWeekBlocksByDate(schedule: RJDay[]): RJWeekBlock[] {
+  const blocks: RJWeekBlock[] = [];
+  let mondayKey = "";
+
+  for (const day of schedule) {
+    const key = rjDateKey(startOfWeek(day.date));
+    if (key !== mondayKey) {
+      mondayKey = key;
+      blocks.push({ week: blocks.length + 1, section: "", days: [] });
+    }
+    blocks[blocks.length - 1].days.push(day);
+  }
+
+  // 그 주에 읽는 권을 제목으로 (여러 권이면 가운뎃점으로 잇는다)
+  for (const b of blocks) {
+    const books: string[] = [];
+    for (const d of b.days) {
+      for (const [book] of d.entry.ranges) {
+        if (!books.includes(book)) books.push(book);
+      }
+    }
+    b.section = books.slice(0, 2).join(" · ") + (books.length > 2 ? " 외" : "");
+  }
+
+  return blocks;
+}
+
 /** 통독표 전체를 주별로 묶는다 (전체 스케줄 팝업) */
 export function rjWeekBlocks(schedule: RJDay[]): RJWeekBlock[] {
   const blocks: RJWeekBlock[] = [];
