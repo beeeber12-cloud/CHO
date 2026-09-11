@@ -22,7 +22,7 @@ export type ReadingTableId = "readingJesus" | "wtbt120" | "wtbt240";
 
 export interface ReadingTable {
   id: ReadingTableId;
-  /** 설정 화면에 보이는 이름 ("성경이 읽어지네 120일") */
+  /** 설정 화면에 보이는 이름 ("어 성경이 읽어지네 120일") */
   name: string;
   /** 오늘의 말씀 제목 앞에 붙는 짧은 이름 ("성경이 읽어지네") */
   short: string;
@@ -104,8 +104,8 @@ export const READING_TABLES: Record<ReadingTableId, ReadingTable> = {
   ),
   wtbt120: table(
     "wtbt120",
-    "성경이 읽어지네 120일",
-    "성경이 읽어지네",
+    "어 성경이 읽어지네 120일",
+    "어 성경이 읽어지네",
     `${WTBT_TITLE} 120일`,
     WTBT_120_ENTRIES,
     6,
@@ -113,8 +113,8 @@ export const READING_TABLES: Record<ReadingTableId, ReadingTable> = {
   ),
   wtbt240: table(
     "wtbt240",
-    "성경이 읽어지네 240일",
-    "성경이 읽어지네",
+    "어 성경이 읽어지네 240일",
+    "어 성경이 읽어지네",
     `${WTBT_TITLE} 240일`,
     WTBT_240_ENTRIES,
     6,

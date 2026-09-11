@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, ChevronDown, X, RefreshCw, Settings, Check, Play, CalendarDays, Video, Sparkles, Users } from "lucide-react";
+import { BookOpen, Send, Loader, CheckCircle2, Target, ListChecks, ChevronRight, ChevronDown, X, RefreshCw, Settings, Check, Play, CalendarDays, Video, Users } from "lucide-react";
 import { SettingModal } from "./SettingsUI";
 import ReadingJesusScheduleForm from "./ReadingJesusScheduleForm";
 import ModalPortal from "./ModalPortal";
@@ -864,7 +864,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             onClick={() => setShowPlanPicker(true)}
             className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-3xl text-2xs sm:text-xs font-bold transition cursor-pointer disabled:opacity-60 bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
           >
-            <Sparkles size={13} />
             <span className="whitespace-nowrap">{myTable ? myTable.short : "일반통독"}</span>
             <ChevronDown size={13} className="opacity-70" />
           </button>

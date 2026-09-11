@@ -21,7 +21,7 @@ export interface WtbtEntry {
 }
 
 /** 통독 목표 이름 — 이 모드에서는 이 이름으로 고정된다 */
-export const WTBT_TITLE = "성경이 읽어지네 통독";
+export const WTBT_TITLE = "어 성경이 읽어지네 통독";
 
 export const WTBT_120: WtbtEntry[] = [
   { day:1, label:"창세기 1-9장", ranges:[["창세기",1,9]] },
