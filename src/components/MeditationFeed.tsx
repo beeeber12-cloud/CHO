@@ -783,17 +783,18 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   onChange={(e) => setSokIdForForm(e.target.value || null)}
                   className="w-full text-sm px-3.5 py-3 bg-white border-2 border-[#0C3B2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold cursor-pointer"
                 >
-                  <option value="">전체공유방 · 우리 공동체 모두가 봅니다</option>
-                  {myRoom && (
-                    <option value={myRoom.id}>
-                      내 묵상방 · 나와 내가 초대한 지체만 봅니다
-                    </option>
-                  )}
+                  {/*
+                    화면의 알약과 **같은 이름, 같은 순서**로 둔다.
+                    설명을 길게 붙였더니 정작 방 이름이 눈에 안 들어왔다 —
+                    누가 보는지는 알약 아래 한 줄이 이미 말해 준다.
+                  */}
+                  <option value="">전체공유방에 쓰기</option>
+                  {myRoom && <option value={myRoom.id}>내 묵상방에 쓰기</option>}
                   {accessibleSoks
                     .filter((sok) => sok.id !== myRoom?.id)
                     .map((sok) => (
                       <option key={sok.id} value={sok.id}>
-                        {sok.name} · 그 방 식구들만 봅니다
+                        {sok.name}에 쓰기
                       </option>
                     ))}
                 </select>
