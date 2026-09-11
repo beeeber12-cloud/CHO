@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BookOpen, ChevronRight, Clock } from "lucide-react";
 import { readingTable, tableIdOf } from "../lib/readingTables";
+import { cheerOf } from "../data/dailyCheer";
 
 /**
  * 하루에 처음 앱을 여실 때 딱 한 번 뜨는 화면.
@@ -51,7 +52,6 @@ interface TodayNotice {
   id: string;
   date: string;
   verseTitle: string;
-  verseText?: string;
   readBy?: string[];
 }
 
@@ -62,16 +62,6 @@ function koreanDate(iso: string): string {
   const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   return `${Number(m[2])}월 ${Number(m[3])}일 ${weekdays[d.getDay()]}요일`;
-}
-
-/** 본문 첫 구절만 한 줄로 (절 번호는 떼고, 너무 길면 줄인다) */
-function firstVerse(text?: string): string {
-  const line = (text || "")
-    .split("\n")
-    .map((l) => l.replace(/^\s*\d+\s*/, "").trim())
-    .find((l) => l.length > 0);
-  if (!line) return "";
-  return line.length > 52 ? line.slice(0, 52).trim() + "…" : line;
 }
 
 interface Props {
@@ -203,6 +193,8 @@ export default function TodayVerseIntro({
   };
 
   const dateLine = koreanDate(notice ? notice.date : todayInKorea());
+  /** 오늘의 위로 한 구절 — 날짜로 고르므로 공동체 모두가 같은 것을 본다 */
+  const cheer = cheerOf(todayInKorea());
 
   return (
     <AnimatePresence>
@@ -226,63 +218,65 @@ export default function TodayVerseIntro({
           >
             <span className="text-2xs font-medium text-white/50">{dateLine}</span>
 
-            <span className="flex flex-col items-center gap-5">
-              <motion.span
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.3 }}
-                className="text-2xs font-bold px-3 py-1.5 rounded-full"
-                style={
-                  notice
-                    ? { background: C.gold, color: C.onGold }
-                    : { background: "rgba(255,255,255,0.18)", color: "#FFFFFF" }
-                }
-              >
-                {notice ? label : "아직 오늘 말씀 전"}
-              </motion.span>
-
+            <span className="flex flex-col items-center gap-6 w-full max-w-[20rem]">
+              {/* 오늘의 위로 — 날마다 다른 한 문장과 말씀 한 구절 */}
               <motion.span
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.16, duration: 0.34 }}
+                transition={{ delay: 0.1, duration: 0.36 }}
                 className="block"
               >
+                <span className="block text-xl sm:text-2xl font-bold leading-snug break-keep text-white">
+                  {cheer.line}
+                </span>
+                <span className="scripture-font block text-sm text-white/75 leading-relaxed break-keep mt-4">
+                  “{cheer.text}”
+                </span>
+                <span className="block text-2xs text-white/50 mt-2">{cheer.ref}</span>
+              </motion.span>
+
+              {/* 오늘 읽을 말씀 — 어디인지만 담백하게 */}
+              <motion.span
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.34 }}
+                className="block w-full pt-5 border-t border-white/15"
+              >
+                <span
+                  className="inline-block text-2xs font-bold px-2.5 py-1 rounded-full"
+                  style={
+                    notice
+                      ? { background: C.gold, color: C.onGold }
+                      : { background: "rgba(255,255,255,0.18)", color: "#FFFFFF" }
+                  }
+                >
+                  {notice ? label : "아직 오늘 말씀 전"}
+                </span>
+
                 {notice ? (
-                  <>
-                    <span className="block text-sm text-white/80 break-keep">
+                  <span className="block mt-2.5">
+                    <span className="block text-2xs text-white/70 break-keep">
                       {currentUser.name}님, 오늘 함께 읽을 말씀은
                     </span>
                     <span
-                      className="block text-3xl sm:text-4xl font-bold mt-3 leading-tight break-keep"
+                      className="block text-lg sm:text-xl font-bold mt-1 leading-snug break-keep"
                       style={{ color: C.gold }}
                     >
                       {notice.verseTitle}
+                      <span className="text-white font-bold"> 입니다</span>
                     </span>
-                    <span className="block text-lg font-bold text-white mt-2">입니다</span>
-
-                    {/* 본문 첫 구절 한 줄 — 무슨 말씀인지 미리 마음에 얹어 드린다 */}
-                    {firstVerse(notice.verseText) && (
-                      <span className="scripture-font block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
-                        “{firstVerse(notice.verseText)}”
-                      </span>
-                    )}
-                  </>
+                  </span>
                 ) : (
-                  <>
-                    <span className="block text-sm text-white/80 break-keep">
-                      {isAdmin ? "관리자님," : `${currentUser.name}님,`}
+                  <span className="block mt-2.5">
+                    <span className="block text-base sm:text-lg font-bold leading-snug break-keep text-white">
+                      오늘의 말씀이 설정되지 않았습니다
                     </span>
-                    <span className="block text-2xl sm:text-3xl font-bold mt-3 leading-snug break-keep text-white">
-                      오늘의 말씀이
-                      <br />
-                      설정되지 않았습니다
-                    </span>
-                    <span className="block text-sm text-white/70 leading-relaxed break-keep mt-5 max-w-[17rem] mx-auto">
+                    <span className="block text-2xs text-white/70 leading-relaxed break-keep mt-1.5">
                       {isAdmin
                         ? "지체들이 기다리고 있습니다. 오늘 말씀을 올려 주세요."
                         : "관리자님의 설정을 기다리고 있습니다."}
                     </span>
-                  </>
+                  </span>
                 )}
               </motion.span>
 
@@ -290,7 +284,7 @@ export default function TodayVerseIntro({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.26, duration: 0.34 }}
-                className="mt-3 flex items-center gap-2 bg-white text-[#12503B] px-6 py-3.5 rounded-3xl text-base font-bold shadow-xl"
+                className="flex items-center gap-2 bg-white text-[#12503B] px-6 py-3.5 rounded-3xl text-base font-bold shadow-xl"
               >
                 {notice ? <BookOpen size={18} /> : <Clock size={18} />}
                 {notice ? "말씀 보러 가기" : isAdmin ? "오늘 말씀 올리러 가기" : "성경통독으로 바로가기"}

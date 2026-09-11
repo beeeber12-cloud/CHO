@@ -13,7 +13,6 @@ import MyMeditations from "./components/MyMeditations";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import InAppBrowserNotice from "./components/InAppBrowserNotice";
 import TodayVerseIntro from "./components/TodayVerseIntro";
-import GoalSummaryPopup from "./components/GoalSummaryPopup";
 import CommunitySettings from "./components/CommunitySettings";
 import AccountModals from "./components/AccountModals";
 import ProfileModal from "./components/ProfileModal";
@@ -453,9 +452,11 @@ export default function App() {
         replay={introReplay}
       />
 
-      {/* 접속 시 하루 한 번, 나눔·통독 진행률을 상기시켜 준다.
-          안내를 보는 동안에는 겹치지 않게 미뤄 둔다 */}
-      {!guideOpen && !introOpen && <GoalSummaryPopup currentUser={currentUser} />}
+      {/*
+        하루 한 번 뜨던 '우리 목표 진행률' 팝업은 뺐다 (2026-09-11).
+        앱을 열면 첫 화면이 이미 오늘 말씀을 알려 주는데, 그 뒤에 숫자가 또 뜨니
+        들어오자마자 두 번 닫아야 했다. 진행률은 나의 기록에서 언제든 보실 수 있다.
+      */}
       {/* Dynamic Header — 공동체 이름만 담백하게, 계정 관련은 톱니(설정)로 옮겼다.
           시안처럼 아래 흰 시트가 이 머리말 위로 겹쳐 올라와야 하므로 sticky 를 쓰지 않는다
           (sticky + z-40 이면 머리말이 시트 위에 그려져 겹침이 안 보인다) */}
