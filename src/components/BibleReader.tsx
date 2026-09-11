@@ -749,17 +749,19 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   /** 통독표를 따르는 중인가 */
   const isRJ = !!myTable;
 
-  /** 플랜마다 다른 상자 색 (지금 무엇을 따르는지 한눈에) */
-  const planBox = !myTable
-    ? "bg-[#F9F9F9]"
+  /** 통독 화면의 상자 색 — 플랜과 상관없이 한 색으로 둔다 */
+  const planBox = "bg-[#E8F0E9]";
+  const planBoxHover = "hover:bg-[#E3ECE4]";
+
+  /**
+   * 화면 제목 — 따르는 플랜을 제목이 그대로 말해 준다.
+   * (색으로 가르는 것보다 글자가 분명하다)
+   */
+  const readerTitle = !myTable
+    ? "성경 통독"
     : myTable.id === "readingJesus"
-    ? "bg-[#E8F0E9]"
-    : "bg-[#D2DDD3]";
-  const planBoxHover = !myTable
-    ? "hover:bg-[#F0F0F0]"
-    : myTable.id === "readingJesus"
-    ? "hover:bg-[#E3ECE4]"
-    : "hover:bg-[#C7D8C9]";
+    ? "리딩 성경 통독"
+    : "어성경 통독";
 
   /** 읽은 장 모음 — 리딩지저스 표에서 완료 표시를 붙이는 데 쓴다 */
   const completedSet = React.useMemo(
@@ -854,7 +856,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       {/* Page title — 오른쪽 단추로 통독 플랜을 갈아 끼운다 */}
       <div className="flex items-start justify-between gap-2.5">
         <div className="min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E]">성경 통독</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0C3B2E] break-keep">{readerTitle}</h2>
           <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5 truncate">
             {myTable
               ? `${myTable.goalTitle} · ${
