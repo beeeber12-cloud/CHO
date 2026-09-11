@@ -145,6 +145,21 @@ export function tableIdOf(mode?: string | null, wtbtLength?: number | null): Rea
   return null;
 }
 
+/**
+ * 그날이 표에서 어디쯤인지 한 마디로.
+ * 리딩지저스는 주 단위로 묶여 있어 "12주 시편", 날짜별 표는 "34일차" 가 자연스럽다.
+ */
+export function tableDayLabel(table: ReadingTable, index: number, entry?: { week: number; section: string }): string {
+  if (table.id === "readingJesus" && entry) return `${entry.week}주 ${entry.section}`;
+  return `${index + 1}일차${entry?.section ? ` · ${entry.section}` : ""}`;
+}
+
+/** "12주차 / 45주" · "34일차 / 120일" */
+export function tableProgressLabel(table: ReadingTable, index: number, week: number): string {
+  if (table.id === "readingJesus") return week > 0 ? `${week}주차 / ${table.weeks}주` : "";
+  return index >= 0 ? `${index + 1}일차 / ${table.totalDays}일` : "";
+}
+
 /** 통독표를 따르는 방식인가 (한 장씩 방식이 아닌가) */
 export function isTableMode(mode?: string | null): boolean {
   return mode === "readingJesus" || mode === "wtbt";

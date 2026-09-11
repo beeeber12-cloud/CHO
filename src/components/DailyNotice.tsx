@@ -507,17 +507,17 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             {/* 어떤 방식으로 자동 공지할지 */}
             <div>
               <label className="block text-2xs font-bold text-[#6F8377] mb-1.5">자동 공지 방식</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {([
-                  { key: "chapter" as const, label: "한 장씩 자동 공지" },
-                  { key: "readingJesus" as const, label: "리딩지저스 통독표" },
-                  { key: "wtbt" as const, label: "성경이 읽어지네" }
+                  { key: "chapter" as const, label: "일반통독" },
+                  { key: "readingJesus" as const, label: "리딩지저스" },
+                  { key: "wtbt" as const, label: "어,성경" }
                 ]).map((m) => (
                   <button
                     key={m.key}
                     type="button"
                     onClick={() => setPlannerMode(m.key)}
-                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                    className={`py-2.5 px-1 rounded-2xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                       plannerMode === m.key
                         ? "grad-forest text-white"
                         : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
@@ -544,7 +544,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                           : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
                       }`}
                     >
-                      {len}일치
+                      {len}일 플랜
                     </button>
                   ))}
                 </div>
