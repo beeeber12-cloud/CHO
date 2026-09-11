@@ -68,8 +68,8 @@ const M = {
 function Pin({ n }: { n: number }) {
   return (
     <span
-      className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
-      style={{ background: M.gold, color: M.greenDeep }}
+      className="w-[17px] h-[17px] rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+      style={{ background: M.gold, color: M.greenDeep, boxShadow: `0 0 0 1.5px ${M.paper}` }}
     >
       {n}
     </span>
@@ -78,13 +78,23 @@ function Pin({ n }: { n: number }) {
 
 /**
  * 예시 그림의 한 줄.
- * 왼쪽은 번호 칸(비어 있어도 자리를 지킨다), 오른쪽이 화면 내용이다.
+ *
+ * 번호는 **그 자리에 직접 붙는다** — 왼쪽 칸에 따로 세워 두면
+ * 아래 설명의 번호와 눈으로 잇기가 어렵다. 테두리를 함께 둘러 어디를 말하는지 못 박는다.
  */
 function Row({ pin, children }: { pin?: number; children: React.ReactNode }) {
+  if (!pin) return <div className="pl-1.5">{children}</div>;
   return (
-    <div className="flex items-start gap-1.5">
-      <span className="w-[18px] shrink-0 flex justify-center pt-px">{pin ? <Pin n={pin} /> : null}</span>
-      <span className="flex-1 min-w-0 block">{children}</span>
+    <div className="relative pl-1.5">
+      <span
+        className="block rounded-[10px] px-1.5 py-1"
+        style={{ boxShadow: `0 0 0 1.5px ${M.gold}` }}
+      >
+        {children}
+      </span>
+      <span className="absolute -left-0.5 -top-1.5 z-10">
+        <Pin n={pin} />
+      </span>
     </div>
   );
 }
@@ -179,22 +189,7 @@ function MockNotice() {
   return (
     <Screen>
       <Row pin={1}>
-        <span className="block space-y-1">
-          <MockTitle title="어 성경이 읽어지네 오늘의 말씀" sub="요한복음 3장 · 9월 8일" />
-          <Box>
-            <span className="flex items-center justify-between gap-1">
-              <span className="text-[8px] font-bold" style={{ color: M.ink }}>
-                오늘의 말씀 설정
-              </span>
-              <span
-                className="text-[7px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ background: M.gold, color: M.greenDeep }}
-              >
-                자동 공지 켜짐
-              </span>
-            </span>
-          </Box>
-        </span>
+        <MockTitle title="오늘의 말씀" sub="요한복음 3장 · 9월 8일" />
       </Row>
 
       <Row pin={2}>
@@ -240,12 +235,12 @@ function MockBible() {
     <Screen>
       <Row pin={2}>
         <span className="flex items-start justify-between gap-2">
-          <MockTitle title="어성경 통독" sub="어 성경이 읽어지네 통독 · 12주 시편" />
+          <MockTitle title="성경 통독" sub="1년 1독 · 하루 3장" />
           <span
             className="text-[8px] font-bold px-2 py-1 rounded-full shrink-0"
             style={{ background: M.box, color: M.green }}
           >
-            어 성경이 읽어지네 플랜 ⌄
+            통독 플랜 ⌄
           </span>
         </span>
       </Row>
@@ -253,10 +248,10 @@ function MockBible() {
       <Row pin={1}>
         <Box>
           <span className="block text-[9px] font-bold" style={{ color: M.ink }}>
-            어 성경이 읽어지네 통독 진행률 38%
+            통독 진행률 38%
           </span>
           <span className="block text-[8px]" style={{ color: M.sub }}>
-            452장 / 1138장 · 통독표대로
+            452장 / 1189장
           </span>
           <span className="block h-1 rounded-full mt-1" style={{ background: M.line }}>
             <span
@@ -344,10 +339,7 @@ function MockFeed() {
       </Row>
 
       <Row pin={1}>
-        <span className="flex gap-1.5">
-          <Btn>+ 묵상 나누기</Btn>
-          <Btn tone="soft">기도제목</Btn>
-        </span>
+        <Btn>+ 묵상 나누기</Btn>
       </Row>
     </Screen>
   );
@@ -469,50 +461,37 @@ const SLIDES: Slide[] = [
   {
     icon: Cross,
     tab: "",
-    title: "소그룹이 함께 말씀을 읽고 나누는 곳입니다",
+    title: "소그룹이 함께 말씀을 읽고 나누는 앱입니다",
     lines: [
-      "혼자 읽고 끝나지 않도록 만들었습니다.",
-      "오늘 함께 읽을 말씀이 정해지고,",
-      "각자 읽은 뒤 묵상과 기도제목을 나눕니다.",
-      "",
       "여기 올라온 글은 우리 공동체 안에서만 보입니다.",
-      "다른 공동체의 글은 서로 보이지 않습니다.",
       "",
-      "화면마다 무엇을 하는 곳인지 그림과 함께",
-      "번호대로 짚어 드리겠습니다.",
-      "옆으로 밀어서 넘기시면 됩니다."
+      "화면마다 번호로 짚어 드리겠습니다.",
+      "옆으로 밀어 넘겨 주세요."
     ]
   },
   {
     icon: BookOpen,
     tab: "오늘 말씀",
-    title: "오늘 함께 읽을 말씀이 정해집니다",
+    title: "오늘 함께 읽을 말씀",
     mock: MockNotice,
     pins: [
-      "그날 함께 읽을 말씀이 아침마다 저절로 올라옵니다. 속장·리더가 직접 올리셔도 됩니다.",
-      "번역본을 눌러 바꿉니다. 개역개정·우리말·NIV 중 두 개를 나란히 놓고 볼 수도 있습니다.",
-      "마음에 닿은 구절을 누르면 노랗게 표시됩니다. 고른 구절은 그대로 묵상 글로 가져갑니다.",
-      "다 읽으셨으면 '오늘 말씀 읽기 완료'를 눌러 주세요. 함께 읽은 분이 몇 명인지 아래에 모입니다."
+      "아침마다 저절로 올라옵니다",
+      "번역본을 눌러 바꿉니다",
+      "구절을 누르면 묵상으로 가져갑니다",
+      "다 읽으면 눌러 주세요"
     ],
-    notes: [
-      "속장·리더는 '오늘의 말씀 설정'에서 통독 프로그램을 고릅니다 — 리딩지저스, 어 성경이 읽어지네.",
-      "시작날과 읽는 요일만 정하면 그다음은 앱이 날마다 알아서 올려 드립니다."
-    ]
+    notes: ["속장·리더는 여기서 통독 프로그램을 정합니다."]
   },
   {
     icon: BrandMark,
     tab: "성경통독",
-    title: "각자 자기 자리에서 성경을 읽습니다",
+    title: "각자 성경을 읽습니다",
     mock: MockBible,
     pins: [
-      "진행률 상자를 누르면 이번 주 계획과 지금까지 읽은 장이 한눈에 보입니다.",
-      "오른쪽 위에서 통독 플랜을 고릅니다 — 일반 통독 · 리딩지저스 · 어 성경이 읽어지네.",
-      "구약·신약에서 권과 장을 고릅니다. '이어서 읽기'는 마지막에 읽던 곳을 바로 펴 줍니다.",
-      "본문을 좌우로 밀면 장이 넘어갑니다. 다 읽으신 장은 완료로 체크됩니다."
-    ],
-    notes: [
-      "플랜을 고르면 시작날·읽는 요일·쉬는 기간에 맞춰 그날 읽을 곳을 앱이 정해 드립니다.",
-      "성경을 읽는 동안에는 화면이 저절로 꺼지지 않습니다."
+      "지금까지 읽은 양이 보입니다",
+      "통독 플랜을 고릅니다",
+      "읽던 곳에서 이어 읽습니다",
+      "옆으로 밀면 장이 넘어갑니다"
     ]
   },
   {
@@ -520,43 +499,22 @@ const SLIDES: Slide[] = [
     tab: "묵상일기",
     title: "묵상과 기도제목을 나눕니다",
     mock: MockFeed,
-    pins: [
-      "'묵상 나누기'로 오늘 받은 말씀과 기도제목을 적습니다. 두세 줄이면 충분합니다.",
-      "어디에 올릴지 고릅니다 — 전체공유방은 모두가, 내 묵상방은 나와 내가 초대한 지체만 봅니다.",
-      "좋아요·기도할게요·댓글로 서로 붙들어 줍니다. @이름을 넣으면 그분을 부를 수 있습니다."
-    ],
-    notes: [
-      "기도제목은 글 아래에 따로 담깁니다. 몇 분이 함께 기도했는지 글쓴이에게만 보입니다.",
-      "나만 보는 '영성일기'가 필요하시면 설정 → 묵상에서 켜시면 됩니다."
-    ]
+    pins: ["묵상과 기도제목을 적습니다", "어디에 올릴지 고릅니다", "좋아요·기도로 응원합니다"]
   },
   {
     icon: Heart,
     tab: "감사칭찬",
-    title: "감사와 칭찬으로 모임이 즐거워집니다",
+    title: "감사와 칭찬을 남깁니다",
     mock: MockGratitude,
-    pins: [
-      "'감사 나누기'로 오늘 감사한 일을 한 줄 남깁니다. 길지 않아도 됩니다.",
-      "@이름을 넣으면 그분을 콕 집어 칭찬할 수 있습니다.",
-      "좋아요와 댓글로 함께 기뻐합니다."
-    ],
-    notes: ["작은 감사가 쌓이면 모임의 공기가 달라집니다."]
+    pins: ["오늘 감사한 일 한 줄", "@이름으로 칭찬합니다", "함께 기뻐합니다"]
   },
   {
     icon: User,
     tab: "나의 기록",
-    title: "내가 걸어온 길이 그대로 남습니다",
+    title: "내 기록이 그대로 남습니다",
     mock: MockMy,
-    pins: [
-      "내가 쓴 묵상과 감사가 모두 여기 모입니다. 검색으로 지난 글을 찾습니다.",
-      "말씀 체크리스트 — 지금까지 읽은 장이 권별로 한눈에 보입니다.",
-      "내 나눔 목표 — 이번 달 몇 번 나눌지 정하고 진행률을 봅니다."
-    ],
-    notes: [
-      "하나님이 주신 마음과 음성, 부족함과 넘어짐까지 그대로 적어 두세요. 몇 해 뒤 돌아보면 내 인생의 귀한 자산이 됩니다.",
-      "글씨 크기 · 어두운 화면 · 알림은 오른쪽 위 톱니(⚙)에서 맞추실 수 있습니다.",
-      "이 안내는 설정 → 안내 → '앱 사용법 다시 보기' 에서 언제든 다시 보실 수 있습니다."
-    ]
+    pins: ["내가 쓴 글이 모입니다", "읽은 장이 한눈에", "이번 달 나눔 목표"],
+    notes: ["몇 해 뒤 돌아보면 내 인생의 귀한 자산이 됩니다."]
   }
 ];
 
