@@ -240,7 +240,7 @@ export default function TodayVerseIntro({
                 className="block w-full pt-5 border-t border-white/15"
               >
                 <span
-                  className="inline-block text-2xs font-bold px-2.5 py-1 rounded-full"
+                  className="inline-block text-xs font-bold px-3 py-1.5 rounded-full"
                   style={
                     notice
                       ? { background: C.gold, color: C.onGold }
@@ -252,11 +252,11 @@ export default function TodayVerseIntro({
 
                 {notice ? (
                   <span className="block mt-2.5">
-                    <span className="block text-2xs text-white/70 break-keep">
+                    <span className="block text-sm text-white/75 break-keep">
                       {currentUser.name}님, 오늘 함께 읽을 말씀은
                     </span>
                     <span
-                      className="block text-lg sm:text-xl font-bold mt-1 leading-snug break-keep"
+                      className="block text-2xl sm:text-3xl font-bold mt-1.5 leading-snug break-keep"
                       style={{ color: C.gold }}
                     >
                       {notice.verseTitle}
@@ -265,10 +265,10 @@ export default function TodayVerseIntro({
                   </span>
                 ) : (
                   <span className="block mt-2.5">
-                    <span className="block text-base sm:text-lg font-bold leading-snug break-keep text-white">
+                    <span className="block text-xl sm:text-2xl font-bold leading-snug break-keep text-white">
                       오늘의 말씀이 설정되지 않았습니다
                     </span>
-                    <span className="block text-2xs text-white/70 leading-relaxed break-keep mt-1.5">
+                    <span className="block text-sm text-white/70 leading-relaxed break-keep mt-2">
                       {isAdmin
                         ? "지체들이 기다리고 있습니다. 오늘 말씀을 올려 주세요."
                         : "관리자님의 설정을 기다리고 있습니다."}
