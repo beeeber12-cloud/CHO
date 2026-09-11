@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { subscribeToDataChanges } from "../lib/revision";
 import { splitLeadingVerses } from "../lib/verseRef";
 import ModalPortal from "./ModalPortal";
+import { authFetch } from "../lib/session";
 
 interface MyMeditationsProps {
   currentUser: { id: string; name: string; role: 'admin' | 'member' };
@@ -132,7 +133,7 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
     if (isFirst) setLoading(true);
     try {
       const [medRes, gratRes] = await Promise.all([
-        fetch("/api/meditations"),
+        authFetch("/api/meditations"),
         fetch("/api/gratitudes")
       ]);
 

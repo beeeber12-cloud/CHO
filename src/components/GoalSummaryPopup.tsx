@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { Meditation, GratitudeNote, SharingGoal, UserBibleProgress } from "../types";
+import { authFetch } from "../lib/session";
 
 /**
  * 하루에 한 번, 그날 처음 들어올 때만 띄우는 목표 진행률 요약.
@@ -66,7 +67,7 @@ export default function GoalSummaryPopup({ currentUser }: Props) {
     (async () => {
       try {
         const [medRes, gratRes, goalRes, progRes] = await Promise.all([
-          fetch("/api/meditations"),
+          authFetch("/api/meditations"),
           fetch("/api/gratitudes"),
           fetch(`/api/sharing-goal/${currentUser.id}`),
           fetch(`/api/bible-progress/${currentUser.id}`)

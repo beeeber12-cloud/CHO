@@ -15,6 +15,7 @@ import MentionPicker from "./MentionPicker";
 import { appendMention } from "../lib/mentions";
 import { splitLeadingVerses } from "../lib/verseRef";
 import { subscribeToDataChanges } from "../lib/revision";
+import { authFetch } from "../lib/session";
 
 
 
@@ -245,7 +246,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   const fetchMeditations = async (isFirst = false) => {
     if (isFirst) setLoading(true);
     try {
-      const res = await fetch("/api/meditations");
+      // 방 글을 받으려면 누구인지 알려야 한다 (서버가 방 식구만 내어 준다)
+      const res = await authFetch("/api/meditations");
       if (res.ok) {
         const data: Meditation[] = await res.json();
         
@@ -384,9 +386,21 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   };
 
   // Accessible Soks for current user
+  /** 관리자가 만든 방 (개인 묵상방은 저마다 알아서 쓰는 것이라 여기서 빼 둔다) */
+  const managedSoks = sokGroups.filter((sok) => !sok.ownerId);
+
+  /** 내 개인 묵상방 (서버가 지체마다 하나씩 갖춰 둔다) */
+  const myRoom = sokGroups.find((sok) => sok.ownerId === currentUser.id) || null;
+
   const accessibleSoks = sokGroups.filter(sok => {
+    const isMember = !!sok.memberUserIds && sok.memberUserIds.includes(currentUser.id);
+    /*
+      개인 묵상방은 **관리자라도** 초대받지 않으면 보이지 않는다.
+      속(관리자가 만든 방)은 지금까지처럼 관리자가 다 볼 수 있다.
+    */
+    if (sok.ownerId) return isMember;
     if (currentUser.role === 'admin') return true;
-    return sok.memberUserIds && sok.memberUserIds.includes(currentUser.id);
+    return isMember;
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -629,8 +643,10 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           전체
         </button>
 
-        {/* User's Soks */}
-        {accessibleSoks.map((sok) => {
+        {/* 내 방 → 그다음 다른 방들 */}
+        {[...accessibleSoks]
+          .sort((a, b) => (a.id === myRoom?.id ? -1 : b.id === myRoom?.id ? 1 : 0))
+          .map((sok) => {
           const isSelected = selectedSokTab === sok.id;
           return (
             <button
@@ -642,7 +658,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                   : "bg-[#F9F9F9] text-[#4A6B57] hover:bg-[#F0F0F0]"
               }`}
             >
-              {sok.name}
+              {sok.ownerId === currentUser.id ? "내 묵상방" : sok.name}
             </button>
           );
         })}
@@ -731,19 +747,26 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
               <div>
                 <label className="block text-xs font-semibold text-[#6F8377] mb-1">
-                  나눔 범위 선택 (속 모임 / 전체 공유)
+                  이 글을 어디에 올릴까요?
                 </label>
                 <select
                   value={sokIdForForm || ""}
                   onChange={(e) => setSokIdForForm(e.target.value || null)}
                   className="w-full text-sm px-3.5 py-3 bg-white border-2 border-[#0C3B2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4A6B57] text-[#14261E] font-bold cursor-pointer"
                 >
-                  <option value="">🌐 전체 공유 (우리 공동체 모두와 나눔)</option>
-                  {accessibleSoks.map((sok) => (
-                    <option key={sok.id} value={sok.id}>
-                      🏷️ {sok.name} 모임 식구들에게만 공유
+                  <option value="">전체 공유 · 우리 공동체 모두가 봅니다</option>
+                  {myRoom && (
+                    <option value={myRoom.id}>
+                      내 묵상방 · 나와 내가 초대한 지체만 봅니다
                     </option>
-                  ))}
+                  )}
+                  {accessibleSoks
+                    .filter((sok) => sok.id !== myRoom?.id)
+                    .map((sok) => (
+                      <option key={sok.id} value={sok.id}>
+                        {sok.name} · 그 방 식구들만 봅니다
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -1079,13 +1102,17 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
 
               {/* Existing Soks List */}
               <div className="space-y-3">
-                <h3 className="text-xs font-bold text-[#0C3B2E]">개설된 속 목록 ({sokGroups.length}개)</h3>
-                {sokGroups.length === 0 ? (
+                <h3 className="text-xs font-bold text-[#0C3B2E]">개설된 속 목록 ({managedSoks.length}개)</h3>
+                <p className="text-2xs text-[#6F8377] leading-relaxed">
+                  지체 개인 묵상방({sokGroups.length - managedSoks.length}개)은 지체마다 하나씩
+                  저절로 만들어집니다 — 여기서는 다루지 않습니다.
+                </p>
+                {managedSoks.length === 0 ? (
                   <p className="text-xs text-[#6F8377] py-4 text-center bg-[#F5F5F5] rounded-3xl">
                     아직 생성된 속이 없습니다. 위에서 속을 추가해 보세요!
                   </p>
                 ) : (
-                  sokGroups.map((sok) => {
+                  managedSoks.map((sok) => {
                     const isEditing = editingSokId === sok.id;
                     const isMemberSettingsOpen = activeSokMemberSettingsId === sok.id;
                     const membersCount = sok.memberUserIds?.length || 0;

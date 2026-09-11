@@ -2829,9 +2829,47 @@ async function startServer() {
   });
 
   // --- Sok (Small Group) APIs ---
+  /** 지체 이름으로 된 개인 묵상방 — 없으면 만들고, 이름이 바뀌었으면 고친다 */
+  function ensurePersonalSoks(db: any): boolean {
+    if (!db.sokGroups) db.sokGroups = [];
+    let changed = false;
+
+    for (const user of db.users || []) {
+      const wanted = `${user.name}의 묵상방`;
+      const mine = db.sokGroups.find((s: SokGroup) => s.ownerId === user.id);
+
+      if (!mine) {
+        db.sokGroups.push({
+          id: "sok-me-" + user.id,
+          name: wanted,
+          description: "나와 내가 초대한 지체만 보는 방입니다.",
+          memberUserIds: [user.id],
+          createdAt: new Date().toISOString(),
+          ownerId: user.id
+        });
+        changed = true;
+        continue;
+      }
+
+      // 이름을 바꾸셨으면 방 이름도 따라간다
+      if (mine.name !== wanted) {
+        mine.name = wanted;
+        changed = true;
+      }
+      // 주인이 자기 방에서 빠져 있으면 되돌린다
+      if (!Array.isArray(mine.memberUserIds)) mine.memberUserIds = [];
+      if (!mine.memberUserIds.includes(user.id)) {
+        mine.memberUserIds.unshift(user.id);
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
   app.get("/api/soks", (req: Request, res: Response) => {
     const db = dbOf(req);
-    if (!db.sokGroups) db.sokGroups = [];
+    if (ensurePersonalSoks(db)) saveDb(db);
     res.json(db.sokGroups);
   });
 
@@ -2886,6 +2924,11 @@ async function startServer() {
       return res.status(404).json({ error: "속 정보를 찾을 수 없습니다." });
     }
 
+    // 개인 묵상방은 지우지 않는다 — 지워도 서버가 곧바로 다시 만든다
+    if (db.sokGroups[idx].ownerId) {
+      return res.status(400).json({ error: "개인 묵상방은 지울 수 없습니다." });
+    }
+
     db.sokGroups.splice(idx, 1);
 
     // Reset sokId of meditations belonging to deleted sok to null (make public)
@@ -2904,6 +2947,21 @@ async function startServer() {
     const db = dbOf(req);
     const { userId } = req.query;
     let list = [...db.meditations];
+
+    // 방 글은 그 방 식구에게만. 누구인지 모르면 전체 공유 글만 내어 준다.
+    const me = whoIs(req);
+    const myRooms = new Set(
+      (db.sokGroups || [])
+        .filter((s) => me && Array.isArray(s.memberUserIds) && s.memberUserIds.includes(me.uid))
+        .map((s) => s.id)
+    );
+    list = list.filter((m) => {
+      if (!m.sokId) return true;                 // 전체 공유
+      if (!me) return false;                     // 누구인지 모른다
+      if (m.userId === me.uid) return true;      // 내가 쓴 글
+      return myRooms.has(m.sokId);               // 내가 속한 방
+    });
+
     if (userId && typeof userId === "string") {
       list = list.filter(m => m.userId === userId);
     }

@@ -58,6 +58,12 @@ export interface SokGroup {
   description?: string;
   memberUserIds: string[]; // List of user IDs assigned to this sok
   createdAt: string;
+  /**
+   * 개인 묵상방의 주인 (지체 한 분당 하나씩 자동으로 만들어진다).
+   * 이게 있으면 **지우지 않는다** — 지워도 서버가 곧바로 다시 만든다.
+   * 함께 나누고 싶은 분을 초대하면 memberUserIds 에 더해진다.
+   */
+  ownerId?: string;
 }
 
 /** 글에 남길 수 있는 반응. 글쓰기가 부담스러운 분도 누를 수 있는 최저 문턱. */
