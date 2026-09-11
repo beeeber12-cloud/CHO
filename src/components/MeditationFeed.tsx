@@ -392,6 +392,22 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
   /** 내 개인 묵상방 (서버가 지체마다 하나씩 갖춰 둔다) */
   const myRoom = sokGroups.find((sok) => sok.ownerId === currentUser.id) || null;
 
+  /** 지금 보고 있는 방이 내 개인 방인가 */
+  const onMyRoom = !!myRoom && selectedSokTab === myRoom.id;
+  /** 지금 보고 있는 방 (전체를 보고 있으면 null) */
+  const openedSok = sokGroups.find((sok) => sok.id === selectedSokTab) || null;
+
+  /** 이 방 글을 누가 볼 수 있는지 — 화면 곳곳에서 같은 말을 쓴다 */
+  const whoCanSee = onMyRoom
+    ? `나만 볼 수 있는 방입니다${
+        myRoom && myRoom.memberUserIds.length > 1
+          ? ` (초대하신 ${myRoom.memberUserIds.length - 1}분도 함께 보십니다)`
+          : " — 초대하시면 그 지체도 함께 보십니다"
+      }`
+    : openedSok
+    ? `${openedSok.name} 식구들만 볼 수 있는 방입니다`
+    : "우리 공동체 모두가 함께 보는 글입니다";
+
   const accessibleSoks = sokGroups.filter(sok => {
     const isMember = !!sok.memberUserIds && sok.memberUserIds.includes(currentUser.id);
     /*
@@ -663,6 +679,8 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           );
         })}
 
+        {/* 아래에 방 설명 한 줄을 따로 둔다 (알약 줄에는 넣지 않는다 — 옆으로 밀리기 때문) */}
+
         {/* Admin / Sok Manage Button */}
         {currentUser.role === 'admin' && (
           <button
@@ -675,6 +693,12 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
           </button>
         )}
       </div>
+
+      {/* 지금 보고 있는 방의 글을 누가 볼 수 있는지 — 늘 한 줄로 알려 드린다 */}
+      <p className="flex items-center gap-1.5 text-2xs font-semibold text-[#6F8377] break-keep">
+        {onMyRoom && <Lock size={11} className="shrink-0 text-[#4A6B57]" />}
+        {whoCanSee}
+      </p>
 
       {showJournal && (
         <JournalModal currentUser={currentUser} onClose={() => setShowJournal(false)} />
@@ -1026,8 +1050,16 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
         ) : (
           <div className="bg-[#F5F5F5] rounded-[32px] p-12 text-center text-[#6F8377]">
             <BookOpen className="mx-auto text-[#6F8377] mb-2" size={32} />
-            <p className="text-sm font-semibold text-[#4A6B57]">아직 조건에 맞는 묵상 나눔 글이 없습니다.</p>
-            <p className="text-xs text-[#6F8377] mt-1">지체 중 첫 번째로 묵상 고백을 올려보세요!</p>
+            <p className="text-sm font-semibold text-[#4A6B57]">
+              {onMyRoom ? "내 묵상방에 아직 글이 없습니다." : "아직 조건에 맞는 묵상 나눔 글이 없습니다."}
+            </p>
+            <p className="text-xs text-[#6F8377] mt-1 leading-relaxed break-keep">
+              {onMyRoom
+                ? "나만 볼 수 있는 방입니다. 남에게 보이기 어려운 마음도 이곳에 편히 적어 보세요."
+                : openedSok
+                ? `${openedSok.name} 식구들만 보는 방입니다. 먼저 한 편 남겨 보세요!`
+                : "지체 중 첫 번째로 묵상 고백을 올려보세요!"}
+            </p>
           </div>
         )}
       </div>
