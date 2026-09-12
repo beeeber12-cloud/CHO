@@ -9,6 +9,10 @@ import DualBibleText from "./DualBibleText";
 import CoachMark from "./CoachMark";
 import PickedVerseBar from "./PickedVerseBar";
 import BibleVersionPicker from "./BibleVersionPicker";
+import RjJourney from "./RjJourney";
+import RjAskCard from "./RjAskCard";
+import RjIntro, { rjIntroSeen } from "./RjIntro";
+import { volumeOfBook, volumeColor } from "../data/readingJesusVolumes";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
 import { useSwipe } from "../lib/useSwipe";
@@ -500,6 +504,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
     // 눌렀을 때 바로 바뀌게 (저장은 뒤따라간다)
     setPlanMode(next);
+    // 리딩지저스는 '왜 이렇게 읽는지' 를 모르면 그냥 남이 정해 준 표로만 보인다.
+    // 처음 고른 그때 한 번만 세 장으로 말해 준다.
+    if (table === "readingJesus" && !rjIntroSeen()) setShowRjIntro(true);
     setSwitchingMode(true);
     try {
       const res = await fetch("/api/bible-progress", {
@@ -743,6 +750,13 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   }, [planMode]);
   /** 통독표를 따르는 중인가 */
   const isRJ = !!myTable;
+  /** 리딩지저스를 따르는 중인가 — 여섯 걸음 안내는 이 플랜에만 붙는다 */
+  const isReadingJesus = myTable?.id === "readingJesus";
+
+  /** 리딩지저스 여정 지도 창 */
+  const [showRjJourney, setShowRjJourney] = useState(false);
+  /** 리딩지저스를 처음 고른 그때 한 번 뜨는 안내 */
+  const [showRjIntro, setShowRjIntro] = useState(false);
 
   /** 통독 화면의 상자 색 — 플랜과 상관없이 한 색으로 둔다 */
   const planBox = "bg-[#E8F0E9]";
@@ -793,6 +807,18 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     () => rjDayOn(rjSchedule, rjDateKey(new Date())),
     [rjSchedule]
   );
+  /**
+   * 오늘 읽는 곳이 여섯 걸음 중 몇 권인가.
+   * 오늘 읽을 분량의 **첫 책**을 본다. 쉬는 날이라 오늘 분량이 없으면
+   * 마지막으로 읽던 곳을 본다 — 쉬는 날에 띠가 사라지면 오히려 이상하다.
+   * 둘 다 없으면(일정을 아직 안 정했거나 한 장도 안 읽었으면) 첫 걸음으로 둔다.
+   */
+  const rjVolume = React.useMemo(() => {
+    if (!isReadingJesus) return null;
+    const todayBook = rjToday?.entry.ranges[0]?.[0];
+    return volumeOfBook(todayBook || userProgress?.lastReadBook || "창세기");
+  }, [isReadingJesus, rjToday, userProgress?.lastReadBook]);
+
   // 전체 스케줄의 주 묶음 — 두 표 모두 '몇째 주' 를 갖고 있어 그대로 묶으면 된다
   const rjBlocks = React.useMemo(() => rjWeekBlocks(rjSchedule), [rjSchedule]);
   const rjFinish = React.useMemo(() => rjFinishDate(rjSchedule), [rjSchedule]);
@@ -914,6 +940,32 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             <span className="w-9 h-9 rounded-full bg-[#F0F0F0] text-[#4A6B57] flex items-center justify-center shrink-0">
               <Settings size={17} />
             </span>
+          </button>
+        )}
+
+        {/* 지금 읽는 곳이 여섯 걸음 중 어디인지 — 리딩지저스에만 붙는다.
+            매일 저절로 보이므로, 따로 찾아 들어가지 않아도 맥락이 붙는다. */}
+        {rjVolume && (
+          <button
+            type="button"
+            onClick={() => setShowRjJourney(true)}
+            className="w-full flex items-center gap-2.5 px-1.5 text-left cursor-pointer"
+          >
+            <span
+              className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white text-2xs font-black shrink-0 leading-none"
+              style={{ background: volumeColor(rjVolume.no) }}
+            >
+              {rjVolume.no}권
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-bold text-[#14261E] truncate">
+                {rjVolume.title}
+              </span>
+              <span className="block text-2xs text-[#6F8377] truncate mt-0.5">
+                “{rjVolume.theme}”
+              </span>
+            </span>
+            <ChevronRight size={16} className="text-[#9aa79e] shrink-0" />
           </button>
         )}
 
@@ -1138,10 +1190,24 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             </div>
 
             {/* '오늘의 통독 실천 제안' 상자를 뺐다 (2026-08-31).
-                그만큼 위 성경 본문이 더 길게 보인다. */}
+                그만큼 위 성경 본문이 더 길게 보인다.
+                리딩지저스만은 '두 질문' 을 접힌 한 줄로 둔다 — 읽는 법이 이 두 줄이
+                전부라서다. 처음 한 번만 펼쳐서 보이고 다음부터는 접힌다. */}
+            {isReadingJesus && (
+              <div className="mt-4">
+                <RjAskCard />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 리딩지저스 여정 지도 — 권 띠를 누르면 열린다 */}
+      {showRjJourney && (
+        <RjJourney current={rjVolume} onClose={() => setShowRjJourney(false)} />
+      )}
+      {/* 리딩지저스를 처음 고른 그때 한 번 */}
+      {showRjIntro && <RjIntro onClose={() => setShowRjIntro(false)} />}
 
       {/* 성경 선택 팝업 (권 → 장 → 절) */}
       {/*

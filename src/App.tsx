@@ -20,6 +20,7 @@ import ProfileModal from "./components/ProfileModal";
 import { SectionLabel, RowGroup, Row, Switch } from "./components/SettingsUI";
 import ChallengeTab from "./components/ChallengeTab";
 import AppGuide, { guideSeen } from "./components/AppGuide";
+import FirstRunSetup, { firstRunSetupDone } from "./components/FirstRunSetup";
 import ThemeStudio from "./components/ThemeStudio";
 import ScreenModeSetting from "./components/ScreenModeSetting";
 import {
@@ -90,10 +91,10 @@ function tabFromUrl(): TabType | null {
 const SHOW_QNA_TAB = false;
 
 /**
- * 앱 사용 안내를 **관리자에게만** 먼저 보인다.
- * 목사님이 먼저 써 보시고 괜찮으면 false 로 바꿔 모두에게 연다.
+ * 앱 사용 안내를 관리자에게만 먼저 보이던 시험 기간이 끝났다 (2026-09-12).
+ * 이제 처음 들어오신 모든 분께 보이고, 그 다음 바로 글씨 크기·알림을 맞춰 드린다.
  */
-const GUIDE_FOR_ADMIN_ONLY = true;
+const GUIDE_FOR_ADMIN_ONLY = false;
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
@@ -122,6 +123,8 @@ export default function App() {
   const [challengeOn, setChallengeOn] = useState<boolean>(false);
   /** 처음 들어오신 분께 보여드리는 앱 사용 안내 */
   const [guideOpen, setGuideOpen] = useState<boolean>(false);
+  /** 앱 사용법 바로 다음에 딱 한 번 — 글씨 크기·알림 맞추기 */
+  const [setupOpen, setSetupOpen] = useState<boolean>(false);
   /** 하루 첫 접속 때 뜨는 '오늘 함께 읽을 말씀' 화면이 떠 있는가 */
   const [introOpen, setIntroOpen] = useState<boolean>(false);
   /** 설정에서 '오늘 첫 화면 다시 보기' 를 누른 횟수 (바뀔 때마다 한 번 더 뜬다) */
@@ -430,7 +433,16 @@ export default function App() {
       <InAppBrowserNotice />
       {/* 처음 오신 분께 탭을 하나씩 소개한다 (건너뛸 수 있다) */}
       {guideOpen && (
-        <AppGuide onClose={() => setGuideOpen(false)} />
+        <AppGuide
+          onClose={() => {
+            setGuideOpen(false);
+            // 사용법을 막 보신 그 자리에서 이어 붙인다 — 설정까지 들어가는 분은 거의 없다
+            if (!firstRunSetupDone()) setSetupOpen(true);
+          }}
+        />
+      )}
+      {setupOpen && (
+        <FirstRunSetup currentUser={currentUser} onClose={() => setSetupOpen(false)} />
       )}
       {/* 앱 색 꾸미기 — 뒤로 앱이 보이는 채로 색을 고른다 */}
       <ThemeStudio
@@ -447,7 +459,7 @@ export default function App() {
       */}
       <TodayVerseIntro
         currentUser={currentUser}
-        enabled={!guideOpen}
+        enabled={!guideOpen && !setupOpen}
         onEnter={(tab) => openTab(tab)}
         onOpenChange={setIntroOpen}
         replay={introReplay}
