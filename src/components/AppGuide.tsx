@@ -5,6 +5,7 @@ import {
   ChevronLeft, ChevronRight, Check, Send, Search, Target, ListChecks
 } from "lucide-react";
 import BrandMark from "./BrandMark";
+import BibleIcon from "./BibleIcon";
 import { useSwipe } from "../lib/useSwipe";
 
 /**
@@ -493,7 +494,7 @@ const SLIDES: Slide[] = [
     notes: ["속장·리더가 통독 프로그램을 정합니다."]
   },
   {
-    icon: BrandMark,
+    icon: BibleIcon,
     tab: "성경통독",
     title: "내 속도로 성경 전체를 읽어 갑니다",
     mock: MockBible,

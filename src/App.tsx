@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette, Users, Trash2 } from "lucide-react";
 import BrandMark from "./components/BrandMark";
+import BibleIcon from "./components/BibleIcon";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
 import DailyNotice from "./components/DailyNotice";
@@ -57,7 +58,7 @@ const TAB_DEFS: Record<TabType, { label: string; short: string; icon: TabIcon }>
   gratitude: { label: "감사칭찬",    short: "감사칭찬", icon: Heart },
   challenge: { label: "챌린지",      short: "챌린지",   icon: Trophy },
   feed:      { label: "묵상 일기",   short: "묵상일기", icon: MessageSquare },
-  bible:     { label: "성경 읽기방", short: "성경통독", icon: BrandMark },
+  bible:     { label: "성경 읽기방", short: "성경통독", icon: BibleIcon },
   my:        { label: "나의 기록",   short: "나의기록", icon: User },
   qna:       { label: "성경 Q&A",    short: "성경Q&A",  icon: HelpCircle },
   settings:  { label: "알림 설정",   short: "알림설정", icon: Bell }

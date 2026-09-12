@@ -2,8 +2,10 @@ import React from "react";
 
 /**
  * 앱 로고 — 말씀(가운데 줄기)과 두 손이 감싸는 모양.
- * 머리말의 공동체 이름 옆과 하단 '성경통독' 탭에 같은 그림을 쓴다
- * (시안 cho_settings_design_test.html 의 .brand / bible 탭 아이콘과 같은 path).
+ * 머리말의 공동체 이름 옆, 로그인·공동체 선택 화면에 쓴다.
+ *
+ * 하단 '성경통독' 탭에도 쓰다가 뺐다 — 선이 많아 19px 에서 뭉개져
+ * 무슨 그림인지 알아볼 수가 없었다. 그 자리는 BibleIcon(십자가 성경책)이 맡는다.
  */
 export default function BrandMark({
   size = 20,
