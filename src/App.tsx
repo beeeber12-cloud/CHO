@@ -105,7 +105,7 @@ export default function App() {
    * 앱 머리에 뜨는 공동체 이름.
    * 기기에 기억해 둔 이름을 먼저 보여주고(깜빡임 없음), 서버 값으로 맞춘다.
    */
-  const [communityName, setCommunityName] = useState<string>(() => getCommunity()?.name || "말씀나눔");
+  const [communityName, setCommunityName] = useState<string>(() => getCommunity()?.name || "목장 나눔");
   /**
    * 머리말에 적는 문구 — 등록된 이름 뒤에 '공동체'를 붙인다.
    * 이미 '공동체'로 끝나는 이름이면 그대로 둔다 (두 번 붙지 않게).

@@ -199,7 +199,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             <BrandMark size={34} />
           </motion.div>
           <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#F2F6F3]">
-            {community?.name || "말씀나눔"}
+            {community?.name || "목장 나눔"}
           </h1>
           <p className="mt-2 text-xs text-white/70 leading-relaxed">
             매일의 말씀 묵상과 따뜻한 은혜 나눔터

@@ -66,7 +66,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
 
   /** 카카오톡에 그대로 붙여넣는 초대 문구 */
   const inviteText = mine
-    ? `${mine.name} 말씀나눔에 초대합니다.\n\n` +
+    ? `${mine.name} 목장 나눔에 초대합니다.\n\n` +
       `아래 링크를 누르면 바로 들어오실 수 있어요.\n` +
       `${inviteLink}\n\n` +
       `휴대폰 홈 화면에 앱처럼 두시려면, 링크를 연 뒤 화면에 뜨는 '설치' 안내를 따라주세요.`
@@ -165,7 +165,7 @@ export default function CommunitySettings({ currentUser, onRenamed }: Props) {
   /** 카카오톡 등으로 바로 보내기 (휴대폰에서만 뜬다) */
   const shareInvite = async () => {
     try {
-      await (navigator as any).share({ title: `${mine?.name} 말씀나눔`, text: inviteText });
+      await (navigator as any).share({ title: `${mine?.name} 목장 나눔`, text: inviteText });
     } catch {
       // 사용자가 취소한 경우 — 아무것도 하지 않는다
     }

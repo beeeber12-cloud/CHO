@@ -1,6 +1,6 @@
 // Service Worker for Bible Meditation Share PWA
 // 아이콘/매니페스트 갱신 시 버전을 올리면 이전 캐시가 자동 삭제됩니다.
-const CACHE_NAME = "bible-meditation-v7";
+const CACHE_NAME = "bible-meditation-v8";
 // 성경 본문 전용 캐시 — 내용이 변하지 않으므로 버전을 올려도 지우지 않는다
 const BIBLE_CACHE = "bible-text-v1";
 const ASSETS = [
@@ -46,10 +46,10 @@ self.addEventListener("push", (e) => {
   try {
     data = e.data ? e.data.json() : {};
   } catch (err) {
-    data = { title: "말씀나눔", body: e.data ? e.data.text() : "" };
+    data = { title: "목장 나눔", body: e.data ? e.data.text() : "" };
   }
 
-  const title = data.title || "말씀나눔";
+  const title = data.title || "목장 나눔";
   const options = {
     body: data.body || "",
     icon: "/icon-192.png",

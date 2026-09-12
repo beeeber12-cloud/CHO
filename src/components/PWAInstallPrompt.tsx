@@ -152,7 +152,7 @@ export default function PWAInstallPrompt({ replay = 0 }: Props) {
         <div className="bg-[#0C3B2E] text-white rounded-3xl shadow-2xl p-3.5 flex items-start gap-3">
           <img
             src="/icon-192.png"
-            alt="말씀나눔"
+            alt="목장 나눔"
             className="w-11 h-11 rounded-3xl shrink-0 shadow-md"
           />
 
