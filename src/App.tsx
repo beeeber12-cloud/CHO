@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BookOpen, Calendar, Bell, LogOut, MessageSquare, BookMarked, HeartHandshake, HelpCircle, Cross, Trophy, Settings, ChevronLeft, ChevronRight, Heart, User, Lock, UserCog, Palette, Users, Trash2 } from "lucide-react";
-import BrandMark from "./components/BrandMark";
 import BibleIcon from "./components/BibleIcon";
+import IchthysMark from "./components/IchthysMark";
 import { motion, AnimatePresence } from "motion/react";
 import LoginScreen from "./components/LoginScreen";
 import DailyNotice from "./components/DailyNotice";
@@ -466,7 +466,7 @@ export default function App() {
             자동으로 더 준다. 기종마다 값이 달라서 숫자를 못박지 않는다. */}
         <div className="relative z-10 max-w-4xl mx-auto px-[18px] pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-8 flex justify-between items-center gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <BrandMark size={19} className="shrink-0 text-[#F2F6F3]" />
+            <IchthysMark size={26} className="shrink-0 text-[#F2F6F3]" />
             <h1 className="text-sm sm:text-base font-bold tracking-[0.01em] truncate text-[#F2F6F3]">
               {brandTitle}
             </h1>

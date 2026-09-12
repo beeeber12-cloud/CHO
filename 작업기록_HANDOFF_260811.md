@@ -1864,3 +1864,16 @@ npm install --no-save sharp && node tools/make-icons.mjs
   lucide 라서 같은 규격(24 칸, 선 1.8, 둥근 끝)을 따랐다.
 - `AppGuide` 의 성경통독 장 아이콘도 같이 바꿨다(탭 바와 어긋나면 안 된다).
   `BrandMark` 는 머리말·로그인·공동체 선택 화면에 그대로 남는다.
+
+**덧 — 머리말 로고를 익투스로 (2026-09-12)**
+
+- 머리말(공동체 이름 앞)의 `BrandMark` 를 `src/components/IchthysMark.tsx` 로 교체.
+- **손으로 다시 그리지 않았다.** 앱 아이콘 원본(`tools/assets/app-logo-src.png`)에서
+  물고기만 골라내 potrace 로 윤곽선을 딴 것이다. 홈 화면 아이콘과 머리말 로고가
+  한 획도 어긋나지 않아야 같은 앱으로 읽힌다.
+  (다시 따야 하면: `npm install --no-save sharp potrace` 후 마스크→potrace→
+  잉크가 닿는 칸으로 viewBox 를 맞추는 순서. 배경은 가장 밝은 채널이 78 을 못 넘고,
+  둥근 테두리의 흰빛 섞인 화소가 끼지 않게 가장자리 8% 는 아예 보지 않는다.)
+- 물고기는 가로:세로 ≒ 2:1 이라 `size` 가 **가로 길이**다. 정사각 칸에 억지로
+  끼우면 옆 아이콘보다 작아 보인다. 머리말은 `size={26}`.
+- `BrandMark` 는 로그인 화면·공동체 선택 화면·AppGuide 의 '우리 공동체' 칩에 그대로 남아 있다.
