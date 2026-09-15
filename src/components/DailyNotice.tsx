@@ -26,6 +26,7 @@ import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
 import CoachMark from "./CoachMark";
 import PickedVerseBar from "./PickedVerseBar";
+import { useFillHeight } from "../lib/useFillHeight";
 import {
   HighlightColor,
   defaultHighlight,
@@ -259,6 +260,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
    * 이미 맞아 있으면 움직이지 않는다 — 절을 고를 때마다 화면이 흔들리면 성가시다.
    */
   const readerRef = useRef<HTMLDivElement>(null);
+  /** 말씀 본문 상자 — 높이를 화면에 맞춰 늘린다 */
+  const noticeBoxRef = useRef<HTMLDivElement>(null);
+  // (번역본을 하나 더 얹으면 위에 쌓인 높이가 달라지므로 그때 다시 잰다)
+  useFillHeight(noticeBoxRef, readerRef, [notice?.id, noticeVersions.length, loading]);
   const alignReader = (e?: React.MouseEvent) => {
     const hit = e?.target as HTMLElement | undefined;
     if (hit?.closest?.("button, a, input, select, textarea, label, .fixed")) return;
@@ -832,11 +837,13 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
               </div>
 
-              {/* 본문은 제 길이대로 흐르고, 스크롤하는 것은 화면이다.
-                  예전에는 화면 높이의 60% 짜리 상자 안에서만 굴렀다 — 본문 한가운데
-                  또 하나의 상자가 있는 꼴이었고, 칠한 자리가 상자 밖으로 잘려 보였다.
-                  좌우 여백(px-1.5)은 칠한 자리가 잘리지 않도록 여기서 준다. */}
-              <div className="overflow-x-hidden px-1.5 pb-3 mb-3 select-text">
+              {/* 본문 상자 — 높이는 useFillHeight 가 화면에 맞춰 넣어 준다.
+                  예전에는 60vh 로 박아 두어 기기마다 아래가 휑하거나 몇 줄 못 봤다.
+                  좌우 여백(px-1.5)은 칠한 자리가 상자 밖으로 잘리지 않게 하려는 것. */}
+              <div
+                ref={noticeBoxRef}
+                className="overflow-y-auto overflow-x-hidden px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200"
+              >
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}

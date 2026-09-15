@@ -22,6 +22,7 @@ import { volumeOfBook, volumeColor } from "../data/readingJesusVolumes";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
 import { useSwipe } from "../lib/useSwipe";
+import { useFillHeight } from "../lib/useFillHeight";
 import { useKeepAwake } from "../lib/keepAwake";
 import { BIBLE_BOOKS, TOTAL_BIBLE_CHAPTERS, BibleBookInfo } from "../data/bibleBooks";
 import { UserBibleProgress } from "../types";
@@ -352,15 +353,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   // 장이 바뀌면 본문을 맨 위부터 보여준다.
   // (안 그러면 옆으로 밀어 다음 장으로 넘어갔을 때 읽던 위치 그대로라 중간부터 보인다)
   useEffect(() => {
-    if (!result?.reference) return;
-    // 본문이 제 높이대로 늘어나므로 스크롤하는 것은 화면이다.
-    // 이미 본문 머리께를 보고 있으면 굳이 움직이지 않는다.
-    const el = readerRef.current;
-    if (!el) return;
-    const top = el.getBoundingClientRect().top;
-    if (top >= -6 && top <= 28) return;
-    el.scrollIntoView({ block: "start" });
+    if (verseBoxRef.current) verseBoxRef.current.scrollTop = 0;
   }, [result?.reference]);
+
+  // 본문 상자를 화면 높이에 맞춰 늘린다 (번역본을 하나 더 얹으면 위가 두꺼워지므로 다시 잰다)
+  useFillHeight(verseBoxRef, readerRef, [result?.reference, bibleVersions.length, loading]);
 
   // 본문이 로드되면 본문 영역으로 화면을 내리고, 선택한 절이 있으면 그 절 위치까지 맞춰준다.
   useEffect(() => {
@@ -370,11 +367,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       readerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
       if (highlightVerse != null) {
-        const target = verseBoxRef.current?.querySelector<HTMLElement>(
-          `[data-verse="${highlightVerse}"]`
-        );
-        // 그 절이 화면 가운데 오도록 — 맨 위에 붙이면 머리말에 가려 읽기 나쁘다
-        target?.scrollIntoView({ behavior: "smooth", block: "center" });
+        const box = verseBoxRef.current;
+        const target = box?.querySelector<HTMLElement>(`[data-verse="${highlightVerse}"]`);
+        if (box && target) {
+          box.scrollTop += target.getBoundingClientRect().top - box.getBoundingClientRect().top - 16;
+        }
       }
       setPendingScroll(false);
     }, 120);
@@ -841,8 +838,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     const el = readerRef.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top;
-    // 이미 지나쳐 읽고 있는 중이면(top 이 음수) 건드리지 않는다
-    if (top <= 28) return;
+    if (top >= -6 && top <= 28) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -1208,9 +1204,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 // pan-y 로 두면 세로 훑기는 브라우저가 그대로 처리하고,
                 // 가로로 미는 동작만 우리가 받아 장을 넘길 수 있다
                 style={{ touchAction: "pan-y" }}
-                // 가로 넘침만 막는다 — 장이 미끄러져 들어올 때 옆으로 삐져나가지 않게.
-                // 세로로는 제 길이대로 늘어나고 화면(페이지)이 스크롤한다.
-                className="scripture-font py-2 px-1.5 overflow-x-hidden"
+                // 높이는 useFillHeight 가 화면에 맞춰 넣어 준다 (숫자를 박지 않는다).
+                // 좌우 여백(px-1.5)은 칠한 자리가 상자 밖으로 삐져나가 잘리지 않게 하려는 것.
+                className="scripture-font py-2 px-1.5 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
                 {/* 바깥층: 손가락을 따라 밀린다 (놓으면 제자리로 튕겨 돌아온다) */}
                 <div ref={dragRef} style={{ willChange: "transform" }}>
