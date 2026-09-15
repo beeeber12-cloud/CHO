@@ -1,5 +1,6 @@
 import React from "react";
 import { BibleVersionKey } from "../lib/bibleVersions";
+import { HighlightColor, HIGHLIGHT_COLORS } from "../lib/verseHighlight";
 
 /** 화면에 실을 번역본 하나 (위에서부터 순서대로 쌓인다) */
 export interface VersionPane {
@@ -14,6 +15,8 @@ interface DualBibleTextProps {
   highlightVerse?: number | null;
   /** 사용자가 눌러서 고른 절 번호들 */
   selectedVerses?: Set<string>;
+  /** 절마다 칠해진 형광펜 색 (없으면 노랑) */
+  verseColors?: Map<string, HighlightColor>;
   /** 절을 누르면 호출 — 번호와 본문(첫 번째 번역본)을 함께 넘긴다 */
   onToggleVerse?: (verseNum: string, verseBody: string) => void;
 }
@@ -54,6 +57,7 @@ export default function DualBibleText({
   className = "",
   highlightVerse = null,
   selectedVerses,
+  verseColors,
   onToggleVerse,
 }: DualBibleTextProps) {
   const used = panes.filter((p) => p && p.text && p.text.trim()).slice(0, 2);
@@ -94,6 +98,7 @@ export default function DualBibleText({
 
         // 이어진 구절을 고르면 한 덩어리로 보이게 한다.
         // 위아래가 같이 골라져 있으면 그 사이의 틈과 모서리를 없앤다.
+        const tone = HIGHLIGHT_COLORS[(v.num && verseColors?.get(v.num)) || "yellow"];
         const joinTop = isPicked && picked(idx - 1);
         const joinBottom = isPicked && picked(idx + 1);
         const corners = joinTop && joinBottom
@@ -110,13 +115,16 @@ export default function DualBibleText({
             data-verse={v.num}
             onClick={canPick ? () => onToggleVerse!(v.num!, v.body) : undefined}
             // 아래 절과 이어 붙는 경우에는 틈을 주지 않는다 (한 상자처럼 보이도록)
-            style={{ marginBottom: joinBottom ? 0 : 11 }}
+            style={{
+              marginBottom: joinBottom ? 0 : 11,
+              // 형광펜 색은 사람이 고른 것이라 테마에 휘둘리지 않게 여기서 직접 칠한다
+              background: isPicked ? tone.bg : undefined
+            }}
             className={`group scroll-mt-4 transition-colors duration-300 -mx-1.5 px-1.5 py-[7px] ${corners} ${
               canPick ? "cursor-pointer" : ""
             } ${
-              // 고른 구절은 은은한 금빛 배경으로 표시
               isPicked
-                ? "bg-[#FFFBEE]"
+                ? ""
                 : isHighlighted
                 ? "bg-[#F5F5F5]"
                 : canPick
@@ -128,8 +136,9 @@ export default function DualBibleText({
                 대조할 때 두 번째 번역본도 같은 칸에 맞춰 왼쪽 선이 일치한다. */}
             <div className="flex gap-1.5">
               <span
-                className={`font-sans font-normal text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
-                  isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
+                style={{ color: isPicked ? tone.num : undefined }}
+                className={`font-sans text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
+                  isPicked ? "font-bold" : "font-normal text-[#8B8B8B]"
                 }`}
               >
                 {v.num}

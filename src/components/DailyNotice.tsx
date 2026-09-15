@@ -26,6 +26,12 @@ import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
 import CoachMark from "./CoachMark";
 import PickedVerseBar from "./PickedVerseBar";
+import {
+  HighlightColor,
+  defaultHighlight,
+  setDefaultHighlight,
+  isHighlightColor
+} from "../lib/verseHighlight";
 import BibleVersionPicker from "./BibleVersionPicker";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions } from "../lib/bibleVersions";
 import { buildVerseReference } from "../lib/verseRef";
@@ -54,39 +60,146 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
 
   const [notice, setNotice] = useState<Notice | null>(null);
 
-  // 사용자가 눌러서 고른 구절 (번호 -> 본문)
-  const [pickedVerses, setPickedVerses] = useState<Map<string, string>>(new Map());
+  // 사용자가 눌러서 고른 구절 (번호 -> 본문·형광펜 색)
+  type Mark = { text: string; color: HighlightColor };
+  const [pickedVerses, setPickedVerses] = useState<Map<string, Mark>>(new Map());
+
+  /** 지금 칠하는 형광펜 색 (마지막에 고른 색을 기억한다) */
+  const [hlColor, setHlColor] = useState<HighlightColor>(() => defaultHighlight());
+
+  /**
+   * 오늘 말씀이 가리키는 책과 장.
+   *
+   * 공지의 구절명("요한1서 5장")에서 뽑아낸다. '요한1서'처럼 책 이름 안에 숫자가
+   * 있으므로 끝의 '장/편'을 기준으로 끊어야 한다 — 앞에서부터 첫 숫자를 집으면
+   * '요한1서 7장'이 '요한 1장'으로 잘린다.
+   *
+   * 리딩지저스 통독표는 하루에 여러 장을 올린다("마태복음 1~3장").
+   * 그런 제목은 책·장을 특정할 수 없으므로 체크리스트에 남기지 않는다.
+   */
+  const noticeRef = React.useMemo(() => {
+    const ref = notice?.verseTitle || "";
+    if (/[~-]/.test(ref)) return null;
+    const m = ref.match(/^(.+?)\s*(\d+)\s*[장편]\s*$/) || ref.match(/^(.+)\s+(\d+)\s*$/);
+    return m ? { book: m[1].trim(), chapter: Number(m[2]) } : null;
+  }, [notice?.verseTitle]);
+
+  /**
+   * 예전에 칠해 둔 것을 되살린다.
+   * 이 화면을 나갔다 들어와도 칠한 색이 그대로 보여야 한다.
+   */
+  useEffect(() => {
+    if (!currentUser?.id || !noticeRef) {
+      setPickedVerses(new Map());
+      return;
+    }
+    let alive = true;
+    fetch(`/api/saved-verses/${currentUser.id}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then(
+        (list: { book: string; chapter: number; verseNum: number; text: string; color?: string }[]) => {
+          if (!alive || !Array.isArray(list)) return;
+          const m = new Map<string, Mark>();
+          for (const v of list) {
+            if (v.book !== noticeRef.book || v.chapter !== noticeRef.chapter) continue;
+            m.set(String(v.verseNum), {
+              text: v.text || "",
+              // 색이 없던 시절에 체크해 둔 것은 노랑으로 본다
+              color: isHighlightColor(v.color) ? v.color : "yellow"
+            });
+          }
+          setPickedVerses(m);
+        }
+      )
+      .catch((e) => console.error("체크한 구절을 불러오지 못했습니다:", e));
+    return () => {
+      alive = false;
+    };
+  }, [currentUser?.id, noticeRef?.book, noticeRef?.chapter]);
+
+  /** 절마다 무슨 색으로 칠할지 — 본문 그리는 쪽에 넘긴다 */
+  const verseColors = React.useMemo(
+    () => new Map([...pickedVerses].map(([num, m]) => [num, m.color] as const)),
+    [pickedVerses]
+  );
+
+  /** 아래 막대는 이 화면에서 실제로 뭔가를 눌렀을 때만 올라온다 */
+  const [barOpen, setBarOpen] = useState(false);
 
   const togglePickedVerse = (num: string, body: string) => {
+    const had = pickedVerses.has(num);
     setPickedVerses((prev) => {
       const next = new Map(prev);
-      if (next.has(num)) next.delete(num);
-      else next.set(num, body);
+      if (had) next.delete(num);
+      else next.set(num, { text: body, color: hlColor });
       return next;
     });
+    setBarOpen(true);
 
     // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
-    // 공지의 구절명("요한1서 5장")에서 책 이름과 장을 뽑아낸다.
-    const ref = notice?.verseTitle || "";
-    // '요한1서'처럼 책 이름 안에 숫자가 있으므로 끝의 '장/편'을 기준으로 끊어야 한다.
-    // (앞에서부터 첫 숫자를 집으면 '요한1서 7장'이 '요한 1장'으로 잘린다)
-    const m = ref.match(/^(.+?)\s*(\d+)\s*[장편]\s*$/) || ref.match(/^(.+)\s+(\d+)\s*$/);
-    // 리딩지저스 통독표는 하루에 여러 장을 올린다("마태복음 1~3장").
-    // 그런 제목은 책 이름이 엉뚱하게 잘리므로 말씀 체크리스트에 남기지 않는다.
-    const isRange = /[~-]/.test(ref);
-    if (currentUser?.id && m && !isRange) {
+    if (currentUser?.id && noticeRef) {
       fetch("/api/saved-verses/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: currentUser.id,
-          book: m[1].trim(),
-          chapter: Number(m[2]),
+          book: noticeRef.book,
+          chapter: noticeRef.chapter,
           verseNum: Number(num),
-          text: body
+          text: body,
+          color: hlColor
         })
       }).catch((e) => console.error("말씀 체크 저장 실패:", e));
     }
+  };
+
+  /** 체크한 것을 모두 지운다 (칠한 색도 함께 사라진다) */
+  const clearPickedVerses = () => {
+    const entries = [...pickedVerses.entries()];
+    setPickedVerses(new Map());
+    setBarOpen(false);
+    if (!currentUser?.id || !noticeRef) return;
+    for (const [num, mark] of entries) {
+      fetch("/api/saved-verses/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          book: noticeRef.book,
+          chapter: noticeRef.chapter,
+          verseNum: Number(num),
+          text: mark.text
+        })
+      }).catch((e) => console.error("말씀 체크 해제 실패:", e));
+    }
+  };
+
+  /** 형광펜 색을 바꾼다 — 이미 칠해 둔 것도 그 색으로 따라 바뀐다 */
+  const changeHighlightColor = (c: HighlightColor) => {
+    setHlColor(c);
+    setDefaultHighlight(c);
+    const nums = [...pickedVerses.keys()];
+    if (nums.length === 0) return;
+    setPickedVerses((prev) => {
+      const next = new Map(prev);
+      for (const num of nums) {
+        const had = next.get(num);
+        if (had) next.set(num, { ...had, color: c });
+      }
+      return next;
+    });
+    if (!currentUser?.id || !noticeRef) return;
+    fetch("/api/saved-verses/color", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        book: noticeRef.book,
+        chapter: noticeRef.chapter,
+        color: c,
+        verseNums: nums.map(Number)
+      })
+    }).catch((e) => console.error("형광펜 색 저장 실패:", e));
   };
 
   /**
@@ -124,7 +237,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
   const buildPickedText = (): string =>
     [...pickedVerses.entries()]
       .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([n, t]) => `${n} ${t}`)
+      .map(([num, m]) => `${num} ${m.text}`)
       .join("\n");
 
   // 오늘 말씀도 번역본을 골라 볼 수 있다 (최대 두 개 대조).
@@ -719,14 +832,15 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
               </div>
 
-              {/* 화면 높이에 맞춰 본문을 길게 보여준다. 예전에는 288px 로 고정이라
-                  몇 줄 못 보고 계속 스크롤해야 했다. */}
-              <div
-                className="max-h-[60vh] md:max-h-[65vh] overflow-y-auto overflow-x-hidden pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200"
-              >
+              {/* 본문은 제 길이대로 흐르고, 스크롤하는 것은 화면이다.
+                  예전에는 화면 높이의 60% 짜리 상자 안에서만 굴렀다 — 본문 한가운데
+                  또 하나의 상자가 있는 꼴이었고, 칠한 자리가 상자 밖으로 잘려 보였다.
+                  좌우 여백(px-1.5)은 칠한 자리가 잘리지 않도록 여기서 준다. */}
+              <div className="overflow-x-hidden px-1.5 pb-3 mb-3 select-text">
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}
+                  verseColors={verseColors}
                   onToggleVerse={togglePickedVerse}
                 />
               </div>
@@ -734,8 +848,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               {/* 고른 구절이 있는 동안 화면 아래에 떠 있는 막대 */}
               {onSelectVerseForMeditation && (
                 <PickedVerseBar
-                  count={pickedVerses.size}
-                  onClear={() => setPickedVerses(new Map())}
+                  count={barOpen ? pickedVerses.size : 0}
+                  color={hlColor}
+                  onColor={changeHighlightColor}
+                  onClear={clearPickedVerses}
                   onWrite={writeWithPicked}
                 />
               )}

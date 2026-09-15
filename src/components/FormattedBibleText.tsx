@@ -1,4 +1,5 @@
 import React from "react";
+import { HighlightColor, HIGHLIGHT_COLORS } from "../lib/verseHighlight";
 
 interface FormattedBibleTextProps {
   text: string;
@@ -6,6 +7,8 @@ interface FormattedBibleTextProps {
   highlightVerse?: number | null;
   /** 사용자가 눌러서 고른 절 번호들 */
   selectedVerses?: Set<string>;
+  /** 절마다 칠해진 형광펜 색 (없으면 노랑) */
+  verseColors?: Map<string, HighlightColor>;
   /** 절을 누르면 호출 — 번호와 본문을 함께 넘긴다 */
   onToggleVerse?: (verseNum: string, verseBody: string) => void;
 }
@@ -20,6 +23,7 @@ export default function FormattedBibleText({
   className = "",
   highlightVerse = null,
   selectedVerses,
+  verseColors,
   onToggleVerse,
 }: FormattedBibleTextProps) {
   if (!text) return null;
@@ -72,18 +76,19 @@ export default function FormattedBibleText({
           highlightVerse != null && v.verseNum != null && Number(v.verseNum) === highlightVerse;
         const isPicked = !!(v.verseNum && selectedVerses?.has(v.verseNum));
         const canPick = !!(onToggleVerse && v.verseNum);
+        const tone = HIGHLIGHT_COLORS[(v.verseNum && verseColors?.get(v.verseNum)) || "yellow"];
 
         return (
           <div
             key={idx}
             data-verse={v.verseNum}
             onClick={canPick ? () => onToggleVerse!(v.verseNum!, v.verseBody) : undefined}
+            style={{ background: isPicked ? tone.bg : undefined }}
             className={`group scroll-mt-4 transition-colors duration-300 rounded-2xl -mx-1.5 px-1.5 py-[7px] ${
               canPick ? "cursor-pointer" : ""
             } ${
-              // 고른 구절은 은은한 금빛 배경으로 표시
               isPicked
-                ? "bg-[#FFFBEE]"
+                ? ""
                 : isNavHighlight
                 ? "bg-[#F5F5F5]"
                 : canPick
@@ -94,8 +99,9 @@ export default function FormattedBibleText({
             {/* 절 번호는 왼쪽 칸에 두고, 줄이 넘어가도 본문이 번호 아래로 내려오지 않게 한다 */}
             <div className="flex gap-1.5">
               <span
-                className={`font-sans font-normal text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
-                  isPicked ? "text-[#B07A00] font-bold" : "text-[#8B8B8B]"
+                style={{ color: isPicked ? tone.num : undefined }}
+                className={`font-sans text-xs sm:text-sm shrink-0 pt-[3px] select-none ${
+                  isPicked ? "font-bold" : "font-normal text-[#8B8B8B]"
                 }`}
               >
                 {v.verseNum}

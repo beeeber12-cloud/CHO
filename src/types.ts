@@ -246,6 +246,8 @@ export interface SavedVerse {
   chapter: number;     // 3
   verseNum: number;    // 16
   text: string;        // 본문
+  /** 형광펜 색 — 없으면 노랑(예전에 체크해 둔 구절들) */
+  color?: "yellow" | "green";
   createdAt: string;
 }
 

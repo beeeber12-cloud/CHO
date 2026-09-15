@@ -987,8 +987,12 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                         {med.comments.map((comment) => {
                           const isMyComment = comment.userId === currentUser.id;
                           return (
-                            <div key={comment.id} className="flex justify-between items-start gap-2 bg-white/80 p-3 rounded-3xl">
-                              <div className="text-[0.88rem]">
+                            <div
+                              key={comment.id}
+                              className="flex justify-between items-start gap-2 bg-[#F4F6F3] px-3.5 py-2.5 rounded-2xl"
+                            >
+                              {/* min-w-0 이 없으면 긴 글이 상자를 밀고 나가 여백이 무너져 보인다 */}
+                              <div className="flex-1 min-w-0 text-[0.88rem]">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
                                   <span className="text-xs text-[#6F8377]">
@@ -1029,7 +1033,7 @@ export default function MeditationFeed({ currentUser, allUsers, prefilledVerse, 
                           value={commentInputs[med.id] || ""}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [med.id]: e.target.value }))}
                           placeholder="은혜로운 지지와 나눔의 말을 기입하세요..."
-                          className="flex-1 text-sm px-3.5 py-2.5 bg-[#F5F5F5] rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
+                          className="flex-1 min-w-0 text-sm px-3.5 py-2.5 bg-[#F4F6F3] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#4A6B57] text-[#14261E]"
                         />
                         <button
                           onClick={() => handleAddComment(med.id)}

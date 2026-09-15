@@ -8,6 +8,12 @@ import FormattedBibleText from "./FormattedBibleText";
 import DualBibleText from "./DualBibleText";
 import CoachMark from "./CoachMark";
 import PickedVerseBar from "./PickedVerseBar";
+import {
+  HighlightColor,
+  defaultHighlight,
+  setDefaultHighlight,
+  isHighlightColor
+} from "../lib/verseHighlight";
 import BibleVersionPicker from "./BibleVersionPicker";
 import RjJourney from "./RjJourney";
 import RjAskCard from "./RjAskCard";
@@ -154,16 +160,79 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   // 장이 바뀔 때 본문이 어느 쪽에서 미끄러져 들어올지 (1 = 오른쪽에서, -1 = 왼쪽에서, 0 = 그냥 나타남)
   const [slideDir, setSlideDir] = useState<1 | -1 | 0>(0);
 
-  // 사용자가 눌러서 고른 구절 (번호 -> 본문). 묵상 쓰기로 넘길 때 이것만 담아 보낸다.
-  const [pickedVerses, setPickedVerses] = useState<Map<string, string>>(new Map());
+  /**
+   * 체크해 둔 구절 **전부** (책|장|절 -> 본문·색).
+   *
+   * 예전에는 장을 넘기면 지워졌다 — 형광펜으로 칠해 놓고 다음 장에 갔다 오면
+   * 칠한 자리가 사라지는 셈이었다. 이제는 서버에 저장해 둔 것을 들고 있다가
+   * 그 장에 돌아오면 칠한 색이 그대로 보인다.
+   */
+  type Mark = { text: string; color: HighlightColor };
+  const [savedMarks, setSavedMarks] = useState<Map<string, Mark>>(new Map());
+  const markKey = (book: string, chapter: number, num: string | number) =>
+    `${book}|${chapter}|${num}`;
+
+  /** 지금 칠하는 형광펜 색 (마지막에 고른 색을 기억한다) */
+  const [hlColor, setHlColor] = useState<HighlightColor>(() => defaultHighlight());
+
+  /**
+   * 아래 막대는 **이 장에서 실제로 뭔가를 눌렀을 때만** 올라온다.
+   * 칠해 둔 장에 들어설 때마다 막대가 따라 올라오면 성가시다.
+   */
+  const [barOpen, setBarOpen] = useState(false);
+
+  /** 지금 보고 있는 장에서 체크된 구절 (번호 -> 본문·색) */
+  const pickedVerses = React.useMemo(() => {
+    const m = new Map<string, Mark>();
+    const prefix = `${selectedBook.name}|${selectedChapter}|`;
+    for (const [k, v] of savedMarks) {
+      if (k.startsWith(prefix)) m.set(k.slice(prefix.length), v);
+    }
+    return m;
+  }, [savedMarks, selectedBook.name, selectedChapter]);
+
+  /** 절마다 무슨 색으로 칠할지 — 본문 그리는 쪽에 넘긴다 */
+  const verseColors = React.useMemo(
+    () => new Map([...pickedVerses].map(([num, m]) => [num, m.color] as const)),
+    [pickedVerses]
+  );
+
+  // 내가 체크해 둔 구절을 한 번 받아 둔다 (장을 옮겨 다녀도 다시 받지 않는다)
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    let alive = true;
+    fetch(`/api/saved-verses/${currentUser.id}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then(
+        (list: { book: string; chapter: number; verseNum: number; text: string; color?: string }[]) => {
+          if (!alive || !Array.isArray(list)) return;
+          const m = new Map<string, Mark>();
+          for (const v of list) {
+            m.set(markKey(v.book, v.chapter, v.verseNum), {
+              text: v.text || "",
+              // 색이 없던 시절에 체크해 둔 것은 노랑으로 본다
+              color: isHighlightColor(v.color) ? v.color : "yellow"
+            });
+          }
+          setSavedMarks(m);
+        }
+      )
+      .catch((e) => console.error("체크한 구절을 불러오지 못했습니다:", e));
+    return () => {
+      alive = false;
+    };
+  }, [currentUser?.id]);
 
   const togglePickedVerse = (num: string, body: string) => {
-    setPickedVerses((prev) => {
+    const key = markKey(selectedBook.name, selectedChapter, num);
+    const had = savedMarks.has(key);
+    setSavedMarks((prev) => {
       const next = new Map(prev);
-      if (next.has(num)) next.delete(num);
-      else next.set(num, body);
+      if (had) next.delete(key);
+      else next.set(key, { text: body, color: hlColor });
       return next;
     });
+    setBarOpen(true);
 
     // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
     if (currentUser?.id) {
@@ -175,17 +244,72 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
           book: selectedBook.name,
           chapter: selectedChapter,
           verseNum: Number(num),
-          text: body
+          text: body,
+          color: hlColor
         })
       }).catch((e) => console.error("말씀 체크 저장 실패:", e));
     }
+  };
+
+  /** 이 장에서 체크한 것을 모두 지운다 (칠한 색도 함께 사라진다) */
+  const clearPickedVerses = () => {
+    const entries = [...pickedVerses.entries()];
+    setSavedMarks((prev) => {
+      const next = new Map(prev);
+      for (const [num] of entries) next.delete(markKey(selectedBook.name, selectedChapter, num));
+      return next;
+    });
+    setBarOpen(false);
+    if (!currentUser?.id) return;
+    for (const [num, mark] of entries) {
+      fetch("/api/saved-verses/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          book: selectedBook.name,
+          chapter: selectedChapter,
+          verseNum: Number(num),
+          text: mark.text
+        })
+      }).catch((e) => console.error("말씀 체크 해제 실패:", e));
+    }
+  };
+
+  /** 형광펜 색을 바꾼다 — 이 장에 이미 칠해 둔 것도 그 색으로 따라 바뀐다 */
+  const changeHighlightColor = (c: HighlightColor) => {
+    setHlColor(c);
+    setDefaultHighlight(c);
+    const nums = [...pickedVerses.keys()];
+    if (nums.length === 0) return;
+    setSavedMarks((prev) => {
+      const next = new Map(prev);
+      for (const num of nums) {
+        const key = markKey(selectedBook.name, selectedChapter, num);
+        const had = next.get(key);
+        if (had) next.set(key, { ...had, color: c });
+      }
+      return next;
+    });
+    if (!currentUser?.id) return;
+    fetch("/api/saved-verses/color", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        book: selectedBook.name,
+        chapter: selectedChapter,
+        color: c,
+        verseNums: nums.map(Number)
+      })
+    }).catch((e) => console.error("형광펜 색 저장 실패:", e));
   };
 
   /** 고른 구절을 "3 본문..." 형태로, 번호 순서대로 이어붙인다. */
   const buildPickedText = (): string =>
     [...pickedVerses.entries()]
       .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([n, t]) => `${n} ${t}`)
+      .map(([num, m]) => `${num} ${m.text}`)
       .join("\n");
 
   // Checklist Modal Filter States
@@ -228,7 +352,14 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   // 장이 바뀌면 본문을 맨 위부터 보여준다.
   // (안 그러면 옆으로 밀어 다음 장으로 넘어갔을 때 읽던 위치 그대로라 중간부터 보인다)
   useEffect(() => {
-    if (verseBoxRef.current) verseBoxRef.current.scrollTop = 0;
+    if (!result?.reference) return;
+    // 본문이 제 높이대로 늘어나므로 스크롤하는 것은 화면이다.
+    // 이미 본문 머리께를 보고 있으면 굳이 움직이지 않는다.
+    const el = readerRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (top >= -6 && top <= 28) return;
+    el.scrollIntoView({ block: "start" });
   }, [result?.reference]);
 
   // 본문이 로드되면 본문 영역으로 화면을 내리고, 선택한 절이 있으면 그 절 위치까지 맞춰준다.
@@ -239,11 +370,11 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       readerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
       if (highlightVerse != null) {
-        const box = verseBoxRef.current;
-        const target = box?.querySelector<HTMLElement>(`[data-verse="${highlightVerse}"]`);
-        if (box && target) {
-          box.scrollTop += target.getBoundingClientRect().top - box.getBoundingClientRect().top - 16;
-        }
+        const target = verseBoxRef.current?.querySelector<HTMLElement>(
+          `[data-verse="${highlightVerse}"]`
+        );
+        // 그 절이 화면 가운데 오도록 — 맨 위에 붙이면 머리말에 가려 읽기 나쁘다
+        target?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       setPendingScroll(false);
     }, 120);
@@ -346,7 +477,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
     setLoading(true);
     setError("");
-    setPickedVerses(new Map()); // 다른 본문으로 넘어가면 고른 구절도 초기화
+    setBarOpen(false); // 본문이 바뀌면 아래 막대는 닫는다 (칠해 둔 색은 그대로 남는다)
 
     try {
       const res = await fetch(bibleSearchUrl(searchStr.trim(), bibleVersions));
@@ -687,7 +818,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   ) => {
     if (!target) return;
     setHighlightVerse(null);
-    setPickedVerses(new Map());
+    setBarOpen(false);
     setSlideDir(dir);
     // 장을 넘기면 '이어서 읽기'를 누른 것처럼 본문을 화면에 맞춰 주고 1절부터 보여준다.
     // (본문 상자의 스크롤은 아래 result.reference 효과가 맨 위로 되돌린다)
@@ -710,7 +841,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
     const el = readerRef.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top;
-    if (top >= -6 && top <= 28) return;
+    // 이미 지나쳐 읽고 있는 중이면(top 이 음수) 건드리지 않는다
+    if (top <= 28) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -1076,7 +1208,9 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 // pan-y 로 두면 세로 훑기는 브라우저가 그대로 처리하고,
                 // 가로로 미는 동작만 우리가 받아 장을 넘길 수 있다
                 style={{ touchAction: "pan-y" }}
-                className="scripture-font py-2 max-h-[calc(100vh-14rem)] min-h-[560px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
+                // 가로 넘침만 막는다 — 장이 미끄러져 들어올 때 옆으로 삐져나가지 않게.
+                // 세로로는 제 길이대로 늘어나고 화면(페이지)이 스크롤한다.
+                className="scripture-font py-2 px-1.5 overflow-x-hidden"
               >
                 {/* 바깥층: 손가락을 따라 밀린다 (놓으면 제자리로 튕겨 돌아온다) */}
                 <div ref={dragRef} style={{ willChange: "transform" }}>
@@ -1092,6 +1226,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                       panes={versionPanes}
                       highlightVerse={highlightVerse}
                       selectedVerses={new Set(pickedVerses.keys())}
+                      verseColors={verseColors}
                       onToggleVerse={handleVerseTap}
                     />
                     {missingVersions.length > 0 && (
@@ -1106,8 +1241,10 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
               {/* 고른 구절이 있는 동안 화면 아래에 떠 있는 막대 */}
               {onSelectVerseForMeditation && (
                 <PickedVerseBar
-                  count={pickedVerses.size}
-                  onClear={() => setPickedVerses(new Map())}
+                  count={barOpen ? pickedVerses.size : 0}
+                  color={hlColor}
+                  onColor={changeHighlightColor}
+                  onClear={clearPickedVerses}
                   onWrite={writeWithPicked}
                 />
               )}

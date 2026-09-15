@@ -751,8 +751,9 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           {med.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] p-3 rounded-3xl">
-                                <div className="text-xs">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] px-3.5 py-2.5 rounded-2xl">
+                                {/* min-w-0 이 없으면 긴 글이 상자를 밀고 나가 여백이 무너져 보인다 */}
+                                <div className="flex-1 min-w-0 text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     <strong className="font-bold text-[#0C3B2E]">{comment.userName}</strong>
                                     <span className="text-2xs text-[#6F8377]">
@@ -887,8 +888,9 @@ export default function MyMeditations({ currentUser }: MyMeditationsProps) {
                           {grat.comments.map((comment) => {
                             const isMyComment = comment.userId === currentUser.id;
                             return (
-                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] p-3 rounded-3xl">
-                                <div className="text-xs">
+                              <div key={comment.id} className="flex justify-between items-start gap-2 bg-[#F9F9F9] px-3.5 py-2.5 rounded-2xl">
+                                {/* min-w-0 이 없으면 긴 글이 상자를 밀고 나가 여백이 무너져 보인다 */}
+                                <div className="flex-1 min-w-0 text-xs">
                                   <div className="flex items-center gap-1.5 mb-1">
                                     <strong className="font-bold text-[#14261E]">{comment.userName}</strong>
                                     <span className="text-2xs text-[#6F8377]">

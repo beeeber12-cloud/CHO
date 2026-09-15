@@ -447,8 +447,8 @@ export default function DailyGratitude({ currentUser, allUsers = [] }: DailyGrat
                           {grat.comments.map((comment) => {
                             const canDeleteComment = comment.userId === currentUser.id || currentUser.role === "admin";
                             return (
-                              <div key={comment.id} className="bg-white rounded-3xl p-2.5 text-xs flex justify-between items-start gap-2">
-                                <div>
+                              <div key={comment.id} className="bg-white rounded-2xl px-3 py-2.5 text-xs flex justify-between items-start gap-2">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5 mb-0.5">
                                     <span className="font-bold text-[#0C3B2E]">{comment.userName}</span>
                                     <span className="text-2xs text-[#6F8377]">

@@ -3740,7 +3740,7 @@ JSON format:
   /** 같은 절을 다시 누르면 해제되는 토글 방식 */
   app.post("/api/saved-verses/toggle", (req: Request, res: Response) => {
     const db = dbOf(req);
-    const { userId, book, chapter, verseNum, text } = req.body;
+    const { userId, book, chapter, verseNum, text, color } = req.body;
     if (!userId || !book || !chapter || !verseNum) {
       return res.status(400).json({ error: "구절 정보가 올바르지 않습니다." });
     }
@@ -3765,6 +3765,7 @@ JSON format:
         chapter: Number(chapter),
         verseNum: Number(verseNum),
         text: String(text || "").slice(0, 500),
+        color: color === "green" ? "green" : "yellow",
         createdAt: new Date().toISOString()
       });
       saved = true;
@@ -3772,6 +3773,33 @@ JSON format:
 
     saveDb(db);
     res.json({ saved, total: db.savedVerses.filter((v) => v.userId === userId).length });
+  });
+
+  /**
+   * 이미 체크해 둔 구절의 **색만** 바꾼다.
+   * 토글로는 못 한다 — 같은 절을 다시 부르면 체크가 풀려 버리기 때문이다.
+   * verseNums 를 주면 그 절만, 안 주면 그 장에서 체크한 것 전부.
+   */
+  app.post("/api/saved-verses/color", (req: Request, res: Response) => {
+    const db = dbOf(req);
+    const { userId, book, chapter, color, verseNums } = req.body;
+    if (!userId || !book || !chapter) {
+      return res.status(400).json({ error: "구절 정보가 올바르지 않습니다." });
+    }
+    const next = color === "green" ? "green" : "yellow";
+    const only = Array.isArray(verseNums) ? new Set(verseNums.map(Number)) : null;
+
+    if (!db.savedVerses) db.savedVerses = [];
+    let changed = 0;
+    for (const v of db.savedVerses) {
+      if (v.userId !== userId || v.book !== book || v.chapter !== Number(chapter)) continue;
+      if (only && !only.has(v.verseNum)) continue;
+      if (v.color === next) continue;
+      v.color = next;
+      changed++;
+    }
+    if (changed) saveDb(db);
+    res.json({ changed });
   });
 
   app.delete("/api/saved-verses/:id", (req: Request, res: Response) => {
