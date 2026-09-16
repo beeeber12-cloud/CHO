@@ -16,7 +16,6 @@ import {
 } from "../lib/verseHighlight";
 import BibleVersionPicker from "./BibleVersionPicker";
 import RjJourney from "./RjJourney";
-import RjAskCard from "./RjAskCard";
 import RjIntro, { rjIntroSeen } from "./RjIntro";
 import { volumeOfBook, volumeColor } from "../data/readingJesusVolumes";
 import { BibleVersionKey, loadSelectedVersions, saveSelectedVersions, versionsQueryParam, BIBLE_VERSIONS } from "../lib/bibleVersions";
@@ -177,10 +176,23 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const [hlColor, setHlColor] = useState<HighlightColor>(() => defaultHighlight());
 
   /**
-   * 아래 막대는 **이 장에서 실제로 뭔가를 눌렀을 때만** 올라온다.
-   * 칠해 둔 장에 들어설 때마다 막대가 따라 올라오면 성가시다.
+   * 아래 막대는 **이 장에서 실제로 뭔가를 눌렀을 때만** 올라오고,
+   * **5초쯤 뒤 저절로 사라진다.**
+   *
+   * 말씀을 체크한다고 다 묵상을 쓰는 것은 아니다. 색만 칠하고 계속 읽는 쪽이
+   * 훨씬 많은데, 막대가 계속 떠 있으면 읽는 화면을 내내 가린다.
+   * 묵상을 쓰실 분은 본문 아래 '이 말씀으로 내 묵상 쓰기' 단추를 쓰시면 된다.
    */
   const [barOpen, setBarOpen] = useState(false);
+  const barTimer = useRef<number | null>(null);
+  const showBarAwhile = () => {
+    setBarOpen(true);
+    if (barTimer.current) window.clearTimeout(barTimer.current);
+    barTimer.current = window.setTimeout(() => setBarOpen(false), 5000);
+  };
+  useEffect(() => () => {
+    if (barTimer.current) window.clearTimeout(barTimer.current);
+  }, []);
 
   /** 지금 보고 있는 장에서 체크된 구절 (번호 -> 본문·색) */
   const pickedVerses = React.useMemo(() => {
@@ -233,7 +245,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
       else next.set(key, { text: body, color: hlColor });
       return next;
     });
-    setBarOpen(true);
+    showBarAwhile();
 
     // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
     if (currentUser?.id) {
@@ -281,6 +293,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const changeHighlightColor = (c: HighlightColor) => {
     setHlColor(c);
     setDefaultHighlight(c);
+    showBarAwhile(); // 색을 고르는 동안에는 막대가 사라지지 않게 시간을 다시 준다
     const nums = [...pickedVerses.keys()];
     if (nums.length === 0) return;
     setSavedMarks((prev) => {
@@ -1308,29 +1321,29 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                     </button>
                   )}
 
-                  {onSelectVerseForMeditation && pickedVerses.size === 0 && (
+                  {onSelectVerseForMeditation && (
                     <button
                       type="button"
                       onClick={writeWithPicked}
                       className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-1.5 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                     >
                       <Send size={14} />
-                      <span>이 말씀으로 내 묵상 쓰기</span>
+                      <span>
+                        {pickedVerses.size > 0
+                          ? `체크한 ${pickedVerses.size}구절로 묵상 쓰기`
+                          : "이 말씀으로 내 묵상 쓰기"}
+                      </span>
                     </button>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* '오늘의 통독 실천 제안' 상자를 뺐다 (2026-08-31).
-                그만큼 위 성경 본문이 더 길게 보인다.
-                리딩지저스만은 '두 질문' 을 접힌 한 줄로 둔다 — 읽는 법이 이 두 줄이
-                전부라서다. 처음 한 번만 펼쳐서 보이고 다음부터는 접힌다. */}
-            {isReadingJesus && (
-              <div className="mt-4">
-                <RjAskCard />
-              </div>
-            )}
+            {/* 본문 아래에는 아무것도 두지 않는다.
+                '오늘의 통독 실천 제안'(2026-08-31)에 이어 리딩지저스 '두 질문'도 뺐다
+                (2026-09-16) — 읽는 화면에서 말씀 아래에 설명이 붙으면 거슬린다.
+                리딩지저스를 어떻게 읽는지는 처음 고를 때 세 장(RjIntro)과
+                권 띠를 누르면 열리는 여정 지도(RjJourney)가 이미 말해 준다. */}
           </motion.div>
         )}
       </AnimatePresence>

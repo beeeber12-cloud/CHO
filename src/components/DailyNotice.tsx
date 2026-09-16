@@ -124,8 +124,20 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
     [pickedVerses]
   );
 
-  /** 아래 막대는 이 화면에서 실제로 뭔가를 눌렀을 때만 올라온다 */
+  /**
+   * 아래 막대는 이 화면에서 실제로 뭔가를 눌렀을 때만 올라오고,
+   * **5초쯤 뒤 저절로 사라진다** (체크한다고 다 묵상을 쓰는 것은 아니다).
+   */
   const [barOpen, setBarOpen] = useState(false);
+  const barTimer = useRef<number | null>(null);
+  const showBarAwhile = () => {
+    setBarOpen(true);
+    if (barTimer.current) window.clearTimeout(barTimer.current);
+    barTimer.current = window.setTimeout(() => setBarOpen(false), 5000);
+  };
+  useEffect(() => () => {
+    if (barTimer.current) window.clearTimeout(barTimer.current);
+  }, []);
 
   const togglePickedVerse = (num: string, body: string) => {
     const had = pickedVerses.has(num);
@@ -135,7 +147,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
       else next.set(num, { text: body, color: hlColor });
       return next;
     });
-    setBarOpen(true);
+    showBarAwhile();
 
     // 눌러서 체크한 구절은 '말씀 체크리스트'에 남도록 서버에도 저장한다.
     if (currentUser?.id && noticeRef) {
@@ -179,6 +191,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
   const changeHighlightColor = (c: HighlightColor) => {
     setHlColor(c);
     setDefaultHighlight(c);
+    showBarAwhile(); // 색을 고르는 동안에는 막대가 사라지지 않게 시간을 다시 준다
     const nums = [...pickedVerses.keys()];
     if (nums.length === 0) return;
     setPickedVerses((prev) => {
@@ -880,10 +893,10 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
               </div>
 
               {/* 마음에 닿은 구절을 고르면 그 구절만 묵상으로 가져간다 */}
-              {onSelectVerseForMeditation && pickedVerses.size === 0 && (
+              {onSelectVerseForMeditation && (
                 <div className="mt-4 pt-3 border-t border-[#E3E9E2] flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs sm:text-sm text-[#6F8377] font-medium">
-                    마음에 닿은 구절을 눌러보세요
+                    {pickedVerses.size > 0 ? "체크한 구절이 있습니다" : "마음에 닿은 구절을 눌러보세요"}
                   </span>
                   <button
                     type="button"
@@ -891,7 +904,9 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                     className="grad-forest flex items-center gap-1.5 text-xs font-bold text-white px-3.5 py-2 rounded-3xl transition cursor-pointer whitespace-nowrap hover:brightness-110"
                   >
                     <Send size={13} />
-                    이 말씀으로 묵상 쓰기
+                    {pickedVerses.size > 0
+                      ? `체크한 ${pickedVerses.size}구절로 묵상 쓰기`
+                      : "이 말씀으로 묵상 쓰기"}
                   </button>
                 </div>
               )}

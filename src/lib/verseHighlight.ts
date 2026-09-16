@@ -5,7 +5,8 @@
  * 거의 없어서 **골랐는지 안 골랐는지 눈에 띄지 않았다.** 형광펜은 눈에 띄라고 칠하는 것이다.
  *
  * 색은 두 가지만 둔다. 더 늘리면 고르는 일이 일이 된다.
- * 글자는 검정 그대로 읽혀야 하므로, 진하되 탁하지 않은 쪽으로 골랐다.
+ * **파스텔로 눕힌다** — 성경 본문 위에 칠하는 것이라 색이 진하면 글자보다 색이 먼저
+ * 눈에 든다. 흰 바탕과는 분명히 다르되, 읽는 것을 방해하지 않을 만큼만.
  *
  * 이 색은 **꾸미기(테마)에 휘둘리지 않는다** — 사람이 직접 고른 색이라
  * 인라인 style 로 칠한다. 테마가 바뀌어도 내가 칠한 곳은 그대로여야 한다.
@@ -16,8 +17,8 @@ export const HIGHLIGHT_COLORS: Record<
   HighlightColor,
   { bg: string; num: string; label: string }
 > = {
-  yellow: { bg: "#FFE49C", num: "#8A6100", label: "노랑" },
-  green: { bg: "#BFE6C8", num: "#1F6B3A", label: "초록" }
+  yellow: { bg: "#FFF0C2", num: "#8A6100", label: "노랑" },
+  green: { bg: "#D9EFE0", num: "#1F6B3A", label: "초록" }
 };
 
 export const HIGHLIGHT_ORDER: HighlightColor[] = ["yellow", "green"];
