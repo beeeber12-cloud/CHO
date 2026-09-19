@@ -17,8 +17,8 @@ export const HIGHLIGHT_COLORS: Record<
   HighlightColor,
   { bg: string; num: string; label: string }
 > = {
-  yellow: { bg: "#FFF0C2", num: "#8A6100", label: "노랑" },
-  green: { bg: "#D9EFE0", num: "#1F6B3A", label: "초록" }
+  yellow: { bg: "#F3E8CC", num: "#7A5600", label: "노랑" },
+  green: { bg: "#D6E5DA", num: "#1F6B3A", label: "초록" }
 };
 
 export const HIGHLIGHT_ORDER: HighlightColor[] = ["yellow", "green"];

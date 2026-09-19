@@ -126,14 +126,14 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
 
   /**
    * 아래 막대는 이 화면에서 실제로 뭔가를 눌렀을 때만 올라오고,
-   * **5초쯤 뒤 저절로 사라진다** (체크한다고 다 묵상을 쓰는 것은 아니다).
+   * **3초쯤 뒤 저절로 사라진다** (체크한다고 다 묵상을 쓰는 것은 아니다).
    */
   const [barOpen, setBarOpen] = useState(false);
   const barTimer = useRef<number | null>(null);
   const showBarAwhile = () => {
     setBarOpen(true);
     if (barTimer.current) window.clearTimeout(barTimer.current);
-    barTimer.current = window.setTimeout(() => setBarOpen(false), 5000);
+    barTimer.current = window.setTimeout(() => setBarOpen(false), 3000);
   };
   useEffect(() => () => {
     if (barTimer.current) window.clearTimeout(barTimer.current);
@@ -280,6 +280,8 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
   const alignReader = (e?: React.MouseEvent) => {
     const hit = e?.target as HTMLElement | undefined;
     if (hit?.closest?.("button, a, input, select, textarea, label, .fixed")) return;
+    // 구절을 고르는 것은 '화면을 맞춰 달라'는 뜻이 아니다 — 읽던 자리에 그대로 둔다
+    if (hit?.closest?.("[data-verse]")) return;
     const el = readerRef.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top;
@@ -549,7 +551,7 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             {plannerActive && planTableInfo ? `${planTableInfo.short} 오늘의 말씀` : "오늘의 말씀"}
           </h3>
           <p className="text-xs sm:text-sm text-[#6F8377] mt-0.5">
-            {notice ? `${notice.verseTitle} · ${formatKoreanDate(notice.date)}` : "매일 아침 새 말씀이 공지됩니다"}
+            {notice ? formatKoreanDate(notice.date) : "매일 아침 새 말씀이 공지됩니다"}
           </p>
         </div>
 
@@ -846,9 +848,6 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
             <div ref={readerRef} className="scroll-mt-4" />
 
             <div className="scripture-font py-3.5">
-              <div className="mb-2.5">
-                <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
-              </div>
 
               {/* 본문 상자 — 높이는 useFillHeight 가 화면에 맞춰 넣어 준다.
                   예전에는 60vh 로 박아 두어 기기마다 아래가 휑하거나 몇 줄 못 봤다.
@@ -857,6 +856,19 @@ export default function DailyNotice({ currentUser, allUsers, onVerseSelect, onSe
                 ref={noticeBoxRef}
                 className="overflow-y-auto overflow-x-hidden px-1.5 pb-3 mb-3 select-text scrollbar-thin scrollbar-thumb-slate-200"
               >
+                {/* 성경·장과 번역본 고르기 — **본문 위에 붙어 따라다닌다**.
+                    성경·장은 예전에 날짜 옆 작은 회색 글씨에 묻혀 있었다. 오늘 어디를
+                    읽는지가 이 화면에서 가장 먼저 보여야 할 것이라 본문 머리로 올려 키웠다.
+                    상자 안에 두어야 sticky 가 붙는다(페이지 쪽은 body 의 overflow 때문에 안 붙는다). */}
+                <div className="sticky top-0 z-20 bg-white pt-1 pb-2.5 -mx-1.5 px-1.5 space-y-2">
+                  {notice?.verseTitle && (
+                    <h4 className="text-lg sm:text-xl font-bold text-[#0C3B2E] break-keep">
+                      {notice.verseTitle}
+                    </h4>
+                  )}
+                  <BibleVersionPicker selected={noticeVersions} onChange={handleNoticeVersionsChange} />
+                </div>
+
                 <DualBibleText
                   panes={noticePanes}
                   selectedVerses={new Set(pickedVerses.keys())}

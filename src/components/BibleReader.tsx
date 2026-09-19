@@ -177,7 +177,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
 
   /**
    * 아래 막대는 **이 장에서 실제로 뭔가를 눌렀을 때만** 올라오고,
-   * **5초쯤 뒤 저절로 사라진다.**
+   * **3초쯤 뒤 저절로 사라진다.**
    *
    * 말씀을 체크한다고 다 묵상을 쓰는 것은 아니다. 색만 칠하고 계속 읽는 쪽이
    * 훨씬 많은데, 막대가 계속 떠 있으면 읽는 화면을 내내 가린다.
@@ -188,7 +188,7 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const showBarAwhile = () => {
     setBarOpen(true);
     if (barTimer.current) window.clearTimeout(barTimer.current);
-    barTimer.current = window.setTimeout(() => setBarOpen(false), 5000);
+    barTimer.current = window.setTimeout(() => setBarOpen(false), 3000);
   };
   useEffect(() => () => {
     if (barTimer.current) window.clearTimeout(barTimer.current);
@@ -848,6 +848,8 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
   const alignReader = (e?: React.MouseEvent) => {
     const hit = e?.target as HTMLElement | undefined;
     if (hit?.closest?.("button, a, input, select, textarea, label, .fixed")) return;
+    // 구절을 고르는 것은 '화면을 맞춰 달라'는 뜻이 아니다 — 읽던 자리에 그대로 둔다
+    if (hit?.closest?.("[data-verse]")) return;
     const el = readerRef.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top;
@@ -1193,19 +1195,6 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
             {/* Chapter Content — 시안의 .scripture-block: 제목은 상자 밖, 본문은 위 nav-card와
                 떨어뜨려 "여기부터는 본문"임을 구별한다. 별도 흰 카드로 감싸지 않는다. */}
             <div className="space-y-2.5 sm:space-y-4 mt-3.5">
-              <h3 className="text-base sm:text-lg font-bold text-[#0C3B2E] flex items-center gap-2">
-                {result.reference}
-                {/* 새 장을 받아오는 동안에도 보던 본문은 그대로 두고, 여기서만 알려준다 */}
-                {loading && (
-                  <span className="flex items-center gap-1 text-2xs font-bold text-[#6F8377]">
-                    <Loader className="animate-spin" size={12} />
-                    불러오는 중
-                  </span>
-                )}
-              </h3>
-
-              {/* 번역본 고르기 — 최대 두 개까지 대조 */}
-              <BibleVersionPicker selected={bibleVersions} onChange={handleVersionsChange} />
 
               {/* 말씀 본문 — 박스 없이 흰 배경에 그대로 놓인다 */}
               <div
@@ -1219,8 +1208,26 @@ export default function BibleReader({ currentUser, onSelectVerseForMeditation, i
                 style={{ touchAction: "pan-y" }}
                 // 높이는 useFillHeight 가 화면에 맞춰 넣어 준다 (숫자를 박지 않는다).
                 // 좌우 여백(px-1.5)은 칠한 자리가 상자 밖으로 삐져나가 잘리지 않게 하려는 것.
-                className="scripture-font py-2 px-1.5 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
+                className="scripture-font pb-2 px-1.5 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200"
               >
+                {/* 어느 말씀인지와 번역본 고르기 — **본문 위에 붙어 따라다닌다**.
+                    본문을 한참 내려가도 지금 읽는 곳과 번역본 바꾸기가 늘 손 닿는 자리에 있다.
+                    상자 안에 두는 이유는 위 주석 참고(페이지 쪽 sticky 는 붙지 않는다).
+                    흰 바탕을 깔아야 글이 뒤로 비치지 않는다. */}
+                <div className="sticky top-0 z-20 bg-white pt-2 pb-2.5 -mx-1.5 px-1.5 space-y-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-[#0C3B2E] flex items-center gap-2">
+                    {result.reference}
+                    {/* 새 장을 받아오는 동안에도 보던 본문은 그대로 두고, 여기서만 알려준다 */}
+                    {loading && (
+                      <span className="flex items-center gap-1 text-2xs font-bold text-[#6F8377]">
+                        <Loader className="animate-spin" size={12} />
+                        불러오는 중
+                      </span>
+                    )}
+                  </h3>
+                  <BibleVersionPicker selected={bibleVersions} onChange={handleVersionsChange} />
+                </div>
+
                 {/* 바깥층: 손가락을 따라 밀린다 (놓으면 제자리로 튕겨 돌아온다) */}
                 <div ref={dragRef} style={{ willChange: "transform" }}>
                   {/* 안층: 장이 바뀌면 밀어낸 쪽 반대편에서 미끄러져 들어온다.
